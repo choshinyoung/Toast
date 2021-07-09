@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Toast", "Toast\Toast.csproj", "{004DD223-2A3E-4710-858F-8EE90551AE34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{CF6B8760-CD31-489A-885F-9207293856C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{004DD223-2A3E-4710-858F-8EE90551AE34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{004DD223-2A3E-4710-858F-8EE90551AE34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{004DD223-2A3E-4710-858F-8EE90551AE34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{004DD223-2A3E-4710-858F-8EE90551AE34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF6B8760-CD31-489A-885F-9207293856C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF6B8760-CD31-489A-885F-9207293856C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF6B8760-CD31-489A-885F-9207293856C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF6B8760-CD31-489A-885F-9207293856C5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3FA6A38A-5E5C-4C5E-B6DF-6085395720D0}
+	EndGlobalSection
+EndGlobal
