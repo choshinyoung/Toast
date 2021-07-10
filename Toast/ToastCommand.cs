@@ -9,13 +9,13 @@ namespace Toast
 {
     public class ToastCommand
     {
-        public string Name;
+        public string Name { get; private set; }
 
-        public MethodInfo Method;
-        public object Target;
+        public MethodInfo Method { get; private set; }
+        public object Target { get; private set; }
 
-        public Type[] Parameters;
-        public Type Return;
+        public Type[] Parameters { get; private set; }
+        public Type Return { get; private set; }
 
         private ToastCommand()
         {
