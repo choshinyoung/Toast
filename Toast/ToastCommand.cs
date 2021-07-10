@@ -11,7 +11,7 @@ namespace Toast
     {
         public string Name;
 
-        public ParameterInfo[] Parameters;
+        public Type[] Parameters;
         public Type Return;
 
         public MethodInfo Method;
@@ -27,7 +27,7 @@ namespace Toast
             {
                 Name = name,
                 Method = method,
-                Parameters = method.GetParameters(),
+                Parameters = method.GetParameters().Select(p => p.ParameterType).ToArray(),
                 Return = method.ReturnType,
             };
 
