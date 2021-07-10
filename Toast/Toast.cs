@@ -8,6 +8,6 @@ namespace Toast
 {
     public class Toast
     {
-
+        public List<ToastCommand> Commands;
     }
 }
