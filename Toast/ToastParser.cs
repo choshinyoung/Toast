@@ -12,39 +12,34 @@ namespace Toast
     internal class ToastParser
     {
         static readonly Parser<Element> CommandParser =
-            (from first in Parse.Letter.Or(Parse.Char('_')).Once().Text()
-             from rest in Parse.LetterOrDigit.Many().Text()
-             select new Command(first + rest))
-            .Named("Command");
+            from first in Parse.Letter.Or(Parse.Char('_')).Once().Text()
+            from rest in Parse.LetterOrDigit.Many().Text()
+            select new Command(first + rest);
 
         static readonly Parser<Element> NumberParser =
-            (from n in Parse.Decimal
-             select new Number(float.Parse(n)))
-            .Named("Number");
+            from n in Parse.Decimal
+            select new Number(float.Parse(n));
 
         static readonly Parser<Element> BoolParser =
-            (from b in Parse.String("true").Or(Parse.String("false")).Text()
-             select new Bool(b == "true"))
-            .Named("Bool");
+            from b in Parse.String("true").Or(Parse.String("false")).Text()
+            select new Bool(b == "true");
 
         private static readonly Parser<char> QuoteParser = Parse.Char('"');
         static readonly Parser<Element> TextParser =
-            (from lquot in QuoteParser
-             from s in Parse.AnyChar.Except(QuoteParser).Many().Text()
-             from rquot in QuoteParser
-             select new Text(s))
-            .Named("Text");
+            from lquot in QuoteParser
+            from s in Parse.AnyChar.Except(QuoteParser).Many().Text()
+            from rquot in QuoteParser
+            select new Text(s);
 
         static readonly Parser<Element> GroupParser =
-            (from lparen in Parse.Char('(')
-             from g in ElementParser.Many()
-             from rparen in Parse.Char(')')
-             select new Group(g.ToArray()))
-            .Named("Group");
+            from lparen in Parse.Char('(')
+            from g in ElementParser.Many()
+            from rparen in Parse.Char(')')
+            select new Group(g.ToArray());
 
         static readonly Parser<Element> ElementParser =
             from lspace in Parse.WhiteSpace.Many()
-            from e in BoolParser.Or(NumberParser).Or(TextParser).Or(CommandParser).Or(GroupParser)
+            from e in NumberParser.Or(TextParser).Or(BoolParser).Or(CommandParser).Or(GroupParser)
             from rspace in Parse.WhiteSpace.Many()
             select e;
 
