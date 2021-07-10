@@ -12,186 +12,198 @@ namespace Toast
         public string Name;
 
         public ParameterInfo[] Parameters;
-        public ParameterInfo Return;
+        public Type Return;
 
         public MethodInfo Method;
 
-        private void Init(string name, MethodInfo method)
+        private ToastCommand()
         {
-            Parameters = method.GetParameters();
-            Return = method.ReturnParameter;
 
-            Name = name;
         }
 
-        public ToastCommand(string name, Action method)
+        private static ToastCommand Create(string name, MethodInfo method)
         {
-            Init(name, method.Method);
+            ToastCommand cmd = new()
+            {
+                Name = name,
+                Method = method,
+                Parameters = method.GetParameters(),
+                Return = method.ReturnType,
+            };
+
+            Console.WriteLine($"Name: {cmd.Name}\nParameters: {string.Join(", ", cmd.Parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"))}\nReturn: {cmd.Return.Name}\n\n");
+
+            return cmd;
         }
 
-        public ToastCommand(string name, Action<object> method)
+        public static ToastCommand Create(string name, Action method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object> method)
+        public static ToastCommand Create<T1>(string name, Action<T1> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object> method)
+        public static ToastCommand Create<T1, T2>(string name, Action<T1, T2> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3>(string name, Action<T1, T2, T3> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4>(string name, Action<T1, T2, T4, T4> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5>(string name, Action<T1, T2, T3, T4, T5> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6>(string name, Action<T1, T2, T3, T4, T5, T6> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7>(string name, Action<T1, T2, T3, T4, T5, T6, T7> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8>(string name, Action<T1, T2, T3, T4, T5, T6, T8> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string name, Action<T1, T2, T3, T4, T5, T6, T8, T9> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(string name, Action<T1, T2, T3, T4, T5, T6, T8, T9, T10> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Action<object, object, object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object> method)
+        public static ToastCommand Create<TResult>(string name, Func<TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object> method)
+        public static ToastCommand Create<T1, TResult>(string name, Func<T1, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, TResult>(string name, Func<T1, T2, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, TResult>(string name, Func<T1, T2, T3, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, TResult>(string name, Func<T1, T2, T4, T4, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, TResult>(string name, Func<T1, T2, T3, T4, T5, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, T9, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, T9, T10, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
         }
 
-        public ToastCommand(string name, Func<object, object, object, object, object, object, object, object, object, object, object, object, object, object, object, object, object> method)
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, TResult> method)
         {
-            Init(name, method.Method);
+            return Create(name, method.Method);
+        }
+
+        public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> method)
+        {
+            return Create(name, method.Method);
         }
     }
 }
