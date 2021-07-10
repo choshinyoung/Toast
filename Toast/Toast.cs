@@ -9,5 +9,12 @@ namespace Toast
     public class Toast
     {
         public List<ToastCommand> Commands = new();
+
+        public Action<ToastCommand> AddCommand;
+
+        public Toast()
+        {
+            AddCommand = Commands.Add;
+        }
     }
 }

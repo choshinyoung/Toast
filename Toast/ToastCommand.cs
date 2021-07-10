@@ -31,7 +31,7 @@ namespace Toast
                 Return = method.ReturnType,
             };
 
-            Console.WriteLine($"Name: {cmd.Name}\nParameters: {string.Join(", ", cmd.Parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"))}\nReturn: {cmd.Return.Name}\n\n");
+            // Console.WriteLine($"Name: {cmd.Name}\nParameters: {string.Join(", ", cmd.Parameters.Select(p => $"{p.ParameterType.Name} {p.Name}"))}\nReturn: {cmd.Return.Name}\n\n");
 
             return cmd;
         }

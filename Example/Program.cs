@@ -13,9 +13,9 @@ namespace Example
         {
             Toast.Toast toast = new();
 
-            toast.Commands.Add(ToastCommand.Create("a", () => Console.WriteLine("hello")));
-            toast.Commands.Add(ToastCommand.Create<int>("b", (i) => Console.WriteLine(i)));
-            toast.Commands.Add(ToastCommand.Create<int, int>("c", (i) => i * 2));
+            toast.AddCommand(ToastCommand.Create("a", () => Console.WriteLine("hello")));
+            toast.AddCommand(ToastCommand.Create<int>("b", (i) => Console.WriteLine(i)));
+            toast.AddCommand(ToastCommand.Create<int, int>("c", (i) => i * 2));
         }
     }
 }
