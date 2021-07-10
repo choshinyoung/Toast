@@ -16,5 +16,35 @@ namespace Toast
         {
             AddCommand = Commands.Add;
         }
+
+        public object Execute(string line)
+        {
+            string[] parameters = line.Split();
+            string name = parameters[0];
+            parameters = parameters[1..];
+
+            ToastCommand cmd = Commands.Find(c => c.Name == name);
+            if (cmd is null)
+            {
+                throw new CommandNotFoundException(name);
+            }
+
+            object result = cmd.Method.Invoke(cmd.Target, parameters);
+
+            return result;
+        }
+
+        public class CommandNotFoundException : Exception
+        {
+            public CommandNotFoundException()
+            {
+
+            }
+
+            public CommandNotFoundException(string cmd) : base($"Couldn't find a command '{cmd}'.")
+            {
+                
+            }
+        }
     }
 }
