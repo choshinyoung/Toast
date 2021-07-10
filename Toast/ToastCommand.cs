@@ -9,13 +9,13 @@ namespace Toast
 {
     public class ToastCommand
     {
-        public string Name { get; private set; }
+        public string Name { get; private init; }
 
-        public MethodInfo Method { get; private set; }
-        public object Target { get; private set; }
+        public MethodInfo Method { get; private init; }
+        public object Target { get; private init; }
 
-        public Type[] Parameters { get; private set; }
-        public Type Return { get; private set; }
+        public Type[] Parameters { get; private init; }
+        public Type Return { get; private init; }
 
         private ToastCommand()
         {
@@ -32,8 +32,6 @@ namespace Toast
                 Parameters = method.GetParameters().Select(p => p.ParameterType).ToArray(),
                 Return = method.ReturnType,
             };
-
-            // Console.WriteLine($"Name: {cmd.Name}\nParameters: {string.Join(", ", cmd.Parameters.Select(p => $"{p.Name}"))}\nReturn: {cmd.Return.Name}\n\n");
 
             return cmd;
         }

@@ -19,9 +19,9 @@ namespace Toast
 
         public object Execute(string line)
         {
-            string[] parameters = line.Split();
-            string name = parameters[0];
-            parameters = parameters[1..];
+            var parseResult = ToastParser.ParseLine(line);
+            string name = parseResult.name;
+            object[] parameters = parseResult.parameters;
 
             ToastCommand cmd = Commands.Find(c => c.Name == name);
             if (cmd is null)
@@ -36,15 +36,9 @@ namespace Toast
 
         public class CommandNotFoundException : Exception
         {
-            public CommandNotFoundException()
-            {
+            public CommandNotFoundException() { }
 
-            }
-
-            public CommandNotFoundException(string cmd) : base($"Couldn't find a command '{cmd}'.")
-            {
-                
-            }
+            public CommandNotFoundException(string cmd) : base($"Couldn't find a command '{cmd}'.") { }
         }
     }
 }
