@@ -35,7 +35,7 @@ namespace Toast
 
             if (++index != parseResult.Length)
             {
-                throw new ParameterCountException(parseResult.Length, index);
+                throw new ParameterCountException(parseResult.Length - 1, index - 1);
             }
 
             return ExecuteCommand(cmd, parameters);
@@ -56,7 +56,7 @@ namespace Toast
                         return parameters.ToArray();
                     }
 
-                    throw new ParameterCountException(count, elements.Length);
+                    throw new ParameterCountException(elements.Length - 1, count);
                 }
 
                 Element ele = elements[index];
