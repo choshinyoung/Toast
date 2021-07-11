@@ -44,13 +44,13 @@ namespace Toast
             NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
-            from e in ElementParser.DelimitedBy(Parse.WhiteSpace)
+            from e in ElementParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce())
             select e.ToArray();
 
         public static Element[] ParseRaw(string line)
         {
             var result = LineParser.TryParse(line);
-
+            
             if (result.Remainder.AtEnd)
             {
                 return result.Value;

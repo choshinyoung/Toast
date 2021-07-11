@@ -14,12 +14,12 @@ namespace Example
             Toast.Toast toast = new();
 
             toast.AddCommand(ToastCommand.Create("a", () => Console.WriteLine("hello")));
-            toast.AddCommand(ToastCommand.Create<float>("b", i => Console.WriteLine(i)));
+            toast.AddCommand(ToastCommand.Create<object>("b", Console.WriteLine));
             toast.AddCommand(ToastCommand.Create<float, float>("c", i => i * 2));
             toast.AddCommand(ToastCommand.Create<string, string>("d", s => new string(s.Reverse().ToArray())));
             toast.AddCommand(ToastCommand.Create<float, float, float>("e", (x, y) => x + y));
 
-            toast.Execute("b e 1 c 2");
+            toast.Execute("b 10");
         }
     }
 }
