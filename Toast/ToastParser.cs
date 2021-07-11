@@ -20,11 +20,7 @@ namespace Toast
             from n in Parse.Decimal
             select new Number(float.Parse(n));
 
-        static readonly Parser<Element> BoolParser =
-            from b in Parse.String("true").Or(Parse.String("false")).Text()
-            select new Bool(b == "true");
-
-        private static readonly Parser<char> QuoteParser = Parse.Char('"');
+        static readonly Parser<char> QuoteParser = Parse.Char('"');
         static readonly Parser<Element> TextParser =
             from lquot in QuoteParser
             from s in Parse.AnyChar.Except(QuoteParser).Many().Text()
@@ -38,14 +34,11 @@ namespace Toast
             select new Group(g.ToArray());
 
         static readonly Parser<Element> ElementParser =
-            from lspace in Parse.WhiteSpace.Many()
-            from e in NumberParser.Or(TextParser).Or(BoolParser).Or(CommandParser).Or(GroupParser)
-            from rspace in Parse.WhiteSpace.Many()
-            select e;
+            NumberParser.Or(TextParser).Or(CommandParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
-            ElementParser.Many()
-            .Select(e => e.ToArray());
+            from e in ElementParser.DelimitedBy(Parse.WhiteSpace)
+            select e.ToArray();
 
         public static (string name, object[] parameters) ParseLine(string line)
         {
@@ -64,9 +57,16 @@ namespace Toast
 
         public static Element[] ParseRaw(string line)
         {
-            Element[] result = LineParser.Parse(line);
+            var result = LineParser.TryParse(line);
 
-            return result;
+            if (result.Remainder.AtEnd)
+            {
+                return result.Value;
+            }
+            else
+            {
+                throw new InvalidCommandLineException(line);
+            }
         }
 
         public class InvalidCommandLineException : Exception
@@ -108,16 +108,6 @@ namespace Toast
             public new float GetValue()
             {
                 return (float)base.GetValue();
-            }
-        }
-        
-        public class Bool : Element
-        {
-            public Bool(bool value) : base(value) { }
-
-            public new bool GetValue()
-            {
-                return (bool)base.GetValue();
             }
         }
 
