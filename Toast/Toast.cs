@@ -31,7 +31,7 @@ namespace Toast
             ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
 
             int index = 0;
-            object[] parameters = ExecuteParameter(parseResult, cmd.Parameters.Length, ref index);
+            object[] parameters = ExecuteParameters(parseResult, cmd.Parameters.Length, ref index);
 
             if (++index != parseResult.Length)
             {
@@ -41,39 +41,48 @@ namespace Toast
             return ExecuteCommand(cmd, parameters);
         }
         
-        private object[] ExecuteParameter(Element[] elements, int count, ref int index)
+        private object[] ExecuteParameters(Element[] elements, int count, ref int index, bool isGroup = false)
         {
             List<object> parameters = new();
 
-            while (parameters.Count < count)
+            while (parameters.Count < count || isGroup)
             {
                 index++;
 
                 if (elements.Length <= index)
                 {
-                    throw new Exception();
+                    if (isGroup)
+                    {
+                        return parameters.ToArray();
+                    }
+
+                    throw new Exception($"{elements.Length} : {index}");
                 }
 
                 Element ele = elements[index];
 
                 switch (ele)
                 {
+                    case Number or Text:
+                        parameters.Add(ele.GetValue());
+
+                        break;
                     case Command c:
                         ToastCommand cmd = GetCommand(c.GetValue());
 
-                        parameters.Add(ExecuteCommand(cmd, ExecuteParameter(elements, cmd.Parameters.Length, ref index)));
+                        parameters.Add(ExecuteCommand(cmd, ExecuteParameters(elements, cmd.Parameters.Length, ref index)));
 
                         break;
-                    case Number n:
-                        parameters.Add(n.GetValue());
+                    case Group g:
+                        int i = -1;
+                        object[] groupParameters = ExecuteParameters(g.GetValue(), 0, ref i, true);
 
-                        break;
-                    case Text t:
-                        parameters.Add(t.GetValue());
+                        if (parameters.Count + groupParameters.Length > count)
+                        {
+                            throw new Exception();
+                        }
 
-                        break;
-                    case Group:
-                        throw new NotImplementedException();
+                        parameters.AddRange(groupParameters);
 
                         break;
                     default:
