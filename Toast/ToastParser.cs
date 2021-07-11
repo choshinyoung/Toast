@@ -44,9 +44,7 @@ namespace Toast
             NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
-            from startSpace in Parse.WhiteSpace.Many()
             from e in ElementParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce())
-            from endSpace in Parse.WhiteSpace.Many()
             select e.ToArray();
 
         public static Element[] ParseRaw(string line)

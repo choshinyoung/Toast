@@ -19,7 +19,7 @@ namespace Example
             toast.AddCommand(ToastCommand.Create<string, string>("d", s => new string(s.Reverse().ToArray())));
             toast.AddCommand(ToastCommand.Create<float, float, float>("e", (x, y) => x + y));
 
-            toast.Execute(" b ( 1 ) ");
+            toast.Execute("b e ((1) 2)");
         }
     }
 }
