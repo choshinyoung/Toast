@@ -8,6 +8,7 @@ namespace Toast
     public class Toast
     {
         public List<ToastCommand> Commands = new();
+        public List<ToastConverter> Converters = new();
 
         public Action<ToastCommand> AddCommand;
 

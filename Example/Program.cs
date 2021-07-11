@@ -18,6 +18,11 @@ namespace Example
             toast.AddCommand(ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray())));
             toast.AddCommand(ToastCommand.Create<float, float, float>("numberAdd", (x, y) => x + y));
 
+            toast.AddCommand(ToastCommand.Create("true", () => true));
+            toast.AddCommand(ToastCommand.Create("false", () => false));
+
+            toast.AddCommand(ToastCommand.Create<object, object, bool>("equal", (x, y) => x == y));
+
             Execute("numberAdd 10 15");
             Execute("print \"asdf\"");
 
