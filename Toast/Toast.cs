@@ -35,7 +35,7 @@ namespace Toast
 
             if (++index != parseResult.Length)
             {
-                throw new Exception($"Argument is not correct. {index} != {parseResult.Length}");
+                throw new ParameterCountException(parseResult.Length, index);
             }
 
             return ExecuteCommand(cmd, parameters);
@@ -56,7 +56,7 @@ namespace Toast
                         return parameters.ToArray();
                     }
 
-                    throw new Exception($"{elements.Length} : {index}");
+                    throw new ParameterCountException(count, elements.Length);
                 }
 
                 Element ele = elements[index];
@@ -79,14 +79,14 @@ namespace Toast
 
                         if (parameters.Count + groupParameters.Length > count && !isGroup)
                         {
-                            throw new Exception();
+                            throw new ParameterCountException(parameters.Count + groupParameters.Length, count);
                         }
 
                         parameters.AddRange(groupParameters);
 
                         break;
                     default:
-                        throw new Exception("Unknown type.");
+                        throw new InvalidParameterTypeException(ele);
                 }
             }
 
@@ -98,7 +98,7 @@ namespace Toast
             ToastCommand cmd = Commands.Find(c => c.Name == name);
             if (cmd is null)
             {
-                throw new Exception($"Couldn't find a command '{cmd}'.");
+                throw new CommandNotFoundException(name);
             }
 
             return cmd;

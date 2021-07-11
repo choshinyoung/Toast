@@ -13,13 +13,23 @@ namespace Example
         {
             Toast.Toast toast = new();
 
-            toast.AddCommand(ToastCommand.Create("a", () => Console.WriteLine("hello")));
-            toast.AddCommand(ToastCommand.Create<object>("b", Console.WriteLine));
-            toast.AddCommand(ToastCommand.Create<float, float>("c", i => i * 2));
-            toast.AddCommand(ToastCommand.Create<string, string>("d", s => new string(s.Reverse().ToArray())));
-            toast.AddCommand(ToastCommand.Create<float, float, float>("e", (x, y) => x + y));
+            toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
+            toast.AddCommand(ToastCommand.Create<object>("print", Console.WriteLine));
+            toast.AddCommand(ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray())));
+            toast.AddCommand(ToastCommand.Create<float, float, float>("numberAdd", (x, y) => x + y));
 
-            toast.Execute(" b (  1  ) ");
+            Execute("numberAdd 10 15");
+            Execute("print \"asdf\"");
+
+            void Execute(string line)
+            {
+                object result = toast.Execute(line);
+
+                if (result is not null)
+                {
+                    Console.WriteLine(result);
+                }
+            }
         }
     }
 }
