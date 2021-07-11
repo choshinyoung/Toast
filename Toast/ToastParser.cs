@@ -20,6 +20,11 @@ namespace Toast
             from n in Parse.Decimal
             select new Number(float.Parse(n));
 
+        static readonly Parser<Element> SignedNumberParser =
+            from s in Parse.Char('+').Or(Parse.Char('-'))
+            from n in NumberParser
+            select s == '+' ? n : new Number((float)n.GetValue() * -1);
+
         static readonly Parser<char> QuoteParser = Parse.Char('"');
         static readonly Parser<Element> TextParser =
             from lquot in QuoteParser
@@ -34,7 +39,7 @@ namespace Toast
             select new Group(g.ToArray());
 
         static readonly Parser<Element> ElementParser =
-            NumberParser.Or(TextParser).Or(CommandParser).Or(GroupParser);
+            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
             from e in ElementParser.DelimitedBy(Parse.WhiteSpace)
