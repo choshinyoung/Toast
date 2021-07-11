@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Sprache;
+using Toast.Elements;
+using Toast.Exceptions;
 
 namespace Toast
 {
@@ -47,21 +47,6 @@ namespace Toast
             from e in ElementParser.DelimitedBy(Parse.WhiteSpace)
             select e.ToArray();
 
-        public static (string name, object[] parameters) ParseLine(string line)
-        {
-            Element[] elements = ParseRaw(line);
-
-            if (elements[0] is not Command)
-            {
-                throw new InvalidCommandLineException(line);
-            }
-
-            string name = ((Command)elements[0]).GetValue();
-            object[] parameters = elements[1..].Select(e => e.GetValue()).ToArray();
-
-            return (name, parameters);
-        }
-
         public static Element[] ParseRaw(string line)
         {
             var result = LineParser.TryParse(line);
@@ -73,68 +58,6 @@ namespace Toast
             else
             {
                 throw new InvalidCommandLineException(line);
-            }
-        }
-
-        public class InvalidCommandLineException : Exception
-        {
-            public InvalidCommandLineException() { }
-
-            public InvalidCommandLineException(string line) : base($"\"{line}\" is not a vaild command line.") { }
-        }
-
-        public class Element
-        {
-            private readonly object value;
-
-            public Element(object v)
-            {
-                value = v;
-            }
-
-            public object GetValue()
-            {
-                return value;
-            }
-        }
-
-        public class Command : Element
-        {
-            public Command(string value) : base(value) { }
-
-            public new string GetValue()
-            {
-                return (string)base.GetValue();
-            }
-        }
-
-        public class Number : Element
-        {
-            public Number(float value) : base(value) { }
-
-            public new float GetValue()
-            {
-                return (float)base.GetValue();
-            }
-        }
-
-        public class Text : Element
-        {
-            public Text(string value) : base(value) { }
-
-            public new string GetValue()
-            {
-                return (string)base.GetValue();
-            }
-        }
-
-        public class Group : Element
-        {
-            public Group(Element[] value) : base(value) { }
-
-            public new Element[] GetValue()
-            {
-                return (Element[])base.GetValue();
             }
         }
     }

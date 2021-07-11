@@ -12,15 +12,12 @@ namespace Toast
         public string Name { get; private init; }
 
         public MethodInfo Method { get; private init; }
+
         public object Target { get; private init; }
 
         public Type[] Parameters { get; private init; }
+
         public Type Return { get; private init; }
-
-        private ToastCommand()
-        {
-
-        }
 
         private static ToastCommand Create(string name, MethodInfo method, object target)
         {
