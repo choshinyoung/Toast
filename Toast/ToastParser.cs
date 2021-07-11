@@ -11,9 +11,10 @@ namespace Toast
 {
     internal class ToastParser
     {
+        static readonly Parser<char> UnderLine = Parse.Char('_');
         static readonly Parser<Element> CommandParser =
-            from first in Parse.Letter.Or(Parse.Char('_')).Once().Text()
-            from rest in Parse.LetterOrDigit.Many().Text()
+            from first in Parse.Letter.Or(UnderLine).Once().Text()
+            from rest in Parse.LetterOrDigit.Or(UnderLine).Many().Text()
             select new Command(first + rest);
 
         static readonly Parser<Element> NumberParser =
@@ -27,7 +28,6 @@ namespace Toast
 
         static readonly Parser<char> QuoteParser = Parse.Char('"');
         static readonly Parser<char> SlashQuoteParser = Parse.String("\\\"").Select(c => '"');
-
         static readonly Parser<Element> TextParser =
             from start in QuoteParser
             from s in SlashQuoteParser.Or(Parse.AnyChar).Except(QuoteParser).Many()
