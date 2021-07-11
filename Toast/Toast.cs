@@ -77,7 +77,7 @@ namespace Toast
                         int i = -1;
                         object[] groupParameters = ExecuteParameters(g.GetValue(), 0, ref i, true);
 
-                        if (parameters.Count + groupParameters.Length > count)
+                        if (parameters.Count + groupParameters.Length > count && !isGroup)
                         {
                             throw new Exception();
                         }
