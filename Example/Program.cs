@@ -18,7 +18,7 @@ namespace Example
             toast.AddCommand(ToastCommand.Create<float, float>("c", i => i * 2));
             toast.AddCommand(ToastCommand.Create<string, string>("d", s => new string(s.Reverse().ToArray())));
 
-            int result = (int)(float)toast.Execute("c 5");
+            string result = (string)toast.Execute("d \"as\\\"df\"");
             Console.WriteLine(result);
         }
     }

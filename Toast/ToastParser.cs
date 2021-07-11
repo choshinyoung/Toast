@@ -26,16 +26,18 @@ namespace Toast
             select s == '+' ? n : new Number((float)n.GetValue() * -1);
 
         static readonly Parser<char> QuoteParser = Parse.Char('"');
+        static readonly Parser<char> SlashQuoteParser = Parse.String("\\\"").Select(c => '"');
+
         static readonly Parser<Element> TextParser =
-            from lquot in QuoteParser
-            from s in Parse.AnyChar.Except(QuoteParser).Many().Text()
-            from rquot in QuoteParser
-            select new Text(s);
+            from start in QuoteParser
+            from s in SlashQuoteParser.Or(Parse.AnyChar).Except(QuoteParser).Many()
+            from end in QuoteParser
+            select new Text(string.Concat(s));
 
         static readonly Parser<Element> GroupParser =
-            from lparen in Parse.Char('(')
+            from start in Parse.Char('(')
             from g in ElementParser.Many()
-            from rparen in Parse.Char(')')
+            from end in Parse.Char(')')
             select new Group(g.ToArray());
 
         static readonly Parser<Element> ElementParser =
