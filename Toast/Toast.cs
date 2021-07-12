@@ -145,6 +145,8 @@ namespace Toast
         {
             for (int i = 0; i < targets.Length; i++)
             {
+                if (parameters[i] is null) continue;
+
                 Type targetType = targets[i];
                 Type paramType = parameters[i].GetType();
 
@@ -173,6 +175,10 @@ namespace Toast
                     else if (IsNumber(targetType) && paramType == typeof(string))
                     {
                         parameters[i] = Convert.ChangeType(float.Parse((string)parameters[i]), targetType);
+                    }
+                    else
+                    {
+                        throw new ParameterConvertException(paramType, targetType);
                     }
                 }
             }
