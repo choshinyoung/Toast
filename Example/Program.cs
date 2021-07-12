@@ -28,6 +28,8 @@ namespace Example
 
             Execute("isTrue 1");
 
+            Console.WriteLine(BasicCommands.All.Count);
+
             void Execute(string line)
             {
                 object result = toast.Execute(line);
