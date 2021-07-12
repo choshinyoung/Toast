@@ -17,7 +17,7 @@ namespace Example
 
             toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
 
-            Execute("print add input input");
+            Execute("print member input 3");
 
             void Execute(string line)
             {

@@ -10,7 +10,7 @@ namespace Toast
     public class BasicCommands
     {
         public static ToastCommand[] All =>
-            Literals.Concat(Operators).Concat(Statements).Concat(Others).ToArray();
+            Literals.Concat(Operators).Concat(Statements).Concat(Others).Concat(Lists).Concat(Strings).ToArray();
 
         public static ToastCommand[] Literals => new ToastCommand[]
         {
@@ -35,6 +35,16 @@ namespace Toast
         public static ToastCommand[] Others => new ToastCommand[]
         {
             Print, Input
+        };
+
+        public static ToastCommand[] Lists => new ToastCommand[]
+        {
+            Member, Count
+        };
+
+        public static ToastCommand[] Strings => new ToastCommand[]
+        {
+            Split, Reverse, StartsWith, EndsWith, Contains
         };
 
         public static readonly ToastCommand True =
@@ -122,7 +132,28 @@ namespace Toast
                 ToastCommand.Create<object>("print", Console.WriteLine);
 
         public static readonly ToastCommand Input =
-                ToastCommand.Create<string>("input", Console.ReadLine);
+                ToastCommand.Create("input", Console.ReadLine);
+
+        public static readonly ToastCommand Member =
+                ToastCommand.Create<object[], int, object>("member", (x, y) => x[y]);
+
+        public static readonly ToastCommand Count =
+                ToastCommand.Create<object[], int>("count", x => x.Length);
+
+        public static readonly ToastCommand Split =
+                ToastCommand.Create<string, char, string[]>("split", (x, y) => x.Split(y));
+
+        public static readonly ToastCommand Reverse =
+                ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray()));
+
+        public static readonly ToastCommand StartsWith =
+                ToastCommand.Create<string, char, bool>("startsWith", (x, y) => x.StartsWith(y));
+
+        public static readonly ToastCommand EndsWith =
+                ToastCommand.Create<string, char, bool>("endsWith", (x, y) => x.EndsWith(y));
+
+        public static readonly ToastCommand Contains =
+                ToastCommand.Create<string, string, bool>("contains", (x, y) => x.Contains(y));
 
         private BasicCommands() { }
     }

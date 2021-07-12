@@ -150,36 +150,43 @@ namespace Toast
                 Type targetType = targets[i];
                 Type paramType = parameters[i].GetType();
 
-                if (paramType != targetType)
+                if (paramType == targetType) continue;
+
+                if (Converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
                 {
-                    if (Converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
-                    {
-                        parameters[i] = ExecuteConverter(c1, parameters[i]);
-                    }
-                    else if (IsNumber(paramType) && Converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
-                    {
-                        parameters[i] = ExecuteConverter(c2, Convert.ChangeType(parameters[i], c2.From));
-                    }
-                    else if (IsNumber(targetType) && Converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
-                    {
-                        parameters[i] = Convert.ChangeType(ExecuteConverter(c3, parameters[i]), targetType);
-                    }
-                    else if (targetType == typeof(string))
-                    {
-                        parameters[i] = parameters[i].ToString();
-                    }
-                    else if (IsNumber(targetType) && IsNumber(paramType))
-                    {
-                        parameters[i] = Convert.ChangeType(parameters[i], targetType);
-                    }
-                    else if (IsNumber(targetType) && paramType == typeof(string))
-                    {
-                        parameters[i] = Convert.ChangeType((string)parameters[i], targetType);
-                    }
-                    else if (targetType is not object)
-                    {
-                        throw new ParameterConvertException(paramType, targetType);
-                    }
+                    parameters[i] = ExecuteConverter(c1, parameters[i]);
+                }
+                else if (IsNumber(paramType) && Converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
+                {
+                    parameters[i] = ExecuteConverter(c2, Convert.ChangeType(parameters[i], c2.From));
+                }
+                else if (IsNumber(targetType) && Converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
+                {
+                    parameters[i] = Convert.ChangeType(ExecuteConverter(c3, parameters[i]), targetType);
+                }
+                else if (targetType == typeof(string))
+                {
+                    parameters[i] = parameters[i].ToString();
+                }
+                else if (IsNumber(targetType) && IsNumber(paramType))
+                {
+                    parameters[i] = Convert.ChangeType(parameters[i], targetType);
+                }
+                else if (IsNumber(targetType) && paramType == typeof(string))
+                {
+                    parameters[i] = Convert.ChangeType((string)parameters[i], targetType);
+                }
+                else if (targetType == typeof(char) && parameters[i] is string s1 && s1.Length == 1)
+                {
+                    parameters[i] = s1[0];
+                }
+                else if (targetType == typeof(object[]) && parameters[i] is string s2)
+                {
+                    parameters[i] = s2.Select(c => (object)c).ToArray();
+                }
+                else if (targetType is not object)
+                {
+                    throw new ParameterConvertException(paramType, targetType);
                 }
             }
 
