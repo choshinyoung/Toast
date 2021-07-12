@@ -6,6 +6,6 @@ namespace Toast.Exceptions
     {
         public CommandNotFoundException() { }
 
-        public CommandNotFoundException(string cmd) : base($"Couldn't find a command '{cmd}'.") { }
+        public CommandNotFoundException(string cmd) : base($"Cannot find command '{cmd}'.") { }
     }
 }

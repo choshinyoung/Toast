@@ -10,6 +10,6 @@ namespace Toast.Exceptions
     {
         public ParameterConvertException() { }
 
-        public ParameterConvertException(Type from, Type to) : base($"Can't convert {from.Name} to {to.Name}.") { }
+        public ParameterConvertException(Type from, Type to) : base($"Cannot convert {from.Name} to {to.Name}.") { }
     }
 }

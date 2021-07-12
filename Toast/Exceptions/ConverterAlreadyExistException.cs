@@ -10,6 +10,6 @@ namespace Toast.Exceptions
     {
         public ConverterAlreadyExistException() { }
         
-        public ConverterAlreadyExistException(string cvt) : base($"A converter named '{cvt}' is already created.") { }
+        public ConverterAlreadyExistException(Type from, Type to) : base($"A converter that converts {from.Name} to {to.Name} already exists.") { }
     }
 }

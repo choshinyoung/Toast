@@ -8,8 +8,8 @@ namespace Toast
 {
     public class Toast
     {
-        private List<ToastCommand> Commands;
-        private List<ToastConverter> Converters;
+        private readonly List<ToastCommand> Commands;
+        private readonly List<ToastConverter> Converters;
 
         public Toast()
         {
@@ -23,7 +23,7 @@ namespace Toast
             {
                 if (Commands.Any(c => c.Name == cmd.Name))
                 {
-                    throw new CommandAlreadyExistException();
+                    throw new CommandAlreadyExistException(cmd.Name);
                 }
 
                 Commands.Add(cmd);
@@ -36,7 +36,7 @@ namespace Toast
             {
                 if (Converters.Any(c => c.From == cvt.From && c.To == cvt.From))
                 {
-                    throw new ConverterAlreadyExistException();
+                    throw new ConverterAlreadyExistException(cvt.From, cvt.To);
                 }
 
                 Converters.Add(cvt);
@@ -174,7 +174,7 @@ namespace Toast
                     }
                     else if (IsNumber(targetType) && paramType == typeof(string))
                     {
-                        parameters[i] = Convert.ChangeType(float.Parse((string)parameters[i]), targetType);
+                        parameters[i] = Convert.ChangeType((string)parameters[i], targetType);
                     }
                     else if (targetType is not object)
                     {

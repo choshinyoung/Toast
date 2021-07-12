@@ -9,14 +9,42 @@ namespace Toast
 {
     public class BasicCommands
     {
-        public static ToastCommand[] All => new ToastCommand[]
+        public static ToastCommand[] All =>
+            Literals.Concat(Operators).Concat(Statements).Concat(Others).ToArray();
+
+        public static ToastCommand[] Literals => new ToastCommand[]
+        {
+            Null,
+            True, False,
+        };
+
+        public static ToastCommand[] Operators => new ToastCommand[]
         {
             Addition, Subtraction, Multiplication, Division, Modulus, Exponentiation, FloorDivision,
             Equal, Greater, Less, GreaterOrEqual, LessOrEqual,
             And, Or, Not,
             BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseNot, LeftShift, RightShift,
-            True, False, Null
         };
+
+        public static ToastCommand[] Statements => new ToastCommand[]
+        {
+            If, IfElse,
+            Repeat,
+        };
+
+        public static ToastCommand[] Others => new ToastCommand[]
+        {
+            Print, Input
+        };
+
+        public static readonly ToastCommand True =
+            ToastCommand.Create("true", () => true);
+
+        public static readonly ToastCommand False =
+            ToastCommand.Create("false", () => false);
+
+        public static readonly ToastCommand Null =
+            ToastCommand.Create<object>("null", () => null);
 
         public static readonly ToastCommand Addition =
                 ToastCommand.Create<float, float, float>("add", (x, y) => x + y);
@@ -37,7 +65,7 @@ namespace Toast
                 ToastCommand.Create<float, float, float>("exp", (x, y) => MathF.Pow(x, y));
 
         public static readonly ToastCommand FloorDivision =
-                ToastCommand.Create<int, int, int>("floordiv", (x, y) => x / y);
+                ToastCommand.Create<int, int, int>("floorDiv", (x, y) => x / y);
 
         public static readonly ToastCommand Equal =
                 ToastCommand.Create<object, object, bool>("equal", (x, y) => x == y);
@@ -49,10 +77,10 @@ namespace Toast
                 ToastCommand.Create<float, float, bool>("less", (x, y) => x < y);
 
         public static readonly ToastCommand GreaterOrEqual =
-                ToastCommand.Create<float, float, bool>("greaterorequal", (x, y) => x >= y);
+                ToastCommand.Create<float, float, bool>("greaterEqual", (x, y) => x >= y);
 
         public static readonly ToastCommand LessOrEqual =
-                ToastCommand.Create<float, float, bool>("lessorequal", (x, y) => x <= y);
+                ToastCommand.Create<float, float, bool>("lessEqual", (x, y) => x <= y);
 
         public static readonly ToastCommand And =
                 ToastCommand.Create<bool, bool, bool>("and", (x, y) => x && y);
@@ -64,31 +92,37 @@ namespace Toast
                 ToastCommand.Create<bool, bool>("not", x => !x);
 
         public static readonly ToastCommand BitwiseAnd =
-                ToastCommand.Create<int, int, int>("bitand", (x, y) => x & y);
+                ToastCommand.Create<int, int, int>("bitAnd", (x, y) => x & y);
 
         public static readonly ToastCommand BitwiseOr =
-                ToastCommand.Create<int, int, int>("bitor", (x, y) => x | y);
+                ToastCommand.Create<int, int, int>("bitOr", (x, y) => x | y);
 
         public static readonly ToastCommand BitwiseXor =
-                ToastCommand.Create<int, int, int>("bitxor", (x, y) => x ^ y);
+                ToastCommand.Create<int, int, int>("bitXor", (x, y) => x ^ y);
 
         public static readonly ToastCommand BitwiseNot =
-                ToastCommand.Create<int, int>("bitnot", x => ~x);
+                ToastCommand.Create<int, int>("bitNot", x => ~x);
 
         public static readonly ToastCommand LeftShift =
-                ToastCommand.Create<int, int, int>("lshift", (x, y) => x << y);
+                ToastCommand.Create<int, int, int>("lShift", (x, y) => x << y);
 
         public static readonly ToastCommand RightShift =
-                ToastCommand.Create<int, int, int>("rshift", (x, y) => x >> y);
+                ToastCommand.Create<int, int, int>("rShift", (x, y) => x >> y);
 
-        public static readonly ToastCommand True =
-            ToastCommand.Create<bool>("true", () => true);
+        public static readonly ToastCommand If =
+                ToastCommand.Create<bool, object, object>("if", (x, y) => x ? y: null);
 
-        public static readonly ToastCommand False =
-            ToastCommand.Create<bool>("false", () => false);
+        public static readonly ToastCommand IfElse =
+                ToastCommand.Create<bool, object, object, object>("ifElse", (x, y, z) => x ? y : z);
 
-        public static readonly ToastCommand Null =
-            ToastCommand.Create<object>("null", () => null);
+        public static readonly ToastCommand Repeat =
+                ToastCommand.Create<int, object, object[]>("repeat", (x, y) => Enumerable.Repeat(y, x).ToArray());
+
+        public static readonly ToastCommand Print =
+                ToastCommand.Create<object>("print", Console.WriteLine);
+
+        public static readonly ToastCommand Input =
+                ToastCommand.Create<string>("input", Console.ReadLine);
 
         private BasicCommands() { }
     }

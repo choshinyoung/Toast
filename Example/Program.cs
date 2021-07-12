@@ -15,11 +15,9 @@ namespace Example
 
             toast.AddCommand(BasicCommands.All);
 
-            toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")),
-                             ToastCommand.Create<object>("print", Console.WriteLine),
-                             ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray())));
+            toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
 
-            Execute("print exp 2 10");
+            Execute("print add input input");
 
             void Execute(string line)
             {

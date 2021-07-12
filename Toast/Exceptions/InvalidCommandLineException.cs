@@ -6,6 +6,6 @@ namespace Toast.Exceptions
     {
         public InvalidCommandLineException() { }
 
-        public InvalidCommandLineException(string line) : base($"\"{line}\" is not a vaild command line.") { }
+        public InvalidCommandLineException(string line) : base($"\"{line}\" is not a valid command line.") { }
     }
 }
