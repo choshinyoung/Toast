@@ -8,17 +8,40 @@ namespace Toast
 {
     public class Toast
     {
-        public List<ToastCommand> Commands = new();
-        public List<ToastConverter> Converters = new();
-
-        public Action<ToastCommand> AddCommand;
-        public Action<ToastConverter> AddConverter;
+        private List<ToastCommand> Commands;
+        private List<ToastConverter> Converters;
 
         public Toast()
         {
-            AddCommand = Commands.Add;
-            AddConverter = Converters.Add;
+            Commands = new();
+            Converters = new();
         }
+
+        public void AddCommand(ToastCommand cmd)
+        {
+            if (Commands.Any(c => c.Name == cmd.Name))
+            {
+                throw new CommandAlreadyExistException();
+            }
+
+            Commands.Add(cmd);
+        }
+
+        public void AddConverter(ToastConverter cvt)
+        {
+            if (Converters.Any(c => c.From == cvt.From && c.To == cvt.From))
+            {
+                throw new ConverterAlreadyExistException();
+            }
+
+            Converters.Add(cvt);
+        }
+
+        public IReadOnlyList<ToastCommand> GetCommands()
+            => Commands.AsReadOnly();
+
+        public IReadOnlyList<ToastConverter> GetConverters()
+            => Converters.AsReadOnly();
 
         public object Execute(string line)
         {
