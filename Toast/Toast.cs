@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Toast.Elements;
 using Toast.Exceptions;
 
@@ -11,10 +12,12 @@ namespace Toast
         public List<ToastConverter> Converters = new();
 
         public Action<ToastCommand> AddCommand;
+        public Action<ToastConverter> AddConverter;
 
         public Toast()
         {
             AddCommand = Commands.Add;
+            AddConverter = Converters.Add;
         }
 
         public object Execute(string line)
@@ -66,7 +69,6 @@ namespace Toast
                         break;
                     case Command c:
                         ToastCommand cmd = GetCommand(c.GetValue());
-
                         parameters.Add(ExecuteCommand(cmd, ExecuteParameters(elements, cmd.Parameters.Length, ref index)));
 
                         break;
@@ -101,11 +103,61 @@ namespace Toast
             return cmd;
         }
 
-        private static object ExecuteCommand(ToastCommand cmd, object[] parameters)
+        private object ExecuteCommand(ToastCommand cmd, object[] parameters)
         {
+            parameters = ConvertParameters(cmd.Parameters, parameters);
+
             object result = cmd.Method.Invoke(cmd.Target, parameters);
 
             return result;
         }
+
+        private object[] ConvertParameters(Type[] targets, object[] parameters)
+        {
+            for (int i = 0; i < targets.Length; i++)
+            {
+                Type targetType = targets[i];
+                Type paramType = parameters[i].GetType();
+
+                if (paramType != targetType)
+                {
+                    if (Converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
+                    {
+                        parameters[i] = ExecuteConverter(c1, parameters[i]);
+                    }
+                    else if (IsNumber(paramType) && Converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
+                    {
+                        parameters[i] = ExecuteConverter(c2, Convert.ChangeType(parameters[i], c2.From));
+                    }
+                    else if (IsNumber(targetType) && Converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
+                    {
+                        parameters[i] = Convert.ChangeType(ExecuteConverter(c3, parameters[i]), targetType);
+                    }
+                    else if (targetType == typeof(string))
+                    {
+                        parameters[i] = parameters[i].ToString();
+                    }
+                    else if (IsNumber(targetType) && IsNumber(paramType))
+                    {
+                        parameters[i] = Convert.ChangeType(parameters[i], targetType);
+                    }
+                    else if (IsNumber(targetType) && paramType == typeof(string))
+                    {
+                        parameters[i] = Convert.ChangeType(float.Parse((string)parameters[i]), targetType);
+                    }
+                }
+            }
+
+            return parameters;
+        }
+
+        private static object ExecuteConverter(ToastConverter cvt, object parameter)
+        {
+            return cvt.Method.Invoke(cvt.Target, new object[] { parameter });
+        }
+
+        private static bool IsNumber(Type type)
+            => type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(int) || type == typeof(long) || type == typeof(ushort)
+            || type == typeof(uint) || type == typeof(ulong) || type == typeof(float) || type == typeof(double) || type == typeof(decimal);
     }
 }
