@@ -19,7 +19,7 @@ namespace Example
                              ToastCommand.Create<object>("print", Console.WriteLine),
                              ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray())));
 
-            Execute("and 1 2");
+            Execute("print exp 2 10");
 
             void Execute(string line)
             {

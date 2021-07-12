@@ -176,7 +176,7 @@ namespace Toast
                     {
                         parameters[i] = Convert.ChangeType(float.Parse((string)parameters[i]), targetType);
                     }
-                    else
+                    else if (targetType is not object)
                     {
                         throw new ParameterConvertException(paramType, targetType);
                     }
