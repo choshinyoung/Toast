@@ -18,17 +18,10 @@ namespace Example
             toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
             toast.AddCommand(ToastCommand.Create<object>("print", Console.WriteLine));
             toast.AddCommand(ToastCommand.Create<string, string>("reverse", s => new string(s.Reverse().ToArray())));
-            toast.AddCommand(ToastCommand.Create<int, int, int>("numberAdd", (x, y) => x + y));
 
-            toast.AddCommand(ToastCommand.Create("true", () => true));
-            toast.AddCommand(ToastCommand.Create("false", () => false));
+            toast.AddCommand(BasicCommands.All);
 
-            toast.AddCommand(ToastCommand.Create<object, object, bool>("equal", (x, y) => x == y));
-            toast.AddCommand(ToastCommand.Create<bool, bool>("isTrue", (x) => x));
-
-            Execute("isTrue 1");
-
-            Console.WriteLine(BasicCommands.All.Count);
+            Execute("print null");
 
             void Execute(string line)
             {

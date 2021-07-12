@@ -9,14 +9,14 @@ namespace Toast
 {
     public class BasicCommands
     {
-        public static readonly IReadOnlyList<ToastCommand> All = new List<ToastCommand>()
+        public static ToastCommand[] All => new ToastCommand[]
         {
             Addition, Subtraction, Multiplication, Division, Modulus, Exponentiation, FloorDivision,
             Equal, Greater, Less, GreaterOrEqual, LessOrEqual,
             And, Or, Not,
             BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseNot, LeftShift, RightShift,
-            True, False,
-        }.AsReadOnly();
+            True, False, Null
+        };
 
         public static readonly ToastCommand Addition =
                 ToastCommand.Create<float, float, float>("add", (x, y) => x + y);
@@ -49,10 +49,10 @@ namespace Toast
                 ToastCommand.Create<float, float, bool>("less", (x, y) => x < y);
 
         public static readonly ToastCommand GreaterOrEqual =
-                ToastCommand.Create<float, float, bool>("greater", (x, y) => x >= y);
+                ToastCommand.Create<float, float, bool>("greaterorequal", (x, y) => x >= y);
 
         public static readonly ToastCommand LessOrEqual =
-                ToastCommand.Create<float, float, bool>("less", (x, y) => x <= y);
+                ToastCommand.Create<float, float, bool>("lessorequal", (x, y) => x <= y);
 
         public static readonly ToastCommand And =
                 ToastCommand.Create<bool, bool, bool>("and", (x, y) => x && y);

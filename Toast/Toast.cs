@@ -17,24 +17,30 @@ namespace Toast
             Converters = new();
         }
 
-        public void AddCommand(ToastCommand cmd)
+        public void AddCommand(params ToastCommand[] commands)
         {
-            if (Commands.Any(c => c.Name == cmd.Name))
+            foreach (ToastCommand cmd in commands)
             {
-                throw new CommandAlreadyExistException();
-            }
+                if (Commands.Any(c => c.Name == cmd.Name))
+                {
+                    throw new CommandAlreadyExistException();
+                }
 
-            Commands.Add(cmd);
+                Commands.Add(cmd);
+            }
         }
 
-        public void AddConverter(ToastConverter cvt)
+        public void AddConverter(params ToastConverter[] converters)
         {
-            if (Converters.Any(c => c.From == cvt.From && c.To == cvt.From))
+            foreach (ToastConverter cvt in converters)
             {
-                throw new ConverterAlreadyExistException();
-            }
+                if (Converters.Any(c => c.From == cvt.From && c.To == cvt.From))
+                {
+                    throw new ConverterAlreadyExistException();
+                }
 
-            Converters.Add(cvt);
+                Converters.Add(cvt);
+            }
         }
 
         public IReadOnlyList<ToastCommand> GetCommands()
