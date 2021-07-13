@@ -134,6 +134,16 @@ namespace Toast
         public static readonly ToastCommand Input =
                 ToastCommand.Create("input", Console.ReadLine);
 
+        /* public static readonly ToastCommand Converter =
+                ToastCommand.Create<object, string, object>("convert", (x, y) =>
+                {
+                    Type t = Type.GetType(y);
+                    if (t is null)
+                        throw new Exception($"Cannot found a type named '{y}'.");
+
+                    return Convert.ChangeType(x, t);
+                }); */
+
         public static readonly ToastCommand Member =
                 ToastCommand.Create<object[], int, object>("member", (x, y) => x[y]);
 

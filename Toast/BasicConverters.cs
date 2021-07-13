@@ -39,7 +39,7 @@ namespace Toast
         public static readonly ToastConverter ObjectToString = ToastConverter.Create<object, string>(x => x.ToString());
 
         public static readonly ToastConverter StringToObjectArray = ToastConverter.Create<string, object[]>(x => x.Select(_x => (object)_x).ToArray());
-        public static readonly ToastConverter StringToChar = ToastConverter.Create<string, char>(x => x.Length == 1 ? x[0] : throw new InvalidParameterTypeException());
+        public static readonly ToastConverter StringToChar = ToastConverter.Create<string, char>(x => x.Length == 1 ? x[0] : throw new ParameterConvertException(typeof(string), typeof(char)));
 
         private BasicConverters() { }
     }
