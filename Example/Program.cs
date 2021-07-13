@@ -13,6 +13,7 @@ namespace Example
         {
             Toast.Toast toast = new();
 
+            toast.AddConverter(BasicConverters.All);
             toast.AddCommand(BasicCommands.All);
 
             toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));

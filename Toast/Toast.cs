@@ -164,25 +164,9 @@ namespace Toast
                 {
                     parameters[i] = Convert.ChangeType(ExecuteConverter(c3, parameters[i]), targetType);
                 }
-                else if (targetType == typeof(string))
-                {
-                    parameters[i] = parameters[i].ToString();
-                }
                 else if (IsNumber(targetType) && IsNumber(paramType))
                 {
                     parameters[i] = Convert.ChangeType(parameters[i], targetType);
-                }
-                else if (IsNumber(targetType) && paramType == typeof(string))
-                {
-                    parameters[i] = Convert.ChangeType((string)parameters[i], targetType);
-                }
-                else if (targetType == typeof(char) && parameters[i] is string s1 && s1.Length == 1)
-                {
-                    parameters[i] = s1[0];
-                }
-                else if (targetType == typeof(object[]) && parameters[i] is string s2)
-                {
-                    parameters[i] = s2.Select(c => (object)c).ToArray();
                 }
                 else if (targetType is not object)
                 {
