@@ -143,7 +143,7 @@ namespace Toast
 
         private object[] ConvertParameters(Type[] targets, object[] parameters)
         {
-            for (int i = 0; i < targets.Length; i++)
+            /* for (int i = 0; i < targets.Length; i++)
             {
                 if (parameters[i] is null) continue;
 
@@ -188,7 +188,7 @@ namespace Toast
                 {
                     throw new ParameterConvertException(paramType, targetType);
                 }
-            }
+            } */
 
             return parameters;
         }
