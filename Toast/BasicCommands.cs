@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Toast.Elements;
 
 namespace Toast
 {
@@ -40,6 +41,11 @@ namespace Toast
         public static ToastCommand[] Lists => new ToastCommand[]
         {
             Member, Count
+        };
+
+        public static ToastCommand[] Functions => new ToastCommand[]
+        {
+
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -164,6 +170,9 @@ namespace Toast
 
         public static readonly ToastCommand Contains =
                 ToastCommand.Create<string, string, bool>("contains", (x, y) => x.Contains(y));
+
+        public static readonly ToastCommand Execute =
+                ToastCommand.Create<Function, object>("execute", (x) => throw new NotImplementedException());
 
         private BasicCommands() { }
     }

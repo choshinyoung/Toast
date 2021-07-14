@@ -6,7 +6,7 @@ using Toast.Exceptions;
 
 namespace Toast
 {
-    public class ToastParser
+    internal class ToastParser
     {
         static readonly Parser<char> UnderLine = Parse.Char('_');
         static readonly Parser<Element> CommandParser =

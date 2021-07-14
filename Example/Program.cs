@@ -18,8 +18,6 @@ namespace Example
 
             toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
 
-            Console.WriteLine(ToastParser.ParseRaw("(a b) {add a b}"));
-
             while (true)
             {
                 Console.Write("> ");

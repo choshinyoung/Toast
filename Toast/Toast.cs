@@ -92,7 +92,7 @@ namespace Toast
 
                 switch (ele)
                 {
-                    case Number or Text:
+                    case Number or Text or Function:
                         parameters.Add(ele.GetValue());
 
                         break;
