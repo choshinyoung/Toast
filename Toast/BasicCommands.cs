@@ -5,13 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Toast.Elements;
+using Toast.Exceptions;
 
 namespace Toast
 {
     public class BasicCommands
     {
         public static ToastCommand[] All =>
-            Literals.Concat(Operators).Concat(Statements).Concat(Others).Concat(Lists).Concat(Strings).ToArray();
+            Literals.Concat(Operators).Concat(Statements).Concat(Others).Concat(Lists).Concat(Strings).Concat(Functions).ToArray();
 
         public static ToastCommand[] Literals => new ToastCommand[]
         {
@@ -45,7 +46,7 @@ namespace Toast
 
         public static ToastCommand[] Functions => new ToastCommand[]
         {
-
+            Execute
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -172,7 +173,20 @@ namespace Toast
                 ToastCommand.Create<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
 
         public static readonly ToastCommand Execute =
-                ToastCommand.Create<ToastContext, Function, object>("execute", (ctx, x) => throw new NotImplementedException());
+                ToastCommand.Create<ToastContext, Function, object>("execute", (ctx, x) =>
+                {
+                    foreach(Element[] line in x.GetValue())
+                    {
+                        if (line[0] is not Command)
+                        {
+                            throw new InvalidCommandLineException($"{line[0].GetValue()}..");
+                        }
+
+                        ctx.Toaster.ExecuteParsedLine(line);
+                    }
+
+                    return null;
+                });
 
         private BasicCommands() { }
     }

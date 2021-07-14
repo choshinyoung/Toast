@@ -52,19 +52,25 @@ namespace Toast
         public object Execute(string line)
         {
             var parseResult = ToastParser.ParseRaw(line);
+
             if (parseResult[0] is not Command)
             {
                 throw new InvalidCommandLineException(line);
             }
 
-            ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
+            return ExecuteParsedLine(parseResult);
+        }
+
+        public object ExecuteParsedLine(Element[] parsed)
+        {
+            ToastCommand cmd = GetCommand(((Command)parsed[0]).GetValue());
 
             int index = 0;
-            object[] parameters = ExecuteParameters(parseResult, cmd.Parameters.Length, ref index);
+            object[] parameters = ExecuteParameters(parsed, cmd.Parameters.Length, ref index);
 
-            if (++index != parseResult.Length)
+            if (++index != parsed.Length)
             {
-                throw new ParameterCountException(parseResult.Length - 1, index - 1);
+                throw new ParameterCountException(parsed.Length - 1, index - 1);
             }
 
             return ExecuteCommand(cmd, parameters);
@@ -92,7 +98,7 @@ namespace Toast
 
                 switch (ele)
                 {
-                    case Number or Text or Function:
+                    case Number or Text:
                         parameters.Add(ele.GetValue());
 
                         break;
@@ -111,6 +117,10 @@ namespace Toast
                         }
 
                         parameters.AddRange(groupParameters);
+
+                        break;
+                    case Function f:
+                        parameters.Add(f);
 
                         break;
                     default:

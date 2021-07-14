@@ -50,7 +50,7 @@ namespace Toast
             from space in Parse.WhiteSpace.Many()
             from start in Parse.Char('{')
             from startSpace in Parse.WhiteSpace.Many()
-            from g in LineParser.DelimitedBy(Parse.LineEnd.AtLeastOnce()).Optional()
+            from g in LineParser.DelimitedBy(Parse.LineEnd.Or(Parse.String(";")).AtLeastOnce()).Optional()
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char('}')
             select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray());
