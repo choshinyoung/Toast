@@ -14,9 +14,14 @@ namespace Example
             Toaster toaster = new();
 
             toaster.AddConverter(BasicConverters.All);
-            toaster.AddCommand(BasicCommands.All);
+            toaster.AddCommand(BasicCommands.Assign);
 
             toaster.AddCommand(ToastCommand.Create<ToastContext>("hello", (ctx) => Console.WriteLine("hello")));
+
+            toaster.AddCommand(ToastCommand.Create<ToastContext>("cmds", (ctx) =>
+            {
+                Console.WriteLine($"Command list: {string.Join(", ", ctx.Toaster.GetCommands().Select(c => c.Name))}");
+            }));
 
             while (true)
             {

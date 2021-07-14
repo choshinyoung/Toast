@@ -36,7 +36,7 @@ namespace Toast
 
         public static ToastCommand[] Others => new ToastCommand[]
         {
-            Print, Input
+            Print, Input, Assign
         };
 
         public static ToastCommand[] Lists => new ToastCommand[]
@@ -186,6 +186,12 @@ namespace Toast
                     }
 
                     return null;
+                });
+
+        public static readonly ToastCommand Assign =
+                ToastCommand.Create<ToastContext, string, object>("var", (ctx, x, y) =>
+                {
+                    ctx.Toaster.AddCommand(ToastCommand.Create<ToastContext, object>(x, (ctx) => y));
                 });
 
         private BasicCommands() { }
