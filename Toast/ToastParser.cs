@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Sprache;
 using Toast.Elements;
 using Toast.Exceptions;
 
 namespace Toast
 {
-    internal class ToastParser
+    public class ToastParser
     {
         static readonly Parser<char> UnderLine = Parse.Char('_');
         static readonly Parser<Element> CommandParser =
@@ -36,8 +37,26 @@ namespace Toast
             from end in Parse.Char(')')
             select new Group(g.ToArray());
 
+        static readonly Parser<Element> FunctionParameterParser =
+            from start in Parse.Char('(')
+            from startSpace in Parse.WhiteSpace.Many()
+            from g in CommandParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce()).Optional()
+            from endSpace in Parse.WhiteSpace.Many()
+            from end in Parse.Char(')')
+            select new Group(g.IsEmpty ? Array.Empty<Element>() : g.Get().ToArray());
+
+        static readonly Parser<Element> FunctionParser =
+            from parameters in FunctionParameterParser
+            from space in Parse.WhiteSpace.Many()
+            from start in Parse.Char('{')
+            from startSpace in Parse.WhiteSpace.Many()
+            from g in LineParser.DelimitedBy(Parse.LineEnd.AtLeastOnce()).Optional()
+            from endSpace in Parse.WhiteSpace.Many()
+            from end in Parse.Char('}')
+            select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray());
+
         static readonly Parser<Element> ElementParser =
-            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(GroupParser);
+            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
             from startSpace in Parse.WhiteSpace.Many()
