@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
+using Toast.Exceptions;
 
 namespace Toast
 {
@@ -18,21 +19,21 @@ namespace Toast
 
         private static ToastCommand Create(string name, MethodInfo method, object target)
         {
+            if (method.GetParameters()[0].ParameterType != typeof(ToastContext))
+            {
+                throw new ContextNotExistException();
+            }
+
             ToastCommand cmd = new()
             {
                 Name = name,
                 Method = method,
                 Target = target,
-                Parameters = method.GetParameters().Select(p => p.ParameterType).ToArray(),
+                Parameters = method.GetParameters()[1..].Select(p => p.ParameterType).ToArray(),
                 Return = method.ReturnType,
             };
 
             return cmd;
-        }
-
-        public static ToastCommand Create(string name, Action method)
-        {
-            return Create(name, method.Method, method.Target);
         }
 
         public static ToastCommand Create<T1>(string name, Action<T1> method)
@@ -111,11 +112,6 @@ namespace Toast
         }
 
         public static ToastCommand Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> method)
-        {
-            return Create(name, method.Method, method.Target);
-        }
-
-        public static ToastCommand Create<TResult>(string name, Func<TResult> method)
         {
             return Create(name, method.Method, method.Target);
         }

@@ -6,12 +6,12 @@ using Toast.Exceptions;
 
 namespace Toast
 {
-    public class Toast
+    public class Toaster
     {
         private readonly List<ToastCommand> Commands;
         private readonly List<ToastConverter> Converters;
 
-        public Toast()
+        public Toaster()
         {
             Commands = new();
             Converters = new();
@@ -136,7 +136,7 @@ namespace Toast
         {
             parameters = ConvertParameters(cmd.Parameters, parameters);
 
-            object result = cmd.Method.Invoke(cmd.Target, parameters);
+            object result = cmd.Method.Invoke(cmd.Target, new[] { new ToastContext(this) }.Union(parameters).ToArray());
 
             return result;
         }
@@ -179,7 +179,7 @@ namespace Toast
 
         private static object ExecuteConverter(ToastConverter cvt, object parameter)
         {
-            return cvt.Method.Invoke(cvt.Target, new object[] { parameter });
+            return cvt.Method.Invoke(cvt.Target, new[] { parameter });
         }
 
         private static bool IsNumber(Type type)

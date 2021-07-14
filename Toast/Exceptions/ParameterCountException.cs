@@ -2,7 +2,7 @@
 
 namespace Toast.Exceptions
 {
-    class ParameterCountException : Exception
+    public class ParameterCountException : Exception
     {
         public ParameterCountException() { }
 

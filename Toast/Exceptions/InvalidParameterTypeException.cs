@@ -2,7 +2,7 @@
 
 namespace Toast.Exceptions
 {
-    class InvalidParameterTypeException : Exception
+    public class InvalidParameterTypeException : Exception
     {
         public InvalidParameterTypeException() { }
 

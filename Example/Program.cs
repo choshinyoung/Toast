@@ -11,12 +11,12 @@ namespace Example
     {
         static void Main(string[] args)
         {
-            Toast.Toast toast = new();
+            Toaster toaster = new();
 
-            toast.AddConverter(BasicConverters.All);
-            toast.AddCommand(BasicCommands.All);
+            toaster.AddConverter(BasicConverters.All);
+            toaster.AddCommand(BasicCommands.All);
 
-            toast.AddCommand(ToastCommand.Create("hello", () => Console.WriteLine("hello")));
+            toaster.AddCommand(ToastCommand.Create<ToastContext>("hello", (ctx) => Console.WriteLine("hello")));
 
             while (true)
             {
@@ -26,7 +26,7 @@ namespace Example
 
             void Execute(string line)
             {
-                object result = toast.Execute(line);
+                object result = toaster.Execute(line);
 
                 if (result is not null)
                 {

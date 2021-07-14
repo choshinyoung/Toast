@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Toast.Exceptions
 {
-    class ParameterConvertException : Exception
+    public class ParameterConvertException : Exception
     {
         public ParameterConvertException() { }
 
