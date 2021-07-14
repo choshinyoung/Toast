@@ -189,9 +189,9 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Assign =
-                ToastCommand.Create<ToastContext, string, object>("var", (ctx, x, y) =>
+                ToastCommand.Create<ToastContext, Command, object>("var", (ctx, x, y) =>
                 {
-                    ctx.Toaster.AddCommand(ToastCommand.Create<ToastContext, object>(x, (ctx) => y));
+                    ctx.Toaster.AddCommand(ToastCommand.Create<ToastContext, object>(x.GetValue(), (ctx) => y));
                 });
 
         private BasicCommands() { }

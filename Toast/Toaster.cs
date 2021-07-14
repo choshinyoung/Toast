@@ -103,8 +103,15 @@ namespace Toast
 
                         break;
                     case Command c:
-                        ToastCommand cmd = GetCommand(c.GetValue());
-                        parameters.Add(ExecuteCommand(cmd, ExecuteParameters(elements, cmd.Parameters.Length, ref index)));
+                        if (Commands.Any(cc => cc.Name == c.GetValue()))
+                        {
+                            ToastCommand cmd = GetCommand(c.GetValue());
+                            parameters.Add(ExecuteCommand(cmd, ExecuteParameters(elements, cmd.Parameters.Length, ref index)));
+                        }
+                        else
+                        {
+                            parameters.Add(c);
+                        }
 
                         break;
                     case Group g:
@@ -177,6 +184,10 @@ namespace Toast
                 else if (IsNumber(targetType) && IsNumber(paramType))
                 {
                     parameters[i] = Convert.ChangeType(parameters[i], targetType);
+                }
+                else if (parameters[i] is Command c4)
+                {
+                    throw new CommandNotFoundException(c4.GetValue());
                 }
                 else if (targetType is not object)
                 {
