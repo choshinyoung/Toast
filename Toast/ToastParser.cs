@@ -55,8 +55,20 @@ namespace Toast
             from end in Parse.Char('}')
             select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray(), parameters);
 
+        static readonly Parser<char> CommaDividerParser =
+            from startSpace in Parse.WhiteSpace.Many()
+            from comma in Parse.Char(',')
+            from endSpace in Parse.WhiteSpace.Many()
+            select comma;
+
+        static readonly Parser<Element> ListParser =
+            from start in Parse.Char('[')
+            from l in LineParser.DelimitedBy(CommaDividerParser)
+            from end in Parse.Char(']')
+            select new List(l.ToArray());
+
         static readonly Parser<Element> ElementParser =
-            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(GroupParser);
+            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(ListParser).Or(GroupParser);
 
         static readonly Parser<Element[]> LineParser =
             from startSpace in Parse.WhiteSpace.Many()

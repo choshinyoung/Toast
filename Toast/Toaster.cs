@@ -106,7 +106,9 @@ namespace Toast
                     RemoveCommand(cmd);
                 }
 
-                AddCommand(ToastCommand.Create<ToastContext, object>(func.Parameters[i], (ctx) => parameters[i]));
+                object value = parameters[i];
+
+                AddCommand(ToastCommand.Create<ToastContext, object>(func.Parameters[i], (ctx) => value));
             }
 
             foreach (Element[] line in func.GetValue())
@@ -199,6 +201,18 @@ namespace Toast
                         break;
                     case Function f:
                         parameters.Add(f);
+
+                        break;
+                    case List l:
+                        List<object> lst = new();
+
+                        foreach (Element[] e in l.GetValue())
+                        {
+                            i = -1;
+                            lst.Add(ExecuteParameters(e, 1, ref i)[0]);
+                        }
+
+                        parameters.Add(lst.ToArray());
 
                         break;
                     default:
