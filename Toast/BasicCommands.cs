@@ -31,7 +31,7 @@ namespace Toast
         public static ToastCommand[] Statements => new ToastCommand[]
         {
             If, IfElse,
-            Repeat,
+            Repeat, While
         };
 
         public static ToastCommand[] Others => new ToastCommand[]
@@ -135,6 +135,15 @@ namespace Toast
         public static readonly ToastCommand Repeat =
                 ToastCommand.Create<ToastContext, int, object, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(y, x).ToArray());
 
+        public static readonly ToastCommand While =
+                ToastCommand.Create<ToastContext, Function, Function>("while", (ctx, x, y) =>
+                {
+                    while ((bool)ctx.Toaster.ExecuteFunction(x))
+                    {
+                        ctx.Toaster.ExecuteFunction(y);
+                    }
+                });
+
         public static readonly ToastCommand Print =
                 ToastCommand.Create<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x));
 
@@ -173,24 +182,17 @@ namespace Toast
                 ToastCommand.Create<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
 
         public static readonly ToastCommand Execute =
-                ToastCommand.Create<ToastContext, Function, object>("execute", (ctx, x) =>
-                {
-                    foreach(Element[] line in x.GetValue())
-                    {
-                        if (line[0] is not Command)
-                        {
-                            throw new InvalidCommandLineException($"{line[0].GetValue()}..");
-                        }
-
-                        ctx.Toaster.ExecuteParsedLine(line);
-                    }
-
-                    return null;
-                });
+                ToastCommand.Create<ToastContext, Function, object>("execute", (ctx, x) => ctx.Toaster.ExecuteFunction(x));
 
         public static readonly ToastCommand Assign =
-                ToastCommand.Create<ToastContext, Command, object>("var", (ctx, x, y) =>
+                ToastCommand.Create<ToastContext, Variable, object>("var", (ctx, x, y) =>
                 {
+                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == x.GetValue());
+                    if (cmd is not null)
+                    {
+                        ctx.Toaster.RemoveCommand(cmd);
+                    }
+
                     ctx.Toaster.AddCommand(ToastCommand.Create<ToastContext, object>(x.GetValue(), (ctx) => y));
                 });
 
