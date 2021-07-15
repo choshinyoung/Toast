@@ -37,13 +37,13 @@ namespace Toast
             from end in Parse.Char(')')
             select new Group(g.ToArray());
 
-        static readonly Parser<Element> FunctionParameterParser =
+        static readonly Parser<string[]> FunctionParameterParser =
             from start in Parse.Char('(')
             from startSpace in Parse.WhiteSpace.Many()
             from g in CommandParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce()).Optional()
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char(')')
-            select new Group(g.IsEmpty ? Array.Empty<Element>() : g.Get().ToArray());
+            select g.IsEmpty ? Array.Empty<string>() : g.Get().Select(c => ((Command)c).GetValue()).ToArray();
 
         static readonly Parser<Element> FunctionParser =
             from parameters in FunctionParameterParser
@@ -53,7 +53,7 @@ namespace Toast
             from g in LineParser.DelimitedBy(Parse.LineEnd.Or(Parse.String(";")).AtLeastOnce()).Optional()
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char('}')
-            select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray());
+            select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray(), parameters);
 
         static readonly Parser<Element> ElementParser =
             NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(GroupParser);

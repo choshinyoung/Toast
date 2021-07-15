@@ -2,11 +2,18 @@
 {
     public class Function : Element
     {
-        public Function(Element[][] value) : base(value) { }
+        public string[] Parameters;
+
+        public Function(Element[][] value, string[] parameters) : base(value) 
+        {
+            Parameters = parameters;
+        }
 
         public new Element[][] GetValue()
         {
             return (Element[][])base.GetValue();
         }
+
+        public string[] GetParameters() => Parameters;
     }
 }

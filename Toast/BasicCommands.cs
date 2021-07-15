@@ -138,12 +138,12 @@ namespace Toast
         public static readonly ToastCommand While =
                 ToastCommand.Create<ToastContext, Function, Function>("while", (ctx, x, y) =>
                 {
-                    while ((bool)ctx.Toaster.ExecuteFunction(x))
+                    while ((bool)ctx.Toaster.ExecuteFunction(x, Array.Empty<object>()))
                     {
-                        ctx.Toaster.ExecuteFunction(y);
+                        ctx.Toaster.ExecuteFunction(y, Array.Empty<object>());
                     }
                 });
-
+        
         public static readonly ToastCommand Print =
                 ToastCommand.Create<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x));
 
@@ -182,7 +182,7 @@ namespace Toast
                 ToastCommand.Create<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
 
         public static readonly ToastCommand Execute =
-                ToastCommand.Create<ToastContext, Function, object>("execute", (ctx, x) => ctx.Toaster.ExecuteFunction(x));
+                ToastCommand.Create<ToastContext, Function, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
 
         public static readonly ToastCommand Assign =
                 ToastCommand.Create<ToastContext, Variable, object>("var", (ctx, x, y) =>

@@ -48,7 +48,7 @@ namespace Toast
             {
                 if (!Commands.Contains(cmd))
                 {
-                    throw new Exception(cmd.Name);
+                    throw new CannotRemoveCommandException(cmd.Name);
                 }
 
                 Commands.Remove(cmd);
@@ -61,7 +61,7 @@ namespace Toast
             {
                 if (!Converters.Contains(cvt))
                 {
-                    throw new Exception();
+                    throw new CannotRemoveConverterException();
                 }
 
                 Converters.Remove(cvt);
@@ -86,9 +86,28 @@ namespace Toast
             return ExecuteParsedLine(parseResult);
         }
 
-        public object ExecuteFunction(Function func)
+        public object ExecuteFunction(Function func, object[] parameters)
         {
             object result = null;
+
+            if (func.Parameters.Length != parameters.Length)
+            {
+                throw new FunctionParameterLengthException(func.ToString(), parameters.Length, func.Parameters.Length);
+            }
+
+            List<ToastCommand> originalVariables = new();
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                ToastCommand cmd = Commands.Find(c => c.Name == func.Parameters[i]);
+                if (cmd is not null)
+                {
+                    originalVariables.Add(cmd);
+                    RemoveCommand(cmd);
+                }
+
+                AddCommand(ToastCommand.Create<ToastContext, object>(func.Parameters[i], (ctx) => parameters[i]));
+            }
 
             foreach (Element[] line in func.GetValue())
             {
@@ -99,6 +118,17 @@ namespace Toast
 
                 result = ExecuteParsedLine(line);
             }
+
+            foreach (string s in func.Parameters)
+            {
+                ToastCommand cmd = Commands.Find(c => c.Name == s);
+                if (cmd is not null)
+                {
+                    RemoveCommand(cmd);
+                }
+            }
+
+            AddCommand(originalVariables.ToArray());
 
             return result;
         }
