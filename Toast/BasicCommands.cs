@@ -31,7 +31,7 @@ namespace Toast
         public static ToastCommand[] Statements => new ToastCommand[]
         {
             If, IfElse,
-            Repeat, While
+            Repeat, While, For
         };
 
         public static ToastCommand[] Others => new ToastCommand[]
@@ -141,6 +141,17 @@ namespace Toast
                     while ((bool)ctx.Toaster.ExecuteFunction(x, Array.Empty<object>()))
                     {
                         ctx.Toaster.ExecuteFunction(y, Array.Empty<object>());
+                    }
+                });
+
+        public static readonly ToastCommand For =
+                ToastCommand.CreateAction<ToastContext, Function, Function, Function, Function>("for", (ctx, x, y, z, w) =>
+                {
+                    for (ctx.Toaster.ExecuteFunction(x, Array.Empty<object>()); 
+                         (bool)ctx.Toaster.ExecuteFunction(y, Array.Empty<object>()); 
+                         ctx.Toaster.ExecuteFunction(z, Array.Empty<object>()))
+                    {
+                        ctx.Toaster.ExecuteFunction(w, Array.Empty<object>());
                     }
                 });
         
