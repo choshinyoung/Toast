@@ -95,14 +95,11 @@ namespace Toast
                 throw new FunctionParameterLengthException(func.ToString(), parameters.Length, func.Parameters.Length);
             }
 
-            List<ToastCommand> originalVariables = new();
-
             for (int i = 0; i < parameters.Length; i++)
             {
                 ToastCommand cmd = Commands.Find(c => c.Name == func.Parameters[i]);
                 if (cmd is not null)
                 {
-                    originalVariables.Add(cmd);
                     RemoveCommand(cmd);
                 }
 
@@ -120,17 +117,6 @@ namespace Toast
 
                 result = ExecuteParsedLine(line);
             }
-
-            foreach (string s in func.Parameters)
-            {
-                ToastCommand cmd = Commands.Find(c => c.Name == s);
-                if (cmd is not null)
-                {
-                    RemoveCommand(cmd);
-                }
-            }
-
-            AddCommand(originalVariables.ToArray());
 
             return result;
         }

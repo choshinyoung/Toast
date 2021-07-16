@@ -63,9 +63,9 @@ namespace Toast
 
         static readonly Parser<Element> ListParser =
             from start in Parse.Char('[')
-            from l in LineParser.DelimitedBy(CommaDividerParser)
+            from l in LineParser.DelimitedBy(CommaDividerParser).Optional()
             from end in Parse.Char(']')
-            select new List(l.ToArray());
+            select new List(l.IsEmpty ? Array.Empty<Element[]>() : l.Get().ToArray());
 
         static readonly Parser<Element> ElementParser =
             NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(ListParser).Or(GroupParser);
