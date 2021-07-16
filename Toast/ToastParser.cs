@@ -40,7 +40,7 @@ namespace Toast
         static readonly Parser<string[]> FunctionParameterParser =
             from start in Parse.Char('(')
             from startSpace in Parse.WhiteSpace.Many()
-            from g in CommandParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce()).Optional()
+            from g in CommandParser.DelimitedBy(CommaDividerParser).Optional()
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char(')')
             select g.IsEmpty ? Array.Empty<string>() : g.Get().Select(c => ((Command)c).GetValue()).ToArray();
@@ -54,7 +54,7 @@ namespace Toast
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char('}')
             select new Function(g.IsEmpty ? Array.Empty<Element[]>() : g.Get().ToArray(), parameters);
-
+        
         static readonly Parser<char> CommaDividerParser =
             from startSpace in Parse.WhiteSpace.Many()
             from comma in Parse.Char(',')
