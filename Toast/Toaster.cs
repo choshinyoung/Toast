@@ -105,7 +105,7 @@ namespace Toast
 
                 object value = parameters[i];
 
-                AddCommand(ToastCommand.Create<ToastContext, object>(func.Parameters[i], (ctx) => value));
+                AddCommand(ToastCommand.CreateFunc<ToastContext, object>(func.Parameters[i], (ctx) => value));
             }
 
             foreach (Element[] line in func.GetValue())
