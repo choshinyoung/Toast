@@ -85,7 +85,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, int, int, int>("floorDiv", (ctx, x, y) => x / y);
 
         public static readonly ToastCommand Equal =
-                ToastCommand.CreateFunc<ToastContext, object, object, bool>("equal", (ctx, x, y) => x == y);
+                ToastCommand.CreateFunc<ToastContext, object, object, bool>("equal", (ctx, x, y) => x.Equals(y));
 
         public static readonly ToastCommand Greater =
                 ToastCommand.CreateFunc<ToastContext, float, float, bool>("greater", (ctx, x, y) => x > y);
