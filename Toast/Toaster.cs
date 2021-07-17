@@ -74,7 +74,7 @@ namespace Toast
         public IReadOnlyList<ToastConverter> GetConverters()
             => Converters.AsReadOnly();
 
-        public object Execute(string line)
+        public object ExecuteLine(string line)
         {
             var parseResult = ToastParser.ParseRaw(line);
 
@@ -84,6 +84,36 @@ namespace Toast
             }
 
             return ExecuteParsedLine(parseResult);
+        }
+
+        private object ExecuteParsedLine(Element[] parsed)
+        {
+            ToastCommand cmd = GetCommand(((Command)parsed[0]).GetValue());
+
+            int index = 0;
+            object[] parameters = ExecuteParameters(parsed, cmd.Parameters.Length, ref index);
+
+            if (++index != parsed.Length)
+            {
+                throw new ParameterCountException(parsed.Length - 1, index - 1);
+            }
+
+            return ExecuteCommand(cmd, parameters);
+        }
+
+        public object Execute(string line)
+        {
+            var parseResult = ToastParser.ParseRaw(line);
+
+            int index = -1;
+            var result = ExecuteParameters(parseResult, 1, ref index)[0];
+
+            if (index != parseResult.Length - 1)
+            {
+                throw new ParameterCountException(parseResult.Length, index + 1);
+            }
+
+            return result;
         }
 
         public object ExecuteFunction(Function func, object[] parameters)
@@ -121,21 +151,6 @@ namespace Toast
             return result;
         }
 
-        private object ExecuteParsedLine(Element[] parsed)
-        {
-            ToastCommand cmd = GetCommand(((Command)parsed[0]).GetValue());
-
-            int index = 0;
-            object[] parameters = ExecuteParameters(parsed, cmd.Parameters.Length, ref index);
-
-            if (++index != parsed.Length)
-            {
-                throw new ParameterCountException(parsed.Length - 1, index - 1);
-            }
-
-            return ExecuteCommand(cmd, parameters);
-        }
-        
         private object[] ExecuteParameters(Element[] elements, int count, ref int index, bool isGroup = false)
         {
             List<object> parameters = new();
