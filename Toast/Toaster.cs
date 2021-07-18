@@ -140,12 +140,13 @@ namespace Toast
 
             foreach (Element[] line in func.GetValue())
             {
-                if (line[0] is not Command)
-                {
-                    throw new InvalidCommandLineException($"{line[0].GetValue()}..");
-                }
+                int index = -1;
+                result = ExecuteParameters(line, 1, ref index)[0];
 
-                result = ExecuteParsedLine(line);
+                if (index != line.Length - 1)
+                {
+                    throw new ParameterCountException(line.Length, index + 1);
+                }
             }
 
             return result;
@@ -158,7 +159,7 @@ namespace Toast
             while (parameters.Count < count || isGroup)
             {
                 index++;
-
+                
                 if (elements.Length <= index)
                 {
                     if (isGroup)
