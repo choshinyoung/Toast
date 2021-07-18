@@ -221,7 +221,7 @@ namespace Toast
             return parameters.ToArray();
         }
 
-        private ToastCommand GetCommand(string name)
+        public ToastCommand GetCommand(string name)
         {
             ToastCommand cmd = Commands.Find(c => c.Name == name);
             if (cmd is null)
@@ -232,9 +232,9 @@ namespace Toast
             return cmd;
         }
 
-        private object ExecuteCommand(ToastCommand cmd, object[] parameters)
+        public object ExecuteCommand(ToastCommand cmd, object[] parameters)
         {
-            parameters = ConvertParameters(cmd.Parameters, parameters);
+            parameters = new ParameterConverter(this).ConvertParameters(cmd.Parameters, parameters);
 
             var ppp = new[] { new ToastContext(this) }.Concat(parameters).ToArray();
 
@@ -242,65 +242,5 @@ namespace Toast
 
             return result;
         }
-
-        private object[] ConvertParameters(Type[] targets, object[] parameters)
-        {
-            for (int i = 0; i < targets.Length; i++)
-            {
-                parameters[i] = ConvertParameter(targets[i], parameters[i]);
-            }
-
-            return parameters;
-        }
-
-        private object ConvertParameter(Type target, object parameter)
-        {
-            if (parameter is null) return parameter;
-
-            Type targetType = target;
-            Type paramType = parameter.GetType();
-
-            if (paramType == targetType) return parameter;
-
-            if (Converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
-            {
-                return ExecuteConverter(c1, parameter);
-            }
-            else if (IsNumber(paramType) && Converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
-            {
-                return ExecuteConverter(c2, Convert.ChangeType(parameter, c2.From));
-            }
-            else if (IsNumber(targetType) && Converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
-            {
-                return Convert.ChangeType(ExecuteConverter(c3, parameter), targetType);
-            }
-            else if (IsNumber(targetType) && IsNumber(paramType))
-            {
-                return Convert.ChangeType(parameter, targetType);
-            }
-            else if (parameter is Variable c4)
-            {
-                return ExecuteCommand(GetCommand(c4.GetValue()), Array.Empty<object>());
-
-                throw new CommandNotFoundException(c4.GetValue());
-            }
-            else if (targetType is not object)
-            {
-                throw new ParameterConvertException(paramType, targetType);
-            }
-            else
-            {
-                return parameter;
-            }
-        }
-
-        private static object ExecuteConverter(ToastConverter cvt, object parameter)
-        {
-            return cvt.Method.Invoke(cvt.Target, new[] { parameter });
-        }
-
-        private static bool IsNumber(Type type)
-            => type == typeof(byte) || type == typeof(sbyte) || type == typeof(short) || type == typeof(int) || type == typeof(long) || type == typeof(ushort)
-            || type == typeof(uint) || type == typeof(ulong) || type == typeof(float) || type == typeof(double) || type == typeof(decimal);
     }
 }
