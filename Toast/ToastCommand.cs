@@ -17,20 +17,28 @@ namespace Toast
 
         public Type Return { get; private init; }
 
+        public int NamePosition { get; private init; }
+
         private static ToastCommand Create(string name, MethodInfo method, object target)
         {
-            if (method.GetParameters()[0].ParameterType != typeof(ToastContext))
+            var parameters = method.GetParameters().ToList();
+
+            if (parameters.Count(p => p.ParameterType == typeof(ToastContext)) != 1)
             {
-                throw new ContextNotExistException();
+                throw new ContextCountException();
             }
+
+            int contextIndex = parameters.FindIndex(p => p.ParameterType == typeof(ToastContext));
+            parameters.RemoveAt(contextIndex);
 
             ToastCommand cmd = new()
             {
                 Name = name,
                 Method = method,
                 Target = target,
-                Parameters = method.GetParameters()[1..].Select(p => p.ParameterType).ToArray(),
+                Parameters = parameters.Select(p => p.ParameterType).ToArray(),
                 Return = method.ReturnType,
+                NamePosition = contextIndex
             };
 
             return cmd;

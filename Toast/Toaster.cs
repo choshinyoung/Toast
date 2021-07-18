@@ -75,6 +75,17 @@ namespace Toast
             }
         }
 
+        public ToastCommand GetCommand(string name)
+        {
+            ToastCommand cmd = Commands.Find(c => c.Name == name);
+            if (cmd is null)
+            {
+                throw new CommandNotFoundException(name);
+            }
+
+            return cmd;
+        }
+
         public object Execute(string line)
         {
             var parseResult = ToastParser.ParseRaw(line);
@@ -110,6 +121,17 @@ namespace Toast
             }
 
             return ExecuteCommand(cmd, parameters);
+        }
+
+        public object ExecuteCommand(ToastCommand cmd, object[] parameters)
+        {
+            var prms = new ParameterConverter(this).ConvertParameters(cmd.Parameters, parameters).ToList();
+
+            prms.Insert(cmd.NamePosition, new ToastContext(this));
+
+            object result = cmd.Method.Invoke(cmd.Target, prms.ToArray());
+
+            return result;
         }
 
         public object ExecuteFunction(Function func, object[] parameters)
@@ -219,28 +241,6 @@ namespace Toast
             }
 
             return parameters.ToArray();
-        }
-
-        public ToastCommand GetCommand(string name)
-        {
-            ToastCommand cmd = Commands.Find(c => c.Name == name);
-            if (cmd is null)
-            {
-                throw new CommandNotFoundException(name);
-            }
-
-            return cmd;
-        }
-
-        public object ExecuteCommand(ToastCommand cmd, object[] parameters)
-        {
-            parameters = new ParameterConverter(this).ConvertParameters(cmd.Parameters, parameters);
-
-            var ppp = new[] { new ToastContext(this) }.Concat(parameters).ToArray();
-
-            object result = cmd.Method.Invoke(cmd.Target, ppp);
-
-            return result;
         }
     }
 }
