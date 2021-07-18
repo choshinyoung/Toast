@@ -17,6 +17,12 @@ namespace Toast
             Converters = new();
         }
 
+        public IReadOnlyList<ToastCommand> GetCommands()
+            => Commands.AsReadOnly();
+
+        public IReadOnlyList<ToastConverter> GetConverters()
+            => Converters.AsReadOnly();
+
         public void AddCommand(params ToastCommand[] commands)
         {
             foreach (ToastCommand cmd in commands)
@@ -42,6 +48,7 @@ namespace Toast
                 Converters.Add(cvt);
             }
         }
+
         public void RemoveCommand(params ToastCommand[] commands)
         {
             foreach (ToastCommand cmd in commands)
@@ -68,39 +75,6 @@ namespace Toast
             }
         }
 
-        public IReadOnlyList<ToastCommand> GetCommands()
-            => Commands.AsReadOnly();
-
-        public IReadOnlyList<ToastConverter> GetConverters()
-            => Converters.AsReadOnly();
-
-        public object ExecuteLine(string line)
-        {
-            var parseResult = ToastParser.ParseRaw(line);
-
-            if (parseResult[0] is not Command)
-            {
-                throw new InvalidCommandLineException(line);
-            }
-
-            return ExecuteParsedLine(parseResult);
-        }
-
-        private object ExecuteParsedLine(Element[] parsed)
-        {
-            ToastCommand cmd = GetCommand(((Command)parsed[0]).GetValue());
-
-            int index = 0;
-            object[] parameters = ExecuteParameters(parsed, cmd.Parameters.Length, ref index);
-
-            if (++index != parsed.Length)
-            {
-                throw new ParameterCountException(parsed.Length - 1, index - 1);
-            }
-
-            return ExecuteCommand(cmd, parameters);
-        }
-
         public object Execute(string line)
         {
             var parseResult = ToastParser.ParseRaw(line);
@@ -114,6 +88,28 @@ namespace Toast
             }
 
             return result;
+        }
+
+        public object ExecuteLine(string line)
+        {
+            var parseResult = ToastParser.ParseRaw(line);
+
+            if (parseResult[0] is not Command)
+            {
+                throw new InvalidCommandLineException(line);
+            }
+
+            ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
+
+            int index = 0;
+            object[] parameters = ExecuteParameters(parseResult, cmd.Parameters.Length, ref index);
+
+            if (++index != parseResult.Length)
+            {
+                throw new ParameterCountException(parseResult.Length - 1, index - 1);
+            }
+
+            return ExecuteCommand(cmd, parameters);
         }
 
         public object ExecuteFunction(Function func, object[] parameters)
