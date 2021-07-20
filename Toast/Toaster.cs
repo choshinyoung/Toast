@@ -90,15 +90,14 @@ namespace Toast
         {
             var parseResult = ToastParser.ParseRaw(line);
 
-            int index = -1;
-            var result = ExecuteParameters(parseResult, 1, ref index)[0];
+            var result = ExecuteParameters(parseResult.ToList());
 
-            if (index != parseResult.Length - 1)
+            if (result.Length != 1)
             {
-                throw new ParameterCountException(parseResult.Length, index + 1);
+                throw new InvalidCommandLineException(line);
             }
 
-            return result;
+            return result[0];
         }
 
         public object ExecuteLine(string line)
@@ -113,7 +112,7 @@ namespace Toast
             ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
 
             int index = 0;
-            object[] parameters = ExecuteParameters(parseResult, cmd.Parameters.Length, ref index);
+            object[] parameters = ExecuteParameters(parseResult.ToList());
 
             if (++index != parseResult.Length)
             {
@@ -159,7 +158,7 @@ namespace Toast
             foreach (Element[] line in func.GetValue())
             {
                 int index = -1;
-                result = ExecuteParameters(line, 1, ref index)[0];
+                result = ExecuteParameters(line.ToList())[0];
 
                 if (index != line.Length - 1)
                 {
@@ -170,74 +169,99 @@ namespace Toast
             return result;
         }
 
-        private object[] ExecuteParameters(Element[] elements, int count, ref int index, bool isGroup = false)
+        private object[] ExecuteParameters(List<Element> elements)
+        {
+            List<(ToastCommand command, Command element)> commands = new();
+
+            for (int i = 0; i < elements.Count; i++)
+            {
+                if (elements[i] is not Command) continue;
+
+                Command cmd = (Command)elements[i];
+                if (Commands.Any(c => c.Name == cmd.GetValue()))
+                {
+                    ToastCommand toastCmd = GetCommand(cmd.GetValue());
+                    if (toastCmd.Parameters.Length > 0)
+                    {
+                        commands.Add((toastCmd, cmd));
+                        
+                        continue;
+                    }
+                }
+
+                elements[i] = new Variable(cmd.GetValue());
+            }
+
+            commands.Sort((c1, c2) => c2.command.Priority.CompareTo(c1.command.Priority));
+
+            foreach (var (command, element) in commands)
+            {
+                int index = elements.IndexOf(element);
+
+                if (index == -1) continue;
+
+                object[] parameters = GetParameters(elements, index + 1, true, command.Parameters.Length - command.NamePosition)
+                              .Concat(GetParameters(elements, index - 1, false, command.NamePosition)).ToArray();
+
+                index = elements.IndexOf(element);
+                elements[index] = new Element(ExecuteCommand(command, parameters));
+            }
+
+            return elements.Select(e => e.GetValue()).ToArray();
+        }
+
+        private object[] GetParameters(List<Element> elements, int start, bool isRight, int count)
         {
             List<object> parameters = new();
 
-            while (parameters.Count < count || isGroup)
-            {
-                index++;
-                
-                if (elements.Length <= index)
-                {
-                    if (isGroup)
-                    {
-                        return parameters.ToArray();
-                    }
+            int index = start;
 
-                    throw new ParameterCountException(elements.Length - 1, count);
+            while (parameters.Count < count)
+            {
+                if (index < 0 || index >= elements.Count)
+                {
+                    throw new ParameterCountException(parameters.Count, count);
                 }
 
-                Element ele = elements[index];
-
-                switch (ele)
+                switch (elements[index])
                 {
-                    case Number or Text:
-                        parameters.Add(ele.GetValue());
-
-                        break;
                     case Command c:
-                        if (Commands.Any(cc => cc.Name == c.GetValue()) && GetCommand(c.GetValue()) is ToastCommand cmd && cmd.Parameters.Length > 0)
-                        {
-                            parameters.Add(ExecuteCommand(cmd, ExecuteParameters(elements, cmd.Parameters.Length, ref index)));
-                        }
-                        else
-                        {
-                            parameters.Add(new Variable(c.GetValue()));
-                        }
+
 
                         break;
                     case Group g:
-                        int i = -1;
-                        object[] groupParameters = ExecuteParameters(g.GetValue(), 0, ref i, true);
 
-                        if (parameters.Count + groupParameters.Length > count && !isGroup)
-                        {
-                            throw new ParameterCountException(parameters.Count + groupParameters.Length, count);
-                        }
-
-                        parameters.AddRange(groupParameters);
-
-                        break;
-                    case Function f:
-                        parameters.Add(f);
 
                         break;
                     case List l:
-                        List<object> lst = new();
 
-                        foreach (Element[] e in l.GetValue())
-                        {
-                            i = -1;
-                            lst.Add(ExecuteParameters(e, 1, ref i)[0]);
-                        }
 
-                        parameters.Add(lst.ToArray());
+                        break;
+                    case Variable or Function:
+                        parameters.Add(elements[index]);
 
                         break;
                     default:
-                        throw new InvalidParameterTypeException(ele);
+                        parameters.Add(elements[index].GetValue());
+
+                        break;
                 }
+
+                index += isRight ? 1 : -1;
+            }
+
+            if (isRight)
+            {
+                elements.RemoveRange(start, index - start);
+            }
+            else
+            {
+                elements.RemoveRange(index + 1, start - index);
+            }
+
+            if (!isRight)
+            {
+                parameters.Reverse();
             }
 
             return parameters.ToArray();

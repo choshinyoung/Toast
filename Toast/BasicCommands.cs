@@ -64,19 +64,19 @@ namespace Toast
             ToastCommand.CreateFunc<ToastContext, object>("null", (ctx) => null);
 
         public static readonly ToastCommand Addition =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("add", (ctx, x, y) => x + y);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("add", (x, ctx, y) => x + y, 1);
 
         public static readonly ToastCommand Subtraction =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("sub", (ctx, x, y) => x - y);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("sub", (x, ctx, y) => x - y, 1);
 
         public static readonly ToastCommand Multiplication =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("mul", (ctx, x, y) => x * y);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("mul", (x, ctx, y) => x * y, 2);
 
         public static readonly ToastCommand Division =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("div", (ctx, x, y) => x / y);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("div", (x, ctx, y) => x / y, 2);
 
         public static readonly ToastCommand Modulus =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("mod", (ctx, x, y) => x % y);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("mod", (x, ctx, y) => x % y, 2);
 
         public static readonly ToastCommand Exponentiation =
                 ToastCommand.CreateFunc<ToastContext, float, float, float>("exp", (ctx, x, y) => MathF.Pow(x, y));
