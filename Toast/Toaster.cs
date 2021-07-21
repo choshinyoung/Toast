@@ -111,12 +111,11 @@ namespace Toast
 
             ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
 
-            int index = 0;
             object[] parameters = ExecuteParameters(parseResult.ToList());
 
-            if (++index != parseResult.Length)
+            if (parameters.Length != 1)
             {
-                throw new ParameterCountException(parseResult.Length - 1, index - 1);
+                throw new ParameterCountException();
             }
 
             return ExecuteCommand(cmd, parameters);
@@ -157,12 +156,11 @@ namespace Toast
 
             foreach (Element[] line in func.GetValue())
             {
-                int index = -1;
-                result = ExecuteParameters(line.ToList())[0];
+                var executeResult = ExecuteParameters(line.ToList());
 
-                if (index != line.Length - 1)
+                if (executeResult.Length != 1)
                 {
-                    throw new ParameterCountException(line.Length, index + 1);
+                    throw new InvalidCommandLineException();
                 }
             }
 
@@ -226,15 +224,44 @@ namespace Toast
                 switch (elements[index])
                 {
                     case Command c:
+                        ToastCommand cmd = GetCommand(c.GetValue());
 
+                        if ((isRight && cmd.NamePosition != 0) || (!isRight && cmd.NamePosition != cmd.Parameters.Length))
+                        {
+                            throw new ParameterCountException();
+                        }
+
+                        parameters.Add(ExecuteCommand(cmd, GetParameters(elements, index + (isRight ? 1 : -1), isRight, cmd.Parameters.Length)));
 
                         break;
                     case Group g:
+                        object[] groupParameters = ExecuteParameters(g.GetValue().ToList());
 
+                        if (parameters.Count + groupParameters.Length > count)
+                        {
+                            throw new ParameterCountException(parameters.Count + groupParameters.Length, count);
+                        }
+
+                        parameters.AddRange(groupParameters);
 
                         break;
                     case List l:
+                        List<object> lst = new();
 
+                        foreach (Element[] e in l.GetValue())
+                        {
+                            object[] members = ExecuteParameters(e.ToList());
+
+                            if (members.Length != 1)
+                            {
+                                throw new ParameterCountException();
+                            }
+
+                            Console.WriteLine(members[0].GetType().Name);
+                            lst.Add(members[0]);
+                        }
+
+                        parameters.Add(lst.ToArray());
 
                         break;
                     case Variable or Function:
