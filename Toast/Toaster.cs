@@ -169,6 +169,35 @@ namespace Toast
 
         private object[] ExecuteParameters(List<Element> elements)
         {
+            if (elements.Count == 1 && elements[0] is not Command)
+            {
+                switch (elements[0])
+                {
+                    case List l:
+                        List<object> lst = new();
+
+                        foreach (Element[] e in l.GetValue())
+                        {
+                            object[] members = ExecuteParameters(e.ToList());
+
+                            if (members.Length != 1)
+                            {
+                                throw new ParameterCountException();
+                            }
+
+                            lst.Add(members[0]);
+                        }
+
+                        return new[] { lst.ToArray() };
+
+                        break;
+                    case Function:
+                        return new[] { elements[0] };
+                    default:
+                        return new[] { elements[0].GetValue() };
+                }
+            }
+
             List<(ToastCommand command, Command element)> commands = new();
 
             for (int i = 0; i < elements.Count; i++)
@@ -257,7 +286,6 @@ namespace Toast
                                 throw new ParameterCountException();
                             }
 
-                            Console.WriteLine(members[0].GetType().Name);
                             lst.Add(members[0]);
                         }
 
