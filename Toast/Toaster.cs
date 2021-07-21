@@ -169,10 +169,12 @@ namespace Toast
 
         private object[] ExecuteParameters(List<Element> elements)
         {
-            if (elements.Count == 1 && elements[0] is not Command)
+            if (elements.Count == 1)
             {
                 switch (elements[0])
                 {
+                    case Command c:
+                        return new[] { new Variable(c.GetValue()) };
                     case List l:
                         List<object> lst = new();
 
@@ -189,9 +191,7 @@ namespace Toast
                         }
 
                         return new[] { lst.ToArray() };
-
-                        break;
-                    case Function:
+                    case Function or Variable:
                         return new[] { elements[0] };
                     default:
                         return new[] { elements[0].GetValue() };
@@ -264,11 +264,23 @@ namespace Toast
 
                         break;
                     case Group g:
-                        object[] groupParameters = ExecuteParameters(g.GetValue().ToList());
-
-                        if (parameters.Count + groupParameters.Length > count)
+                        List<object> groupParameters = new();
+                        
+                        foreach (Element[] line in g.GetValue())
                         {
-                            throw new ParameterCountException(parameters.Count + groupParameters.Length, count);
+                            object[] result = ExecuteParameters(line.ToList());
+
+                            if (result.Length != 1)
+                            {
+                                throw new InvalidCommandLineException();
+                            }
+
+                            groupParameters.Add(result[0]);
+                        }
+
+                        if (parameters.Count + groupParameters.Count > count)
+                        {
+                            throw new ParameterCountException(parameters.Count + groupParameters.Count, count);
                         }
 
                         parameters.AddRange(groupParameters);

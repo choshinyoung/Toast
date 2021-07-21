@@ -33,7 +33,7 @@ namespace Toast
 
         static readonly Parser<Element> GroupParser =
             from start in Parse.Char('(')
-            from g in LineParser
+            from g in LineParser.DelimitedBy(CommaDividerParser)
             from end in Parse.Char(')')
             select new Group(g.ToArray());
 
