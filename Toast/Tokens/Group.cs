@@ -1,4 +1,4 @@
-﻿namespace Toast.Elements
+﻿namespace Toast.Tokens
 {
     public class Group : Element
     {

@@ -1,10 +1,10 @@
-﻿namespace Toast.Elements
+﻿namespace Toast.Tokens
 {
     public class Function : Element
     {
         public string[] Parameters;
 
-        public Function(Element[][] value, string[] parameters) : base(value) 
+        public Function(Element[][] value, string[] parameters) : base(value)
         {
             Parameters = parameters;
         }
