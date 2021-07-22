@@ -1,8 +1,8 @@
 ﻿namespace Toast.Tokens
 {
-    public class Variable : Element
+    public class CommandToken : Token
     {
-        public Variable(string value) : base(value) { }
+        public CommandToken(string value) : base(value) { }
 
         public new string GetValue()
         {

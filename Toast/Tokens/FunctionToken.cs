@@ -1,17 +1,17 @@
 ﻿namespace Toast.Tokens
 {
-    public class Function : Element
+    public class FunctionToken : Token
     {
         public string[] Parameters;
 
-        public Function(Element[][] value, string[] parameters) : base(value)
+        public FunctionToken(Token[][] value, string[] parameters) : base(value)
         {
             Parameters = parameters;
         }
 
-        public new Element[][] GetValue()
+        public new Token[][] GetValue()
         {
-            return (Element[][])base.GetValue();
+            return (Token[][])base.GetValue();
         }
 
         public string[] GetParameters() => Parameters;

@@ -1,8 +1,8 @@
 ﻿namespace Toast.Tokens
 {
-    public class Number : Element
+    public class NumberToken : Token
     {
-        public Number(float value) : base(value) { }
+        public NumberToken(float value) : base(value) { }
 
         public new float GetValue()
         {

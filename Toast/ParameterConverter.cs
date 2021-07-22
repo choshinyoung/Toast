@@ -56,7 +56,7 @@ namespace Toast
             {
                 return Convert.ChangeType(parameter, targetType);
             }
-            else if (parameter is Variable c4)
+            else if (parameter is VariableNode c4)
             {
                 return Toaster.ExecuteCommand(Toaster.GetCommand(c4.GetValue()), Array.Empty<object>());
 

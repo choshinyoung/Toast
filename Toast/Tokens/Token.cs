@@ -1,10 +1,10 @@
 ﻿namespace Toast.Tokens
 {
-    public class Element
+    public class Token
     {
         private readonly object value;
 
-        public Element(object v)
+        public Token(object v)
         {
             value = v;
         }

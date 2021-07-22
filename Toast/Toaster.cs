@@ -104,12 +104,12 @@ namespace Toast
         {
             var parseResult = ToastParser.ParseRaw(line);
 
-            if (parseResult[0] is not Command)
+            if (parseResult[0] is not CommandToken)
             {
                 throw new InvalidCommandLineException(line);
             }
 
-            ToastCommand cmd = GetCommand(((Command)parseResult[0]).GetValue());
+            ToastCommand cmd = GetCommand(((CommandToken)parseResult[0]).GetValue());
 
             object[] parameters = ExecuteParameters(parseResult.ToList());
 
@@ -132,7 +132,7 @@ namespace Toast
             return result;
         }
 
-        public object ExecuteFunction(Function func, object[] parameters)
+        public object ExecuteFunction(FunctionToken func, object[] parameters)
         {
             object result = null;
 
@@ -154,7 +154,7 @@ namespace Toast
                 AddCommand(ToastCommand.CreateFunc<ToastContext, object>(func.Parameters[i], (ctx) => value));
             }
 
-            foreach (Element[] line in func.GetValue())
+            foreach (Token[] line in func.GetValue())
             {
                 var executeResult = ExecuteParameters(line.ToList());
 
@@ -167,18 +167,18 @@ namespace Toast
             return result;
         }
 
-        private object[] ExecuteParameters(List<Element> elements)
+        private object[] ExecuteParameters(List<Token> elements)
         {
             if (elements.Count == 1)
             {
                 switch (elements[0])
                 {
-                    case Command c:
-                        return new[] { new Variable(c.GetValue()) };
-                    case List l:
+                    case CommandToken c:
+                        return new[] { new VariableNode(c.GetValue()) };
+                    case ListToken l:
                         List<object> lst = new();
 
-                        foreach (Element[] e in l.GetValue())
+                        foreach (Token[] e in l.GetValue())
                         {
                             object[] members = ExecuteParameters(e.ToList());
 
@@ -191,20 +191,20 @@ namespace Toast
                         }
 
                         return new[] { lst.ToArray() };
-                    case Function or Variable:
+                    case FunctionToken or VariableNode:
                         return new[] { elements[0] };
                     default:
                         return new[] { elements[0].GetValue() };
                 }
             }
 
-            List<(ToastCommand command, Command element)> commands = new();
+            List<(ToastCommand command, CommandToken element)> commands = new();
 
             for (int i = 0; i < elements.Count; i++)
             {
-                if (elements[i] is not Command) continue;
+                if (elements[i] is not CommandToken) continue;
 
-                Command cmd = (Command)elements[i];
+                CommandToken cmd = (CommandToken)elements[i];
                 if (Commands.Any(c => c.Name == cmd.GetValue()))
                 {
                     ToastCommand toastCmd = GetCommand(cmd.GetValue());
@@ -216,7 +216,7 @@ namespace Toast
                     }
                 }
 
-                elements[i] = new Variable(cmd.GetValue());
+                elements[i] = new VariableNode(cmd.GetValue());
             }
 
             commands.Sort((c1, c2) => c2.command.Priority.CompareTo(c1.command.Priority));
@@ -231,13 +231,13 @@ namespace Toast
                               .Concat(GetParameters(elements, index - 1, false, command.NamePosition)).ToArray();
 
                 index = elements.IndexOf(element);
-                elements[index] = new Element(ExecuteCommand(command, parameters));
+                elements[index] = new Token(ExecuteCommand(command, parameters));
             }
 
             return elements.Select(e => e.GetValue()).ToArray();
         }
 
-        private object[] GetParameters(List<Element> elements, int start, bool isRight, int count)
+        private object[] GetParameters(List<Token> elements, int start, bool isRight, int count)
         {
             List<object> parameters = new();
 
@@ -252,7 +252,7 @@ namespace Toast
 
                 switch (elements[index])
                 {
-                    case Command c:
+                    case CommandToken c:
                         ToastCommand cmd = GetCommand(c.GetValue());
 
                         if ((isRight && cmd.NamePosition != 0) || (!isRight && cmd.NamePosition != cmd.Parameters.Length))
@@ -263,10 +263,10 @@ namespace Toast
                         parameters.Add(ExecuteCommand(cmd, GetParameters(elements, index + (isRight ? 1 : -1), isRight, cmd.Parameters.Length)));
 
                         break;
-                    case Group g:
+                    case GroupToken g:
                         List<object> groupParameters = new();
                         
-                        foreach (Element[] line in g.GetValue())
+                        foreach (Token[] line in g.GetValue())
                         {
                             object[] result = ExecuteParameters(line.ToList());
 
@@ -286,10 +286,10 @@ namespace Toast
                         parameters.AddRange(groupParameters);
 
                         break;
-                    case List l:
+                    case ListToken l:
                         List<object> lst = new();
 
-                        foreach (Element[] e in l.GetValue())
+                        foreach (Token[] e in l.GetValue())
                         {
                             object[] members = ExecuteParameters(e.ToList());
 
@@ -304,7 +304,7 @@ namespace Toast
                         parameters.Add(lst.ToArray());
 
                         break;
-                    case Variable or Function:
+                    case VariableNode or FunctionToken:
                         parameters.Add(elements[index]);
 
                         break;

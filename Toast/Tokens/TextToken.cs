@@ -1,8 +1,8 @@
 ﻿namespace Toast.Tokens
 {
-    public class Text : Element
+    public class TextToken : Token
     {
-        public Text(string value) : base(value) { }
+        public TextToken(string value) : base(value) { }
 
         public new string GetValue()
         {
