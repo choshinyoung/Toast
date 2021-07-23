@@ -9,14 +9,10 @@ namespace Toast
     internal class ParameterConverter
     {
         private readonly Toaster Toaster;
-        private readonly List<ToastCommand> Commands;
-        private readonly List<ToastConverter> Converters;
 
         public ParameterConverter(Toaster toaster)
         {
             Toaster = toaster;
-            Commands = toaster.GetCommands().ToList();
-            Converters = toaster.GetConverters().ToList();
         }
 
         public object[] ConvertParameters(Type[] targets, object[] parameters)
@@ -38,15 +34,17 @@ namespace Toast
 
             if (paramType == targetType) return parameter;
 
-            if (Converters.ToList().Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
+            List<ToastConverter> converters = Toaster.GetConverters().ToList();
+
+            if (converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
             {
                 return ExecuteConverter(c1, parameter);
             }
-            else if (IsNumber(paramType) && Converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
+            else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
             {
                 return ExecuteConverter(c2, Convert.ChangeType(parameter, c2.From));
             }
-            else if (IsNumber(targetType) && Converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
+            else if (IsNumber(targetType) && converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
             {
                 return Convert.ChangeType(ExecuteConverter(c3, parameter), targetType);
             }

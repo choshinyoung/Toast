@@ -3,12 +3,12 @@
     public class CommandNode : INode
     {
         public readonly ToastCommand Command;
-        public readonly INode[] Childs;
+        public readonly INode[] Parameters;
 
-        public CommandNode(ToastCommand c, INode[] childs)
+        public CommandNode(ToastCommand c, INode[] p)
         {
             Command = c;
-            Childs = childs;
+            Parameters = p;
         }
     }
 }
