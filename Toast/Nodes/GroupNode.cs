@@ -1,6 +1,6 @@
 ﻿namespace Toast.Nodes
 {
-    class GroupNode : INode
+    public class GroupNode : INode
     {
         public readonly INode[] Values;
 

@@ -10,7 +10,7 @@ namespace Toast
 {
     internal class ToastExecutor
     {
-        public object Execute(Toaster toaster, INode node)
+        public static object Execute(Toaster toaster, INode node)
         {
             switch (node)
             {

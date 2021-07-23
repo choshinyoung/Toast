@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using Toast.Nodes;
-using Toast.Tokens;
 
 namespace Toast
 {
@@ -132,7 +131,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, int, object, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(y, x).ToArray());
 
         public static readonly ToastCommand While =
-                ToastCommand.CreateAction<ToastContext, FunctionToken, FunctionToken>("while", (ctx, x, y) =>
+                ToastCommand.CreateAction<ToastContext, FunctionNode, FunctionNode>("while", (ctx, x, y) =>
                 {
                     while ((bool)ctx.Toaster.ExecuteFunction(x, Array.Empty<object>()))
                     {
@@ -141,7 +140,7 @@ namespace Toast
                 });
 
         public static readonly ToastCommand For =
-                ToastCommand.CreateAction<ToastContext, FunctionToken, FunctionToken, FunctionToken, FunctionToken>("for", (ctx, x, y, z, w) =>
+                ToastCommand.CreateAction<ToastContext, FunctionNode, FunctionNode, FunctionNode, FunctionNode>("for", (ctx, x, y, z, w) =>
                 {
                     for (ctx.Toaster.ExecuteFunction(x, Array.Empty<object>()); 
                          (bool)ctx.Toaster.ExecuteFunction(y, Array.Empty<object>()); 
@@ -152,7 +151,7 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Foreach =
-                ToastCommand.CreateAction<ToastContext, object[], FunctionToken>("foreach", (ctx, x, y) =>
+                ToastCommand.CreateAction<ToastContext, object[], FunctionNode>("foreach", (ctx, x, y) =>
                 {
                     foreach (object o in x)
                     {
@@ -198,7 +197,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
 
         public static readonly ToastCommand Execute =
-                ToastCommand.CreateFunc<ToastContext, FunctionToken, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
+                ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
 
         public static readonly ToastCommand Assign =
                 ToastCommand.CreateAction<ToastContext, VariableNode, object>("var", (ctx, x, y) =>

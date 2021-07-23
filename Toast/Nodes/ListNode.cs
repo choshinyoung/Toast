@@ -1,6 +1,6 @@
 ﻿namespace Toast.Nodes
 {
-    class ListNode : INode
+    public class ListNode : INode
     {
         public readonly INode[] Value;
 

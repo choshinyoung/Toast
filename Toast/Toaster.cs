@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Toast.Exceptions;
+using Toast.Nodes;
 
 namespace Toast
 {
@@ -88,8 +90,9 @@ namespace Toast
         {
             var lexerResult = ToastLexer.Lexicalize(line);
             var parserResult = ToastParser.Parse(this, lexerResult);
+            var executeResult = ToastExecutor.Execute(this, parserResult);
 
-            return parserResult;
+            return executeResult;
         }
 
         public object ExecuteCommand(ToastCommand cmd, object[] parameters)
@@ -103,7 +106,7 @@ namespace Toast
             return result;
         }
 
-        /* public object ExecuteFunction(FunctionToken func, object[] parameters)
+        public object ExecuteFunction(FunctionNode func, object[] parameters)
         {
             object result = null;
 
@@ -125,12 +128,12 @@ namespace Toast
                 AddCommand(ToastCommand.CreateFunc<ToastContext, object>(func.Parameters[i], (ctx) => value));
             }
 
-            foreach (Token[] line in func.GetValue())
+            foreach (INode line in func.Lines)
             {
-                result = ToastParser.Parse(this, line);
+                result = ToastExecutor.Execute(this, line);
             }
 
             return result;
-        } */
+        }
     }
 }

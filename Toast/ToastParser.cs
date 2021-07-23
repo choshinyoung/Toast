@@ -83,11 +83,12 @@ namespace Toast
             foreach (var (command, node) in commands)
             {
                 int index = nodes.IndexOf(node);
-
                 if (index == -1) continue;
 
-                INode[] parameters = GetParameters(nodes, index + 1, true, command.Parameters.Length - command.NamePosition)
-                              .Concat(GetParameters(nodes, index - 1, false, command.NamePosition)).ToArray();
+                INode[] parameters = GetParameters(nodes, index - 1, false, command.NamePosition);
+
+                index = nodes.IndexOf(node);
+                parameters = parameters.Concat(GetParameters(nodes, index + 1, true, command.Parameters.Length - command.NamePosition)).ToArray();
 
                 index = nodes.IndexOf(node);
                 nodes[index] = new CommandNode(command, parameters);

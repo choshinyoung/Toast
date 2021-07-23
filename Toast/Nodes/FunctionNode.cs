@@ -1,9 +1,9 @@
 ﻿namespace Toast.Nodes
 {
-    class FunctionNode : INode
+    public class FunctionNode : INode
     {
-        private readonly string[] Parameters;
-        private readonly INode[] Lines;
+        public readonly string[] Parameters;
+        public readonly INode[] Lines;
 
         public FunctionNode(string[] p, INode[] l)
         {
