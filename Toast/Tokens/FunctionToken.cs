@@ -2,7 +2,7 @@
 {
     public class FunctionToken : Token
     {
-        public string[] Parameters;
+        public readonly string[] Parameters;
 
         public FunctionToken(Token[][] value, string[] parameters) : base(value)
         {

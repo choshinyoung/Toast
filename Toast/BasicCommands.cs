@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Toast.Exceptions;
+using Toast.Nodes;
 using Toast.Tokens;
 
 namespace Toast
@@ -207,13 +203,13 @@ namespace Toast
         public static readonly ToastCommand Assign =
                 ToastCommand.CreateAction<ToastContext, VariableNode, object>("var", (ctx, x, y) =>
                 {
-                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == x.GetValue());
+                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == x.Name);
                     if (cmd is not null)
                     {
                         ctx.Toaster.RemoveCommand(cmd);
                     }
 
-                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(x.GetValue(), (ctx) => y));
+                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(x.Name, (ctx) => y));
                 });
 
         private BasicCommands() { }

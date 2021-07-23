@@ -1,12 +1,12 @@
-﻿namespace Toast.Tokens
+﻿namespace Toast.Nodes
 {
-    public class VariableNode : Token
+    public class VariableNode : INode
     {
-        public VariableNode(string value) : base(value) { }
+        public readonly string Name;
 
-        public new string GetValue()
+        public VariableNode(string n)
         {
-            return (string)base.GetValue();
+            Name = n;
         }
     }
 }

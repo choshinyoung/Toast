@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Toast.Exceptions;
-using Toast.Tokens;
+using Toast.Nodes;
 
 namespace Toast
 {
@@ -58,9 +56,9 @@ namespace Toast
             }
             else if (parameter is VariableNode c4)
             {
-                return Toaster.ExecuteCommand(Toaster.GetCommand(c4.GetValue()), Array.Empty<object>());
+                return Toaster.ExecuteCommand(Toaster.GetCommand(c4.Name), Array.Empty<object>());
 
-                throw new CommandNotFoundException(c4.GetValue());
+                throw new CommandNotFoundException(c4.Name);
             }
             else if (targetType is not object)
             {

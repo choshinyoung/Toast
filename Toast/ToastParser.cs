@@ -1,93 +1,163 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using Sprache;
 using Toast.Exceptions;
+using Toast.Nodes;
 using Toast.Tokens;
 
 namespace Toast
 {
     internal class ToastParser
     {
-        static readonly Parser<char> UnderLine = Parse.Char('_');
-        static readonly Parser<Token> CommandParser =
-            from first in Parse.Letter.Or(UnderLine).Once().Text()
-            from rest in Parse.LetterOrDigit.Or(UnderLine).Many().Text()
-            select new CommandToken(first + rest);
-
-        static readonly Parser<Token> NumberParser =
-            from n in Parse.Decimal
-            select new NumberToken(float.Parse(n));
-
-        static readonly Parser<Token> SignedNumberParser =
-            from s in Parse.Char('+').Or(Parse.Char('-'))
-            from n in NumberParser
-            select s == '+' ? n : new NumberToken((float)n.GetValue() * -1);
-
-        static readonly Parser<char> QuoteParser = Parse.Char('"');
-        static readonly Parser<char> SlashQuoteParser = Parse.String("\\\"").Select(c => '"');
-        static readonly Parser<Token> TextParser =
-            from start in QuoteParser
-            from s in SlashQuoteParser.Or(Parse.AnyChar).Except(QuoteParser).Many()
-            from end in QuoteParser
-            select new TextToken(string.Concat(s));
-
-        static readonly Parser<Token> GroupParser =
-            from start in Parse.Char('(')
-            from g in LineParser.DelimitedBy(CommaDividerParser)
-            from end in Parse.Char(')')
-            select new GroupToken(g.ToArray());
-
-        static readonly Parser<string[]> FunctionParameterParser =
-            from start in Parse.Char('(')
-            from startSpace in Parse.WhiteSpace.Many()
-            from g in CommandParser.DelimitedBy(CommaDividerParser).Optional()
-            from endSpace in Parse.WhiteSpace.Many()
-            from end in Parse.Char(')')
-            select g.IsEmpty ? Array.Empty<string>() : g.Get().Select(c => ((CommandToken)c).GetValue()).ToArray();
-
-        static readonly Parser<Token> FunctionParser =
-            from parameters in FunctionParameterParser
-            from space in Parse.WhiteSpace.Many()
-            from start in Parse.Char('{')
-            from startSpace in Parse.WhiteSpace.Many()
-            from g in LineParser.DelimitedBy(Parse.LineEnd.Or(Parse.String(";")).AtLeastOnce()).Optional()
-            from endSpace in Parse.WhiteSpace.Many()
-            from end in Parse.Char('}')
-            select new FunctionToken(g.IsEmpty ? Array.Empty<Token[]>() : g.Get().ToArray(), parameters);
-        
-        static readonly Parser<char> CommaDividerParser =
-            from startSpace in Parse.WhiteSpace.Many()
-            from comma in Parse.Char(',')
-            from endSpace in Parse.WhiteSpace.Many()
-            select comma;
-
-        static readonly Parser<Token> ListParser =
-            from start in Parse.Char('[')
-            from l in LineParser.DelimitedBy(CommaDividerParser).Optional()
-            from end in Parse.Char(']')
-            select new ListToken(l.IsEmpty ? Array.Empty<Token[]>() : l.Get().ToArray());
-
-        static readonly Parser<Token> ElementParser =
-            NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(ListParser).Or(GroupParser);
-
-        static readonly Parser<Token[]> LineParser =
-            from startSpace in Parse.WhiteSpace.Many()
-            from e in ElementParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce())
-            from endSpace in Parse.WhiteSpace.Many()
-            select e.ToArray();
-
-        public static Token[] ParseRaw(string line)
+        public static INode Parse(Toaster toaster, Token[] tokens)
         {
-            var result = LineParser.TryParse(line);
-            
-            if (result.Remainder.AtEnd)
+            List<INode> nodes = new();
+            List<(ToastCommand command, CommandNode node)> commands = new();
+
+            foreach (Token token in tokens)
             {
-                return result.Value;
+                switch (token)
+                {
+                    case CommandToken c:
+                        if (toaster.GetCommands().Any(_c => _c.Name == c.GetValue()))
+                        {
+                            ToastCommand toastCmd = toaster.GetCommand(c.GetValue());
+                            if (toastCmd.Parameters.Length > 0)
+                            {
+                                CommandNode node = new(toastCmd, Array.Empty<INode>());
+
+                                nodes.Add(node);
+                                commands.Add((toastCmd, node));
+
+                                continue;
+                            }
+                        }
+
+                        nodes.Add(new VariableNode(c.GetValue()));
+
+                        break;
+                    case GroupToken g:
+                        List<INode> values = new();
+
+                        foreach (Token[] e in g.GetValue())
+                        {
+                            values.Add(Parse(toaster, e));
+                        }
+
+                        nodes.Add(new GroupNode(values.ToArray()));
+
+                        break;
+                    case FunctionToken f:
+                        List<INode> lines = new();
+
+                        foreach (Token[] e in f.GetValue())
+                        {
+                            lines.Add(Parse(toaster, e));
+                        }
+
+                        nodes.Add(new FunctionNode(f.Parameters, lines.ToArray()));
+
+                        break;
+                    case ListToken l:
+                        List<INode> members = new();
+
+                        foreach (Token[] e in l.GetValue())
+                        {
+                            members.Add(Parse(toaster, e));
+                        }
+
+                        nodes.Add(new ListNode(members.ToArray()));
+
+                        break;
+                    case NumberToken or TextToken:
+                        nodes.Add(new ValueNode(token.GetValue()));
+
+                        break;
+                    default:
+                        throw new InvalidParameterTypeException(token);
+                }
+            }
+
+            commands.Sort((c1, c2) => c2.command.Priority.CompareTo(c1.command.Priority));
+
+            foreach (var (command, node) in commands)
+            {
+                int index = nodes.IndexOf(node);
+
+                if (index == -1) continue;
+
+                INode[] parameters = GetParameters(nodes, index + 1, true, command.Parameters.Length - command.NamePosition)
+                              .Concat(GetParameters(nodes, index - 1, false, command.NamePosition)).ToArray();
+
+                index = nodes.IndexOf(node);
+                nodes[index] = new CommandNode(command, parameters);
+            }
+
+            if (nodes.Count != 1)
+            {
+                throw new ParameterCountException();
+            }
+
+            return nodes[0];
+        }
+
+        private static INode[] GetParameters(List<INode> nodes, int start, bool isRight, int count)
+        {
+            List<INode> parameters = new();
+
+            int index = start;
+
+            while (parameters.Count < count)
+            {
+                if (index < 0 || index >= nodes.Count)
+                {
+                    throw new ParameterCountException(parameters.Count, count);
+                }
+
+                switch (nodes[index])
+                {
+                    case CommandNode c:
+                        if ((isRight && c.Command.NamePosition != 0) || (!isRight && c.Command.NamePosition != c.Command.Parameters.Length))
+                        {
+                            throw new ParameterCountException();
+                        }
+
+                        parameters.Add(new CommandNode(c.Command, GetParameters(nodes, index + (isRight ? 1 : -1), isRight, c.Command.Parameters.Length)));
+
+                        break;
+                    case GroupNode g:
+                        if (parameters.Count + g.Values.Length > count)
+                        {
+                            throw new ParameterCountException(parameters.Count + g.Values.Length, count);
+                        }
+
+                        parameters.AddRange(g.Values);
+
+                        break;
+                    default:
+                        parameters.Add(nodes[index]);
+
+                        break;
+                }
+
+                index += isRight ? 1 : -1;
+            }
+
+            if (isRight)
+            {
+                nodes.RemoveRange(start, index - start);
             }
             else
             {
-                throw new InvalidCommandLineException(line);
+                nodes.RemoveRange(index + 1, start - index);
             }
+
+            if (!isRight)
+            {
+                parameters.Reverse();
+            }
+
+            return parameters.ToArray();
         }
     }
 }
