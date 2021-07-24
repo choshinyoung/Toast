@@ -52,7 +52,7 @@ namespace Toast
                 case ValueNode v:
                     return ConvertParameter(toaster, target, v.Value);
                 default:
-                    throw new InvalidParameterTypeException();
+                    throw new InvalidParameterTypeException(node);
             }
         }
 

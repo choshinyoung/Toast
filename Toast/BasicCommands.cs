@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using Toast.Exceptions;
 using Toast.Nodes;
 
 namespace Toast
@@ -126,7 +127,7 @@ namespace Toast
                 {
                     if (x.Command != Equal || x.Parameters[0] is not VariableNode)
                     {
-                        throw new Exception();
+                        throw new InvalidCommandNodeException("var", x.Command.Name);
                     }
 
                     string name = ((VariableNode)x.Parameters[0]).Name;
@@ -139,7 +140,7 @@ namespace Toast
 
                     ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => ToastExecutor.Execute(ctx.Toaster, x.Parameters[1])));
                 }, 1);
-
+        
         public static readonly ToastCommand If =
                 ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y: null);
 
@@ -148,7 +149,7 @@ namespace Toast
                 {
                     if (x.Command != If)
                     {
-                        throw new Exception();
+                        throw new InvalidCommandNodeException("else", x.Command.Name);
                     }
 
                     if ((bool)ToastExecutor.Execute(ctx.Toaster, x.Parameters[0], typeof(bool))) 
