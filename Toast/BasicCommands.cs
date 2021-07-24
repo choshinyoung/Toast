@@ -74,55 +74,55 @@ namespace Toast
                 ToastCommand.CreateFunc<float, ToastContext, float, float>("mod", (x, ctx, y) => x % y, 13);
 
         public static readonly ToastCommand Exponentiation =
-                ToastCommand.CreateFunc<ToastContext, float, float, float>("exp", (ctx, x, y) => MathF.Pow(x, y), 13);
+                ToastCommand.CreateFunc<float, ToastContext, float, float>("exp", (x, ctx, y) => MathF.Pow(x, y), 13);
 
         public static readonly ToastCommand FloorDivision =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("floorDiv", (ctx, x, y) => x / y, 13);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("floorDiv", (x, ctx, y) => x / y, 13);
 
         public static readonly ToastCommand Equal =
-                ToastCommand.CreateFunc<ToastContext, object, object, bool>("equal", (ctx, x, y) => x.Equals(y), 9);
+                ToastCommand.CreateFunc<object, ToastContext, object, bool>("equal", (x, ctx, y) => x.Equals(y), 9);
 
         public static readonly ToastCommand Greater =
-                ToastCommand.CreateFunc<ToastContext, float, float, bool>("greater", (ctx, x, y) => x > y, 10);
+                ToastCommand.CreateFunc<float, ToastContext, float, bool>("greater", (x, ctx, y) => x > y, 10);
 
         public static readonly ToastCommand Less =
-                ToastCommand.CreateFunc<ToastContext, float, float, bool>("less", (ctx, x, y) => x < y, 10);
+                ToastCommand.CreateFunc<float, ToastContext, float, bool>("less", (x, ctx, y) => x < y, 10);
 
         public static readonly ToastCommand GreaterOrEqual =
-                ToastCommand.CreateFunc<ToastContext, float, float, bool>("greaterEqual", (ctx, x, y) => x >= y, 10);
+                ToastCommand.CreateFunc<float, ToastContext, float, bool>("greaterEqual", (x, ctx, y) => x >= y, 10);
 
         public static readonly ToastCommand LessOrEqual =
-                ToastCommand.CreateFunc<ToastContext, float, float, bool>("lessEqual", (ctx, x, y) => x <= y, 10);
+                ToastCommand.CreateFunc<float, ToastContext, float, bool>("lessEqual", (x, ctx, y) => x <= y, 10);
 
         public static readonly ToastCommand And =
-                ToastCommand.CreateFunc<ToastContext, bool, bool, bool>("and", (ctx, x, y) => x && y, 3);
+                ToastCommand.CreateFunc<bool, ToastContext, bool, bool>("and", (x, ctx, y) => x && y, 3);
 
         public static readonly ToastCommand Or =
-                ToastCommand.CreateFunc<ToastContext, bool, bool, bool>("or", (ctx, x, y) => x || y, 2);
+                ToastCommand.CreateFunc<bool, ToastContext, bool, bool>("or", (x, ctx, y) => x || y, 2);
 
         public static readonly ToastCommand Not =
                 ToastCommand.CreateFunc<ToastContext, bool, bool>("not", (ctx, x) => !x, 4);
 
         public static readonly ToastCommand BitwiseAnd =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("bitAnd", (ctx, x, y) => x & y, 7);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("bitAnd", (x, ctx, y) => x & y, 7);
 
         public static readonly ToastCommand BitwiseOr =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("bitOr", (ctx, x, y) => x | y, 5);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("bitOr", (x, ctx, y) => x | y, 5);
 
         public static readonly ToastCommand BitwiseXor =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("bitXor", (ctx, x, y) => x ^ y, 6);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("bitXor", (x, ctx, y) => x ^ y, 6);
 
         public static readonly ToastCommand BitwiseNot =
                 ToastCommand.CreateFunc<ToastContext, int, int>("bitNot", (ctx, x) => ~x, 8);
 
         public static readonly ToastCommand LeftShift =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("lShift", (ctx, x, y) => x << y, 11);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("lShift", (x, ctx, y) => x << y, 11);
 
         public static readonly ToastCommand RightShift =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("rShift", (ctx, x, y) => x >> y, 11);
+                ToastCommand.CreateFunc<int, ToastContext, int, int>("rShift", (x, ctx, y) => x >> y, 11);
 
         public static readonly ToastCommand Assign =
-                ToastCommand.CreateAction<ToastContext, VariableNode, object>("var", (ctx, x, y) =>
+                ToastCommand.CreateAction<VariableNode, ToastContext, object>("is", (x, ctx, y) =>
                 {
                     ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == x.Name);
                     if (cmd is not null)
