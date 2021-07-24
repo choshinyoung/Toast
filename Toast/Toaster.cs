@@ -86,6 +86,14 @@ namespace Toast
             return cmd;
         }
 
+        public INode Parse(string line)
+        {
+            var lexerResult = ToastLexer.Lexicalize(line);
+            var parserResult = ToastParser.Parse(this, lexerResult);
+
+            return parserResult;
+        }
+
         public object Execute(string line)
         {
             var lexerResult = ToastLexer.Lexicalize(line);
@@ -97,7 +105,7 @@ namespace Toast
 
         public object ExecuteCommand(ToastCommand cmd, object[] parameters)
         {
-            var prms = new ParameterConverter(this).ConvertParameters(cmd.Parameters, parameters).ToList();
+            var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
 
             prms.Insert(cmd.NamePosition, new ToastContext(this));
 
