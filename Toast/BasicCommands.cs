@@ -25,7 +25,7 @@ namespace Toast
 
         public static ToastCommand[] Statements => new ToastCommand[]
         {
-            If, IfElse,
+            If, Else,
             Repeat, While, For, Foreach
         };
 
@@ -80,7 +80,7 @@ namespace Toast
                 ToastCommand.CreateFunc<int, ToastContext, int, int>("floorDiv", (x, ctx, y) => x / y, 13);
 
         public static readonly ToastCommand Equal =
-                ToastCommand.CreateFunc<object, ToastContext, object, bool>("equal", (x, ctx, y) => x.Equals(y), 9);
+                ToastCommand.CreateFunc<object, ToastContext, object, bool>("is", (x, ctx, y) => x.Equals(y), 9);
 
         public static readonly ToastCommand Greater =
                 ToastCommand.CreateFunc<float, ToastContext, float, bool>("greater", (x, ctx, y) => x > y, 10);
@@ -122,22 +122,44 @@ namespace Toast
                 ToastCommand.CreateFunc<int, ToastContext, int, int>("rShift", (x, ctx, y) => x >> y, 11);
 
         public static readonly ToastCommand Assign =
-                ToastCommand.CreateAction<VariableNode, ToastContext, object>("is", (x, ctx, y) =>
+                ToastCommand.CreateAction<ToastContext, CommandNode>("var", (ctx, x) =>
                 {
-                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == x.Name);
+                    if (x.Command != Equal || x.Parameters[0] is not VariableNode)
+                    {
+                        throw new Exception();
+                    }
+
+                    string name = ((VariableNode)x.Parameters[0]).Name;
+
+                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
                     if (cmd is not null)
                     {
                         ctx.Toaster.RemoveCommand(cmd);
                     }
 
-                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(x.Name, (ctx) => y));
+                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => ToastExecutor.Execute(ctx.Toaster, x.Parameters[1])));
                 }, 1);
 
         public static readonly ToastCommand If =
                 ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y: null);
 
-        public static readonly ToastCommand IfElse =
-                ToastCommand.CreateFunc<ToastContext, bool, object, object, object>("ifElse", (ctx, x, y, z) => x ? y : z);
+        public static readonly ToastCommand Else =
+                ToastCommand.CreateFunc<CommandNode, ToastContext, object, object>("else", (x, ctx, y) =>
+                {
+                    if (x.Command != If)
+                    {
+                        throw new Exception();
+                    }
+
+                    if ((bool)ToastExecutor.Execute(ctx.Toaster, x.Parameters[0], typeof(bool))) 
+                    {
+                        return ToastExecutor.Execute(ctx.Toaster, x.Parameters[1]);
+                    }
+                    else
+                    {
+                        return y;
+                    }
+                });
 
         public static readonly ToastCommand Repeat =
                 ToastCommand.CreateFunc<ToastContext, int, object, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(y, x).ToArray());

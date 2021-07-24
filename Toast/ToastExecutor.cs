@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Toast.Exceptions;
 using Toast.Nodes;
 
@@ -20,6 +18,11 @@ namespace Toast
             switch (node)
             {
                 case CommandNode c:
+                    if (target == typeof(CommandNode))
+                    {
+                        return c;
+                    }
+
                     List<object> parameters = new();
 
                     for (int i = 0; i < c.Parameters.Length; i++)
