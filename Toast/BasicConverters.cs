@@ -15,7 +15,6 @@ namespace Toast
 
         public static ToastConverter[] Others => new ToastConverter[]
         {
-            ObjectToString,
             StringToObjectArray, StringToChar,
         };
 
@@ -30,8 +29,6 @@ namespace Toast
         public static readonly ToastConverter StringToFloat = ToastConverter.Create<string, float>(float.Parse);
         public static readonly ToastConverter StringToDouble = ToastConverter.Create<string, double>(double.Parse);
         public static readonly ToastConverter StringToDecimal = ToastConverter.Create<string, decimal>(decimal.Parse);
-
-        public static readonly ToastConverter ObjectToString = ToastConverter.Create<object, string>(x => x.ToString());
 
         public static readonly ToastConverter StringToObjectArray = ToastConverter.Create<string, object[]>(x => x.Select(_x => (object)_x).ToArray());
         public static readonly ToastConverter StringToChar = ToastConverter.Create<string, char>(x => x.Length == 1 ? x[0] : throw new ParameterConvertException(typeof(string), typeof(char)));
