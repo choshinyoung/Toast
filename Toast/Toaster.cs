@@ -95,14 +95,20 @@ namespace Toast
 
         public object Execute(string line)
         {
-            var lexerResult = ToastLexer.Lexicalize(line);
-            var parserResult = ToastParser.Parse(this, lexerResult);
+            var parserResult = Parse(line);
             var executeResult = ToastExecutor.Execute(this, parserResult);
 
             return executeResult;
         }
 
-        public object ExecuteCommand(ToastCommand cmd, object[] parameters)
+        public object ExecuteNode(INode node)
+        {
+            var executeResult = ToastExecutor.Execute(this, node);
+
+            return executeResult;
+        }
+
+        public object ExecuteCommand(ToastCommand cmd, object[] parameters, bool isAsync = false)
         {
             var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
 
