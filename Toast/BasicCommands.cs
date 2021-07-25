@@ -8,7 +8,7 @@ namespace Toast
     public class BasicCommands
     {
         public static ToastCommand[] All =>
-            Literals.Concat(Operators).Concat(Statements).Concat(Others).Concat(Lists).Concat(Strings).Concat(Functions).ToArray();
+            Literals.Concat(Operators).Concat(Statements).Concat(Others).Concat(Lists).Concat(Strings).ToArray();
 
         public static ToastCommand[] Literals => new ToastCommand[]
         {
@@ -32,22 +32,17 @@ namespace Toast
 
         public static ToastCommand[] Others => new ToastCommand[]
         {
-            Print, Input, Assign
+            Print, Input, Assign, Execute
         };
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Count, IndexOf
-        };
-
-        public static ToastCommand[] Functions => new ToastCommand[]
-        {
-            Execute
+            Member, Length, IndexOf
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
         {
-            Split, Reverse, StartsWith, EndsWith, Contains
+            Split, Reverse, StartsWith, EndsWith, Contains, Trim, Substring, Join, Replace, ToUpper, ToLower
         };
 
         public static readonly ToastCommand True =
@@ -200,21 +195,14 @@ namespace Toast
         public static readonly ToastCommand Input =
                 ToastCommand.CreateFunc<ToastContext, string>("input", (ctx) => Console.ReadLine());
 
-        /* public static readonly ToastCommand Converter =
-                ToastCommand.Create<object, string, object>("convert", (x, y) =>
-                {
-                    Type t = Type.GetType(y);
-                    if (t is null)
-                        throw new Exception($"Cannot found a type named '{y}'.");
-
-                    return Convert.ChangeType(x, t);
-                }); */
+        public static readonly ToastCommand Execute =
+                ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
 
         public static readonly ToastCommand Member =
                 ToastCommand.CreateFunc<int, ToastContext, object[], object>("of", (x, ctx, y) => y[x]);
 
-        public static readonly ToastCommand Count =
-                ToastCommand.CreateFunc<ToastContext, object[], int>("count", (ctx, x) => x.Length);
+        public static readonly ToastCommand Length =
+                ToastCommand.CreateFunc<ToastContext, object[], int>("len", (ctx, x) => x.Length);
 
         public static readonly ToastCommand IndexOf =
                 ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) => 
@@ -242,8 +230,23 @@ namespace Toast
         public static readonly ToastCommand Contains =
                 ToastCommand.CreateFunc<string, ToastContext, string, bool>("contains", (x, ctx, y) => x.Contains(y));
 
-        public static readonly ToastCommand Execute =
-                ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
+        public static readonly ToastCommand Trim =
+                ToastCommand.CreateFunc<ToastContext, string, string>("trim", (ctx, x) => x.Trim());
+
+        public static readonly ToastCommand Substring =
+                ToastCommand.CreateFunc<ToastContext, string, int, int, string>("substring", (ctx, x, y, z) => x.Substring(y, z));
+
+        public static readonly ToastCommand Join =
+                ToastCommand.CreateFunc<string, ToastContext, string, string>("join", (x, ctx, y) => x + y);
+
+        public static readonly ToastCommand Replace =
+                ToastCommand.CreateFunc<string, ToastContext, string, string, string>("replace", (x, ctx, y, z) => x.Replace(y, z));
+
+        public static readonly ToastCommand ToUpper =
+                ToastCommand.CreateFunc<string, ToastContext, string>("toUpper", (x, ctx) => x.ToUpper());
+
+        public static readonly ToastCommand ToLower =
+                ToastCommand.CreateFunc<string, ToastContext, string>("toLower", (x, ctx) => x.ToLower());
 
         private BasicCommands() { }
     }
