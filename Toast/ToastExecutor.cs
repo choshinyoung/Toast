@@ -70,6 +70,11 @@ namespace Toast
         {
             if (parameter is null) return parameter;
 
+            if (parameter is string s && s.Length == 1)
+            {
+                parameter = s[0];
+            }
+
             Type paramType = parameter.GetType();
 
             if (paramType == targetType) return parameter;

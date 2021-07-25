@@ -37,7 +37,7 @@ namespace Toast
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Count
+            Member, Count, IndexOf
         };
 
         public static ToastCommand[] Functions => new ToastCommand[]
@@ -163,7 +163,7 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Repeat =
-                ToastCommand.CreateFunc<ToastContext, int, object, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(y, x).ToArray());
+                ToastCommand.CreateFunc<object, ToastContext, int, object[]>("repeat", (x, ctx, y) => Enumerable.Repeat(x, y).ToArray());
 
         public static readonly ToastCommand While =
                 ToastCommand.CreateAction<ToastContext, FunctionNode, FunctionNode>("while", (ctx, x, y) =>
@@ -211,25 +211,28 @@ namespace Toast
                 }); */
 
         public static readonly ToastCommand Member =
-                ToastCommand.CreateFunc<ToastContext, object[], int, object>("member", (ctx, x, y) => x[y]);
+                ToastCommand.CreateFunc<int, ToastContext, object[], object>("of", (x, ctx, y) => y[x]);
 
         public static readonly ToastCommand Count =
                 ToastCommand.CreateFunc<ToastContext, object[], int>("count", (ctx, x) => x.Length);
 
+        public static readonly ToastCommand IndexOf =
+                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) => Array.IndexOf(x, y));
+
         public static readonly ToastCommand Split =
-                ToastCommand.CreateFunc<ToastContext, string, char, string[]>("split", (ctx, x, y) => x.Split(y));
+                ToastCommand.CreateFunc<ToastContext, string, string, string[]>("split", (ctx, x, y) => x.Split(y));
 
         public static readonly ToastCommand Reverse =
                 ToastCommand.CreateFunc<ToastContext, string, string>("reverse", (ctx, s) => new string(s.Reverse().ToArray()));
 
         public static readonly ToastCommand StartsWith =
-                ToastCommand.CreateFunc<ToastContext, string, char, bool>("startsWith", (ctx, x, y) => x.StartsWith(y));
+                ToastCommand.CreateFunc<string, ToastContext, string, bool>("startsWith", (x, ctx, y) => x.StartsWith(y));
 
         public static readonly ToastCommand EndsWith =
-                ToastCommand.CreateFunc<ToastContext, string, char, bool>("endsWith", (ctx, x, y) => x.EndsWith(y));
+                ToastCommand.CreateFunc<string, ToastContext, string, bool>("endsWith", (x, ctx, y) => x.EndsWith(y));
 
         public static readonly ToastCommand Contains =
-                ToastCommand.CreateFunc<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
+                ToastCommand.CreateFunc<string, ToastContext, string, bool>("contains", (x, ctx, y) => x.Contains(y));
 
         public static readonly ToastCommand Execute =
                 ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y));
