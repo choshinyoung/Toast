@@ -217,7 +217,15 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, object[], int>("count", (ctx, x) => x.Length);
 
         public static readonly ToastCommand IndexOf =
-                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) => Array.IndexOf(x, y));
+                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) => 
+                {
+                    if (y is string s && s.Length == 1)
+                    {
+                        y = s[0];
+                    }
+
+                    return Array.IndexOf(x, y);
+                });
 
         public static readonly ToastCommand Split =
                 ToastCommand.CreateFunc<ToastContext, string, string, string[]>("split", (ctx, x, y) => x.Split(y));
