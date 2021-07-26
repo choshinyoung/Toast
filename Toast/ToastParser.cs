@@ -78,7 +78,6 @@ namespace Toast
                 }
             }
 
-            commands.Reverse();
             commands.Sort((c1, c2) => c2.command.Priority.CompareTo(c1.command.Priority));
 
             foreach (var (command, node) in commands)

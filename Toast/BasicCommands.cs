@@ -190,7 +190,7 @@ namespace Toast
                 });
         
         public static readonly ToastCommand Print =
-                ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x));
+                ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x), -1);
 
         public static readonly ToastCommand Input =
                 ToastCommand.CreateFunc<ToastContext, string>("input", (ctx) => Console.ReadLine());
