@@ -8,7 +8,7 @@ namespace Toast
 {
     public class ToastExecutor
     {
-        public static object Execute(Toaster toaster, INode node, Type target = null)
+        public static object Execute(Toaster toaster, INode node, ToastContext context, Type target = null)
         {
             if (target is null)
             {
@@ -27,17 +27,17 @@ namespace Toast
 
                     for (int i = 0; i < c.Parameters.Length; i++)
                     {
-                        parameters.Add(Execute(toaster, c.Parameters[i], c.Command.Parameters[i]));
+                        parameters.Add(Execute(toaster, c.Parameters[i], context, c.Command.Parameters[i]));
                     }
 
-                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(c.Command, parameters.ToArray()));
+                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
                 case VariableNode v:
                     if (target == typeof(VariableNode))
                     {
                         return v;
                     }
 
-                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(toaster.GetCommand(v.Name), Array.Empty<object>()));
+                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
                 case FunctionNode f:
                     return ConvertParameter(toaster, target, f);
                 case ListNode l:
@@ -45,7 +45,7 @@ namespace Toast
 
                     foreach (INode n in l.Value)
                     {
-                        list.Add(Execute(toaster, n));
+                        list.Add(Execute(toaster, n, context));
                     }
 
                     return ConvertParameter(toaster, target, list.ToArray());

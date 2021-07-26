@@ -2,9 +2,14 @@
 {
     public class ToastContext
     {
-        public readonly Toaster Toaster;
+        public Toaster Toaster { get; internal set; }
 
-        internal ToastContext(Toaster toaster)
+        public ToastContext()
+        {
+
+        }
+
+        public ToastContext(Toaster toaster)
         {
             Toaster = toaster;
         }

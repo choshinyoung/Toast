@@ -25,12 +25,12 @@ namespace Toast
         {
             var parameters = method.GetParameters().ToList();
 
-            if (parameters.Count(p => p.ParameterType == typeof(ToastContext)) != 1)
+            if (parameters.Count(p => p.ParameterType.IsAssignableTo(typeof(ToastContext))) != 1)
             {
                 throw new ContextCountException();
             }
 
-            int contextIndex = parameters.FindIndex(p => p.ParameterType == typeof(ToastContext));
+            int contextIndex = parameters.FindIndex(p => p.ParameterType.IsAssignableTo(typeof(ToastContext)));
             parameters.RemoveAt(contextIndex);
 
             ToastCommand cmd = new()

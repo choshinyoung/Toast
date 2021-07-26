@@ -20,6 +20,8 @@ namespace Example
                 Console.WriteLine($"Command list: {string.Join(", ", ctx.Toaster.GetCommands().Select(c => c.Name))}");
             }));
 
+            toaster.AddCommand(ToastCommand.CreateFunc<CustomContext, string>("getValue", (ctx) => ctx.Value));
+
             while (true)
             {
                 Console.Write("> ");
@@ -28,7 +30,7 @@ namespace Example
 
             void Execute(string line)
             {
-                object result = toaster.Execute(line);
+                object result = toaster.Execute(line, new CustomContext("sans"));
 
                 if (result is not null)
                 {

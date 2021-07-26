@@ -93,33 +93,42 @@ namespace Toast
             return parserResult;
         }
 
-        public object Execute(string line)
+        public object Execute(string line, ToastContext context = null)
         {
             var parserResult = Parse(line);
-            var executeResult = ToastExecutor.Execute(this, parserResult);
+            var executeResult = ToastExecutor.Execute(this, parserResult, context);
 
             return executeResult;
         }
 
-        public object ExecuteNode(INode node)
+        public object ExecuteNode(INode node, ToastContext context = null)
         {
-            var executeResult = ToastExecutor.Execute(this, node);
+            var executeResult = ToastExecutor.Execute(this, node, context);
 
             return executeResult;
         }
 
-        public object ExecuteCommand(ToastCommand cmd, object[] parameters, bool isAsync = false)
+        public object ExecuteCommand(ToastCommand cmd, object[] parameters, bool isAsync = false, ToastContext context = null)
         {
+            if (context is null)
+            {
+                context = new ToastContext(this);
+            }
+            else if (context.Toaster is null)
+            {
+                context.Toaster = this;
+            }
+
             var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
 
-            prms.Insert(cmd.NamePosition, new ToastContext(this));
+            prms.Insert(cmd.NamePosition, context);
 
             object result = cmd.Method.Invoke(cmd.Target, prms.ToArray());
 
             return result;
         }
 
-        public object ExecuteFunction(FunctionNode func, object[] parameters)
+        public object ExecuteFunction(FunctionNode func, object[] parameters, ToastContext context)
         {
             object result = null;
 
@@ -143,7 +152,7 @@ namespace Toast
 
             foreach (INode line in func.Lines)
             {
-                result = ToastExecutor.Execute(this, line);
+                result = ToastExecutor.Execute(this, line, context);
             }
 
             return result;
