@@ -159,7 +159,7 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Repeat =
-                ToastCommand.CreateFunc<object, ToastContext, int, object[]>("repeat", (x, ctx, y) => Enumerable.Repeat(x, y).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object, int, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(x, y).ToArray());
 
         public static readonly ToastCommand While =
                 ToastCommand.CreateAction<ToastContext, INode, FunctionNode>("while", (ctx, x, y) =>
@@ -200,13 +200,13 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y, ctx));
 
         public static readonly ToastCommand Member =
-                ToastCommand.CreateFunc<int, ToastContext, object[], object>("thOf", (x, ctx, y) => y[x]);
+                ToastCommand.CreateFunc<ToastContext, int, object[], object>("member", (ctx, x, y) => y[x]);
 
         public static readonly ToastCommand Length =
                 ToastCommand.CreateFunc<ToastContext, object[], int>("len", (ctx, x) => x.Length);
 
         public static readonly ToastCommand IndexOf =
-                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) =>
+                ToastCommand.CreateFunc<ToastContext, object[], object, int>("indexOf", (ctx, x, y) =>
                 {
                     if (y is string s && s.Length == 1)
                     {
@@ -217,19 +217,19 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Filter =
-                ToastCommand.CreateFunc<object[], ToastContext, FunctionNode, object[]>("filter", (x, ctx, y) => x.Where(o => (bool)ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object[], FunctionNode, object[]>("filter", (ctx, x, y) => x.Where(o => (bool)ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
 
         public static readonly ToastCommand Map =
-                ToastCommand.CreateFunc<object[], ToastContext, FunctionNode, object[]>("map", (x, ctx, y) => x.Select(o => ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object[], FunctionNode, object[]>("map", (ctx, x, y) => x.Select(o => ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
 
         public static readonly ToastCommand Combine =
-                ToastCommand.CreateFunc<object[], ToastContext, object[], object[]>("combine", (x, ctx, y) => x.Concat(y).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object[], object[], object[]>("combine", (ctx, x, y) => x.Concat(y).ToArray());
 
         public static readonly ToastCommand Append =
-                ToastCommand.CreateFunc<object[], ToastContext, object, object[]>("append", (x, ctx, y) => x.Concat(new[] {y}).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object[], object, object[]>("append", (ctx, x, y) => x.Concat(new[] {y}).ToArray());
 
         public static readonly ToastCommand Remove =
-                ToastCommand.CreateFunc<object[], ToastContext, object, object[]>("remove", (x, ctx, y) =>
+                ToastCommand.CreateFunc<ToastContext, object[], object, object[]>("remove", (ctx, x, y) =>
                 {
                     var list = x.ToList();
                     list.Remove(y);
@@ -251,13 +251,13 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, string, string>("reverse", (ctx, s) => new string(s.Reverse().ToArray()));
 
         public static readonly ToastCommand StartsWith =
-                ToastCommand.CreateFunc<string, ToastContext, string, bool>("startsWith", (x, ctx, y) => x.StartsWith(y));
+                ToastCommand.CreateFunc<ToastContext, string, string, bool>("startsWith", (ctx, x, y) => x.StartsWith(y));
 
         public static readonly ToastCommand EndsWith =
-                ToastCommand.CreateFunc<string, ToastContext, string, bool>("endsWith", (x, ctx, y) => x.EndsWith(y));
+                ToastCommand.CreateFunc<ToastContext, string, string, bool>("endsWith", (ctx, x, y) => x.EndsWith(y));
 
         public static readonly ToastCommand Contains =
-                ToastCommand.CreateFunc<string, ToastContext, string, bool>("contains", (x, ctx, y) => x.Contains(y));
+                ToastCommand.CreateFunc<ToastContext, string, string, bool>("contains", (ctx, x, y) => x.Contains(y));
 
         public static readonly ToastCommand Trim =
                 ToastCommand.CreateFunc<ToastContext, string, string>("trim", (ctx, x) => x.Trim());
@@ -266,16 +266,16 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, string, int, int, string>("substring", (ctx, x, y, z) => x.Substring(y, z));
 
         public static readonly ToastCommand Join =
-                ToastCommand.CreateFunc<string, ToastContext, string, string>("join", (x, ctx, y) => x + y);
+                ToastCommand.CreateFunc<ToastContext, string, string, string>("join", (ctx, x, y) => x + y);
 
         public static readonly ToastCommand Replace =
-                ToastCommand.CreateFunc<string, ToastContext, string, string, string>("replace", (x, ctx, y, z) => x.Replace(y, z));
+                ToastCommand.CreateFunc<ToastContext, string, string, string, string>("replace", (ctx, x, y, z) => x.Replace(y, z));
 
         public static readonly ToastCommand ToUpper =
-                ToastCommand.CreateFunc<string, ToastContext, string>("toUpper", (x, ctx) => x.ToUpper());
+                ToastCommand.CreateFunc<ToastContext, string, string>("toUpper", (ctx, x) => x.ToUpper());
 
         public static readonly ToastCommand ToLower =
-                ToastCommand.CreateFunc<string, ToastContext, string>("toLower", (x, ctx) => x.ToLower());
+                ToastCommand.CreateFunc<ToastContext, string, string>("toLower", (ctx, x) => x.ToLower());
 
         private BasicCommands() { }
     }
