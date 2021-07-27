@@ -23,13 +23,23 @@ namespace Toast
             from n in NumberParser
             select s == '+' ? n : new NumberToken((float)n.GetValue() * -1);
 
-        public static readonly Parser<char> QuoteParser = Parse.Char('"');
-        public static readonly Parser<char> SlashQuoteParser = Parse.String("\\\"").Select(c => '"');
-        public static readonly Parser<Token> TextParser =
-            from start in QuoteParser
-            from s in SlashQuoteParser.Or(Parse.AnyChar).Except(QuoteParser).Many()
-            from end in QuoteParser
+        public static readonly Parser<char> DoubleQuoteParser = Parse.Char('"');
+        public static readonly Parser<char> SlashDoubleQuoteParser = Parse.String("\\\"").Select(c => '"');
+        public static readonly Parser<Token> DoubleQuoteTextParser =
+            from start in DoubleQuoteParser
+            from s in SlashDoubleQuoteParser.Or(Parse.AnyChar).Except(DoubleQuoteParser).Many()
+            from end in DoubleQuoteParser
             select new TextToken(string.Concat(s));
+
+        public static readonly Parser<char> SingleQuoteParser = Parse.Char('\'');
+        public static readonly Parser<char> SlashSingleQuoteParser = Parse.String("\\'").Select(c => '\'');
+        public static readonly Parser<Token> SingleQuoteTextParser =
+            from start in SingleQuoteParser
+            from s in SlashSingleQuoteParser.Or(Parse.AnyChar).Except(SingleQuoteParser).Many()
+            from end in SingleQuoteParser
+            select new TextToken(string.Concat(s));
+
+        public static readonly Parser<Token> TextParser = DoubleQuoteTextParser.Or(SingleQuoteTextParser);
 
         public static readonly Parser<Token> GroupParser =
             from start in Parse.Char('(')
