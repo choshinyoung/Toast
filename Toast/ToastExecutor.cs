@@ -15,6 +15,8 @@ namespace Toast
                 target = typeof(object);
             }
 
+            if (target == typeof(INode)) return node;
+
             switch (node)
             {
                 case CommandNode c:
@@ -91,6 +93,10 @@ namespace Toast
             else if (IsNumber(targetType) && IsNumber(paramType))
             {
                 return Convert.ChangeType(parameter, targetType);
+            }
+            else if (targetType == typeof(INode) && paramType.IsAssignableTo(typeof(INode)))
+            {
+                return (INode)parameter;
             }
             else if (targetType == typeof(string))
             {

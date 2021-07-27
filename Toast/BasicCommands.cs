@@ -126,6 +126,7 @@ namespace Toast
                     }
 
                     string name = ((VariableNode)x.Parameters[0]).Name;
+                    object value = ToastExecutor.Execute(ctx.Toaster, x.Parameters[1], ctx);
 
                     ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
                     if (cmd is not null)
@@ -133,8 +134,8 @@ namespace Toast
                         ctx.Toaster.RemoveCommand(cmd);
                     }
 
-                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => ToastExecutor.Execute(ctx.Toaster, x.Parameters[1], ctx)));
-                }, 1);
+                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => value));
+                }, -1);
         
         public static readonly ToastCommand If =
                 ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y: null);
@@ -161,20 +162,20 @@ namespace Toast
                 ToastCommand.CreateFunc<object, ToastContext, int, object[]>("repeat", (x, ctx, y) => Enumerable.Repeat(x, y).ToArray());
 
         public static readonly ToastCommand While =
-                ToastCommand.CreateAction<ToastContext, FunctionNode, FunctionNode>("while", (ctx, x, y) =>
+                ToastCommand.CreateAction<ToastContext, INode, FunctionNode>("while", (ctx, x, y) =>
                 {
-                    while ((bool)ctx.Toaster.ExecuteFunction(x, Array.Empty<object>(), ctx))
+                    while ((bool)ctx.Toaster.ExecuteNode(x, ctx))
                     {
                         ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx);
                     }
                 });
 
         public static readonly ToastCommand For =
-                ToastCommand.CreateAction<ToastContext, FunctionNode, FunctionNode, FunctionNode, FunctionNode>("for", (ctx, x, y, z, w) =>
+                ToastCommand.CreateAction<ToastContext, INode, INode, INode, FunctionNode>("for", (ctx, x, y, z, w) =>
                 {
-                    for (ctx.Toaster.ExecuteFunction(x, Array.Empty<object>(), ctx); 
-                         (bool)ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx); 
-                         ctx.Toaster.ExecuteFunction(z, Array.Empty<object>(), ctx))
+                    for (ctx.Toaster.ExecuteNode(x, ctx); 
+                         (bool)ctx.Toaster.ExecuteNode(y, ctx); 
+                         ctx.Toaster.ExecuteNode(z, ctx))
                     {
                         ctx.Toaster.ExecuteFunction(w, Array.Empty<object>(), ctx);
                     }
@@ -190,7 +191,7 @@ namespace Toast
                 });
         
         public static readonly ToastCommand Print =
-                ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x), -1);
+                ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x), -2);
 
         public static readonly ToastCommand Input =
                 ToastCommand.CreateFunc<ToastContext, string>("input", (ctx) => Console.ReadLine());
