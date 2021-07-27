@@ -37,7 +37,7 @@ namespace Toast
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Length, IndexOf
+            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -136,9 +136,9 @@ namespace Toast
 
                     ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => value));
                 }, -1);
-        
+
         public static readonly ToastCommand If =
-                ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y: null);
+                ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y : null);
 
         public static readonly ToastCommand Else =
                 ToastCommand.CreateFunc<CommandNode, ToastContext, object, object>("else", (x, ctx, y) =>
@@ -148,7 +148,7 @@ namespace Toast
                         throw new InvalidCommandNodeException("else", x.Command.Name);
                     }
 
-                    if ((bool)ToastExecutor.Execute(ctx.Toaster, x.Parameters[0], ctx, typeof(bool))) 
+                    if ((bool)ToastExecutor.Execute(ctx.Toaster, x.Parameters[0], ctx, typeof(bool)))
                     {
                         return ToastExecutor.Execute(ctx.Toaster, x.Parameters[1], ctx);
                     }
@@ -173,8 +173,8 @@ namespace Toast
         public static readonly ToastCommand For =
                 ToastCommand.CreateAction<ToastContext, INode, INode, INode, FunctionNode>("for", (ctx, x, y, z, w) =>
                 {
-                    for (ctx.Toaster.ExecuteNode(x, ctx); 
-                         (bool)ctx.Toaster.ExecuteNode(y, ctx); 
+                    for (ctx.Toaster.ExecuteNode(x, ctx);
+                         (bool)ctx.Toaster.ExecuteNode(y, ctx);
                          ctx.Toaster.ExecuteNode(z, ctx))
                     {
                         ctx.Toaster.ExecuteFunction(w, Array.Empty<object>(), ctx);
@@ -189,7 +189,7 @@ namespace Toast
                         ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx);
                     }
                 });
-        
+
         public static readonly ToastCommand Print =
                 ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x), -2);
 
@@ -206,7 +206,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, object[], int>("len", (ctx, x) => x.Length);
 
         public static readonly ToastCommand IndexOf =
-                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) => 
+                ToastCommand.CreateFunc<object[], ToastContext, object, int>("indexOf", (x, ctx, y) =>
                 {
                     if (y is string s && s.Length == 1)
                     {
@@ -214,6 +214,34 @@ namespace Toast
                     }
 
                     return Array.IndexOf(x, y);
+                });
+
+        public static readonly ToastCommand Filter =
+                ToastCommand.CreateFunc<object[], ToastContext, FunctionNode, object[]>("filter", (x, ctx, y) => x.Where(o => (bool)ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
+
+        public static readonly ToastCommand Map =
+                ToastCommand.CreateFunc<object[], ToastContext, FunctionNode, object[]>("map", (x, ctx, y) => x.Select(o => ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)).ToArray());
+
+        public static readonly ToastCommand Combine =
+                ToastCommand.CreateFunc<object[], ToastContext, object[], object[]>("combine", (x, ctx, y) => x.Concat(y).ToArray());
+
+        public static readonly ToastCommand Append =
+                ToastCommand.CreateFunc<object[], ToastContext, object, object[]>("append", (x, ctx, y) => x.Concat(new[] {y}).ToArray());
+
+        public static readonly ToastCommand Remove =
+                ToastCommand.CreateFunc<object[], ToastContext, object, object[]>("remove", (x, ctx, y) =>
+                {
+                    var list = x.ToList();
+                    list.Remove(y);
+                    return list.ToArray();
+                });
+
+        public static readonly ToastCommand Sort =
+                ToastCommand.CreateFunc<ToastContext, object[], object[]>("sort", (ctx, x) =>
+                {
+                    var list = x.ToList();
+                    list.Sort();
+                    return list.ToArray();
                 });
 
         public static readonly ToastCommand Split =
