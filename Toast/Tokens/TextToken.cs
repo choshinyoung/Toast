@@ -2,11 +2,11 @@
 {
     public class TextToken : Token
     {
-        public TextToken(string value) : base(value) { }
+        public TextToken(object[] value) : base(value) { }
 
-        public new string GetValue()
+        public new object[] GetValue()
         {
-            return (string)base.GetValue();
+            return (object[])base.GetValue();
         }
     }
 }

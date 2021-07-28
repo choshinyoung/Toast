@@ -23,21 +23,31 @@ namespace Toast
             from n in NumberParser
             select s == '+' ? n : new NumberToken((float)n.GetValue() * -1);
 
-        public static readonly Parser<char> DoubleQuoteParser = Parse.Char('"');
-        public static readonly Parser<char> SlashDoubleQuoteParser = Parse.String("\\\"").Select(c => '"');
+        public static readonly Parser<object> BraceStartParser = Parse.Char('{').Select(c => (object)c);
+        public static readonly Parser<object> BraceEndParser = Parse.Char('}').Select(c => (object)c);
+        public static readonly Parser<object> SlashBracesStartParser = Parse.String("\\{").Select(c => (object)'{');
+        public static readonly Parser<object> SlashBracesEndParser = Parse.String("\\}").Select(c => (object)'}');
+        public static readonly Parser<object> TextInterpolationParser =
+            from start in BraceStartParser
+            from node in LineParser
+            from end in BraceEndParser
+            select node;
+
+        public static readonly Parser<object> DoubleQuoteParser = Parse.Char('"').Select(c => (object)c);
+        public static readonly Parser<object> SlashDoubleQuoteParser = Parse.String("\\\"").Select(c => (object)'"');
         public static readonly Parser<Token> DoubleQuoteTextParser =
             from start in DoubleQuoteParser
-            from s in SlashDoubleQuoteParser.Or(Parse.AnyChar).Except(DoubleQuoteParser).Many()
+            from s in SlashDoubleQuoteParser.Or(SlashBracesStartParser).Or(SlashBracesEndParser).Or(TextInterpolationParser).Or(Parse.AnyChar.Select(c => (object)c).Except(BraceStartParser).Except(BraceEndParser)).Except(DoubleQuoteParser).Many()
             from end in DoubleQuoteParser
-            select new TextToken(string.Concat(s));
+            select new TextToken(s.ToArray());
 
-        public static readonly Parser<char> SingleQuoteParser = Parse.Char('\'');
-        public static readonly Parser<char> SlashSingleQuoteParser = Parse.String("\\'").Select(c => '\'');
+        public static readonly Parser<object> SingleQuoteParser = Parse.Char('\'').Select(c => (object)c);
+        public static readonly Parser<object> SlashSingleQuoteParser = Parse.String("\\'").Select(c => '\'').Select(c => (object)c);
         public static readonly Parser<Token> SingleQuoteTextParser =
             from start in SingleQuoteParser
-            from s in SlashSingleQuoteParser.Or(Parse.AnyChar).Except(SingleQuoteParser).Many()
+            from s in SlashSingleQuoteParser.Or(SlashBracesStartParser).Or(SlashBracesEndParser).Or(TextInterpolationParser).Or(Parse.AnyChar.Select(c => (object)c).Except(BraceStartParser).Except(BraceEndParser)).Except(SingleQuoteParser).Many()
             from end in SingleQuoteParser
-            select new TextToken(string.Concat(s));
+            select new TextToken(s.ToArray());
 
         public static readonly Parser<Token> TextParser = DoubleQuoteTextParser.Or(SingleQuoteTextParser);
 
