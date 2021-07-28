@@ -69,7 +69,34 @@ namespace Toast
                         nodes.Add(new ListNode(members.ToArray()));
 
                         break;
-                    case NumberToken or TextToken:
+                    case TextToken t:
+                        List<object> contents = new();
+
+                        string tmp = "";
+                        foreach (object o in t.GetValue())
+                        {
+                            if (o is char c)
+                            {
+                                tmp += c;
+                            }
+                            else if (o is Token[] tkn)
+                            {
+                                contents.Add(tmp);
+                                tmp = "";
+
+                                contents.Add(Parse(toaster, tkn));
+                            }
+                            else
+                            {
+                                throw new InvalidParameterTypeException(o);
+                            }
+                        }
+                        contents.Add(tmp);
+
+                        nodes.Add(new TextNode(contents.ToArray()));
+
+                        break;
+                    case NumberToken:
                         nodes.Add(new ValueNode(token.GetValue()));
 
                         break;
