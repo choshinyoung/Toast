@@ -51,6 +51,22 @@ namespace Toast
                     }
 
                     return ConvertParameter(toaster, target, list.ToArray());
+                case TextNode t:
+                    string result = "";
+
+                    foreach (object o in t.Values)
+                    {
+                        if (o is string s)
+                        {
+                            result += s;
+                        }
+                        else if (o is INode n)
+                        {
+                            result += Execute(toaster, n, context, typeof(string));
+                        }
+                    }
+
+                    return result;
                 case ValueNode v:
                     return ConvertParameter(toaster, target, v.Value);
                 default:
