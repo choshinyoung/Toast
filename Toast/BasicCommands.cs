@@ -126,7 +126,7 @@ namespace Toast
                     }
 
                     string name = ((VariableNode)x.Parameters[0]).Name;
-                    object value = ToastExecutor.Execute(ctx.Toaster, x.Parameters[1], ctx);
+                    object value = ToastExecutor.Execute(ctx, x.Parameters[1]);
 
                     ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
                     if (cmd is not null)
@@ -148,9 +148,9 @@ namespace Toast
                         throw new InvalidCommandNodeException("else", x.Command.Name);
                     }
 
-                    if ((bool)ToastExecutor.Execute(ctx.Toaster, x.Parameters[0], ctx, typeof(bool)))
+                    if ((bool)ToastExecutor.Execute(ctx, x.Parameters[0], typeof(bool)))
                     {
-                        return ToastExecutor.Execute(ctx.Toaster, x.Parameters[1], ctx);
+                        return ToastExecutor.Execute(ctx, x.Parameters[1]);
                     }
                     else
                     {

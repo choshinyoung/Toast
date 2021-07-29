@@ -8,7 +8,7 @@ namespace Toast
 {
     public class ToastExecutor
     {
-        public static object Execute(Toaster toaster, INode node, ToastContext context, Type target = null)
+        public static object Execute(ToastContext context, INode node, Type target = null)
         {
             if (target is null)
             {
@@ -29,28 +29,28 @@ namespace Toast
 
                     for (int i = 0; i < c.Parameters.Length; i++)
                     {
-                        parameters.Add(Execute(toaster, c.Parameters[i], context, c.Command.Parameters[i]));
+                        parameters.Add(Execute(context, c.Parameters[i],  c.Command.Parameters[i]));
                     }
 
-                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
+                    return ConvertParameter(context.Toaster, target, context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
                 case VariableNode v:
                     if (target == typeof(VariableNode))
                     {
                         return v;
                     }
 
-                    return ConvertParameter(toaster, target, toaster.ExecuteCommand(toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
+                    return ConvertParameter(context.Toaster, target, context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
                 case FunctionNode f:
-                    return ConvertParameter(toaster, target, f);
+                    return ConvertParameter(context.Toaster, target, f);
                 case ListNode l:
                     List<object> list = new();
 
                     foreach (INode n in l.Value)
                     {
-                        list.Add(Execute(toaster, n, context));
+                        list.Add(Execute(context, n));
                     }
 
-                    return ConvertParameter(toaster, target, list.ToArray());
+                    return ConvertParameter(context.Toaster, target, list.ToArray());
                 case TextNode t:
                     string result = "";
 
@@ -62,13 +62,13 @@ namespace Toast
                         }
                         else if (o is INode n)
                         {
-                            result += Execute(toaster, n, context, typeof(string));
+                            result += Execute(context, n, typeof(string));
                         }
                     }
 
                     return result;
                 case ValueNode v:
-                    return ConvertParameter(toaster, target, v.Value);
+                    return ConvertParameter(context.Toaster, target, v.Value);
                 default:
                     throw new InvalidParameterTypeException(node);
             }

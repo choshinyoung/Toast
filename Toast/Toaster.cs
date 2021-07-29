@@ -95,21 +95,18 @@ namespace Toast
 
         public object Execute(string line, ToastContext context = null)
         {
+            GetContext(context);
+
             var parserResult = Parse(line);
-            var executeResult = ToastExecutor.Execute(this, parserResult, context);
+            var executeResult = ToastExecutor.Execute(context, parserResult);
 
             return executeResult;
         }
 
         public object ExecuteNode(INode node, ToastContext context = null)
         {
-            var executeResult = ToastExecutor.Execute(this, node, context);
+            GetContext(context);
 
-            return executeResult;
-        }
-
-        public object ExecuteCommand(ToastCommand cmd, object[] parameters, bool isAsync = false, ToastContext context = null)
-        {
             if (context is null)
             {
                 context = new ToastContext(this);
@@ -118,6 +115,15 @@ namespace Toast
             {
                 context.Toaster = this;
             }
+
+            var executeResult = ToastExecutor.Execute(context, node);
+
+            return executeResult;
+        }
+
+        public object ExecuteCommand(ToastCommand cmd, object[] parameters, ToastContext context = null)
+        {
+            GetContext(context);
 
             var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
 
@@ -152,10 +158,24 @@ namespace Toast
 
             foreach (INode line in func.Lines)
             {
-                result = ToastExecutor.Execute(this, line, context);
+                result = ToastExecutor.Execute(context, line);
             }
 
             return result;
+        }
+
+        private ToastContext GetContext(ToastContext context)
+        {
+            if (context is null)
+            {
+                context = new ToastContext(this);
+            }
+            else if (context.Toaster is null)
+            {
+                context.Toaster = this;
+            }
+
+            return context;
         }
     }
 }
