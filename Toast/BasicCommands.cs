@@ -120,21 +120,38 @@ namespace Toast
         public static readonly ToastCommand Assign =
                 ToastCommand.CreateAction<ToastContext, CommandNode>("var", (ctx, x) =>
                 {
-                    if (x.Command != Equal || x.Parameters[0] is not VariableNode)
+                    if (x.Parameters[0] is not VariableNode)
                     {
                         throw new InvalidCommandNodeException("var", x.Command.Name);
                     }
 
                     string name = ((VariableNode)x.Parameters[0]).Name;
-                    object value = ToastExecutor.Execute(ctx, x.Parameters[1]);
 
-                    ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
-                    if (cmd is not null)
+                    if (x.Command == Equal)
                     {
-                        ctx.Toaster.RemoveCommand(cmd);
+                        object value = ToastExecutor.Execute(ctx, x.Parameters[1]);
+                        setVariable(value);
+                    }
+                    else if (x.Command == Addition || x.Command == Subtraction || x.Command == Multiplication || x.Command == Division || x.Command == Modulus || x.Command == Exponentiation || x.Command == FloorDivision ||
+                            x.Command == BitwiseAnd || x.Command == BitwiseOr || x.Command == BitwiseXor || x.Command == LeftShift || x.Command == RightShift)
+                    {
+                        setVariable(ToastExecutor.Execute(ctx, x));
+                    }
+                    else
+                    {
+                        throw new InvalidCommandNodeException(x.Command.Name, x.Command.Name);
                     }
 
-                    ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => value));
+                    void setVariable(object value)
+                    {
+                        ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
+                        if (cmd is not null)
+                        {
+                            ctx.Toaster.RemoveCommand(cmd);
+                        }
+
+                        ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => value));
+                    }
                 }, -1);
 
         public static readonly ToastCommand If =
