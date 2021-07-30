@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>choshinyoung.Toast</id>
+    <version>1.0.3</version>
+    <title>Toast</title>
+    <authors>choshinyoung</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/choshinyoung/Toast</projectUrl>
+    <description>Simple command language builder</description>
+    <releaseNotes>fix a bug</releaseNotes>
+    <dependencies>
+      <dependency id="Sprache" version="2.3.1" />
+    </dependencies>
+  </metadata>
+</package>

@@ -95,7 +95,7 @@ namespace Toast
 
         public object Execute(string line, ToastContext context = null)
         {
-            GetContext(context);
+            context = GetContext(context);
 
             var parserResult = Parse(line);
             var executeResult = ToastExecutor.Execute(context, parserResult);
@@ -105,7 +105,7 @@ namespace Toast
 
         public object ExecuteNode(INode node, ToastContext context = null)
         {
-            GetContext(context);
+            context = GetContext(context);
 
             if (context is null)
             {
@@ -123,7 +123,7 @@ namespace Toast
 
         public object ExecuteCommand(ToastCommand cmd, object[] parameters, ToastContext context = null)
         {
-            GetContext(context);
+            context = GetContext(context);
 
             var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
 

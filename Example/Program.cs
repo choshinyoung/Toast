@@ -30,7 +30,7 @@ namespace Example
 
             void Execute(string line)
             {
-                object result = toaster.Execute(line, new CustomContext("sans"));
+                object result = toaster.Execute(line);
 
                 if (result is not null)
                 {

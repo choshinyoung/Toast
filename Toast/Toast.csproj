@@ -2,11 +2,23 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <Authors>Toast</Authors>
+    <Authors>choshinyoung</Authors>
+    <Description>Simple command language builder package</Description>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
+    <PackageId>choshinyoung.Toast</PackageId>
+    <Version>1.0.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Sprache" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>
