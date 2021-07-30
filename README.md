@@ -1,2 +1,2 @@
 # Toast
-Simple command language
+Simple command language builder
