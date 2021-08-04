@@ -32,16 +32,16 @@ namespace Toast
                         parameters.Add(Execute(context, c.Parameters[i],  c.Command.Parameters[i]));
                     }
 
-                    return ConvertParameter(context.Toaster, target, context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
+                    return ConvertParameter(context, target, context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
                 case VariableNode v:
                     if (target == typeof(VariableNode))
                     {
                         return v;
                     }
 
-                    return ConvertParameter(context.Toaster, target, context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
+                    return ConvertParameter(context, target, context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
                 case FunctionNode f:
-                    return ConvertParameter(context.Toaster, target, f);
+                    return ConvertParameter(context, target, f);
                 case ListNode l:
                     List<object> list = new();
 
@@ -50,7 +50,7 @@ namespace Toast
                         list.Add(Execute(context, n));
                     }
 
-                    return ConvertParameter(context.Toaster, target, list.ToArray());
+                    return ConvertParameter(context, target, list.ToArray());
                 case TextNode t:
                     string result = "";
 
@@ -68,23 +68,23 @@ namespace Toast
 
                     return result;
                 case ValueNode v:
-                    return ConvertParameter(context.Toaster, target, v.Value);
+                    return ConvertParameter(context, target, v.Value);
                 default:
                     throw new InvalidParameterTypeException(node);
             }
         }
 
-        public static object[] ConvertParameters(Toaster toaster, Type[] targets, object[] parameters)
+        public static object[] ConvertParameters(ToastContext context, Type[] targets, object[] parameters)
         {
             for (int i = 0; i < targets.Length; i++)
             {
-                parameters[i] = ConvertParameter(toaster, targets[i], parameters[i]);
+                parameters[i] = ConvertParameter(context, targets[i], parameters[i]);
             }
 
             return parameters;
         }
 
-        public static object ConvertParameter(Toaster toaster, Type targetType, object parameter)
+        public static object ConvertParameter(ToastContext context, Type targetType, object parameter)
         {
             if (parameter is null) return parameter;
 
@@ -92,19 +92,19 @@ namespace Toast
 
             if (paramType == targetType) return parameter;
 
-            List<ToastConverter> converters = toaster.GetConverters().ToList();
+            List<ToastConverter> converters = context.Toaster.GetConverters().ToList();
 
             if (converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
             {
-                return ExecuteConverter(c1, parameter);
+                return ExecuteConverter(context, c1, parameter);
             }
             else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
             {
-                return ExecuteConverter(c2, Convert.ChangeType(parameter, c2.From));
+                return ExecuteConverter(context, c2, Convert.ChangeType(parameter, c2.From));
             }
             else if (IsNumber(targetType) && converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
             {
-                return Convert.ChangeType(ExecuteConverter(c3, parameter), targetType);
+                return Convert.ChangeType(ExecuteConverter(context, c3, parameter), targetType);
             }
             else if (IsNumber(targetType) && IsNumber(paramType))
             {
@@ -128,9 +128,9 @@ namespace Toast
             }
         }
 
-        public static object ExecuteConverter(ToastConverter cvt, object parameter)
+        public static object ExecuteConverter(ToastContext context, ToastConverter cvt, object parameter)
         {
-            return cvt.Method.Invoke(cvt.Target, new[] { parameter });
+            return cvt.Method.Invoke(cvt.Target, new[] { context, parameter });
         }
 
         public static bool IsNumber(Type type)

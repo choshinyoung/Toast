@@ -18,20 +18,20 @@ namespace Toast
             StringToObjectArray, StringToChar,
         };
 
-        public static readonly ToastConverter StringToByte = ToastConverter.Create<string, byte>(byte.Parse);
-        public static readonly ToastConverter StringToSbyte = ToastConverter.Create<string, sbyte>(sbyte.Parse);
-        public static readonly ToastConverter StringToShort = ToastConverter.Create<string, short>(short.Parse);
-        public static readonly ToastConverter StringToUshort = ToastConverter.Create<string, ushort>(ushort.Parse);
-        public static readonly ToastConverter StringToInt = ToastConverter.Create<string, int>(int.Parse);
-        public static readonly ToastConverter StringToUint = ToastConverter.Create<string, uint>(uint.Parse);
-        public static readonly ToastConverter StringToLong = ToastConverter.Create<string, long>(long.Parse);
-        public static readonly ToastConverter StringToUlong = ToastConverter.Create<string, ulong>(ulong.Parse);
-        public static readonly ToastConverter StringToFloat = ToastConverter.Create<string, float>(float.Parse);
-        public static readonly ToastConverter StringToDouble = ToastConverter.Create<string, double>(double.Parse);
-        public static readonly ToastConverter StringToDecimal = ToastConverter.Create<string, decimal>(decimal.Parse);
+        public static readonly ToastConverter StringToByte = ToastConverter.Create<string, byte>((ctx, x) => byte.Parse(x));
+        public static readonly ToastConverter StringToSbyte = ToastConverter.Create<string, sbyte>((ctx, x) => sbyte.Parse(x));
+        public static readonly ToastConverter StringToShort = ToastConverter.Create<string, short>((ctx, x) => short.Parse(x));
+        public static readonly ToastConverter StringToUshort = ToastConverter.Create<string, ushort>((ctx, x) => ushort.Parse(x));
+        public static readonly ToastConverter StringToInt = ToastConverter.Create<string, int>((ctx, x) => int.Parse(x));
+        public static readonly ToastConverter StringToUint = ToastConverter.Create<string, uint>((ctx, x) => uint.Parse(x));
+        public static readonly ToastConverter StringToLong = ToastConverter.Create<string, long>((ctx, x) => long.Parse(x));
+        public static readonly ToastConverter StringToUlong = ToastConverter.Create<string, ulong>((ctx, x) => ulong.Parse(x));
+        public static readonly ToastConverter StringToFloat = ToastConverter.Create<string, float>((ctx, x) => float.Parse(x));
+        public static readonly ToastConverter StringToDouble = ToastConverter.Create<string, double>((ctx, x) => double.Parse(x));
+        public static readonly ToastConverter StringToDecimal = ToastConverter.Create<string, decimal>((ctx, x) => decimal.Parse(x));
 
-        public static readonly ToastConverter StringToObjectArray = ToastConverter.Create<string, object[]>(x => x.Select(_x => (object)_x).ToArray());
-        public static readonly ToastConverter StringToChar = ToastConverter.Create<string, char>(x => x.Length == 1 ? x[0] : throw new ParameterConvertException(typeof(string), typeof(char)));
+        public static readonly ToastConverter StringToObjectArray = ToastConverter.Create<string, object[]>((ctx, x) => x.Select(_x => (object)_x).ToArray());
+        public static readonly ToastConverter StringToChar = ToastConverter.Create<string, char>((ctx, x) => x.Length == 1 ? x[0] : throw new ParameterConvertException(typeof(string), typeof(char)));
 
         private BasicConverters() { }
     }

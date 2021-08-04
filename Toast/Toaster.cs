@@ -125,7 +125,7 @@ namespace Toast
         {
             context = GetContext(context);
 
-            var prms = ToastExecutor.ConvertParameters(this, cmd.Parameters, parameters).ToList();
+            var prms = ToastExecutor.ConvertParameters(context, cmd.Parameters, parameters).ToList();
 
             prms.Insert(cmd.NamePosition, context);
 
