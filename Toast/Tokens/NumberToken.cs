@@ -2,11 +2,11 @@
 {
     public class NumberToken : Token
     {
-        public NumberToken(float value) : base(value) { }
+        public NumberToken(object value) : base(value) { }
 
-        public new float GetValue()
+        public new object GetValue()
         {
-            return (float)base.GetValue();
+            return base.GetValue();
         }
     }
 }

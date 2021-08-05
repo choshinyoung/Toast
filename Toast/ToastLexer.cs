@@ -16,12 +16,12 @@ namespace Toast
 
         public static readonly Parser<Token> NumberParser =
             from n in Parse.Decimal
-            select new NumberToken(float.Parse(n));
+            select new NumberToken(long.TryParse(n, out var l) ? l : (object)float.Parse(n));
 
         public static readonly Parser<Token> SignedNumberParser =
             from s in Parse.Char('+').Or(Parse.Char('-'))
             from n in NumberParser
-            select s == '+' ? n : new NumberToken((float)n.GetValue() * -1);
+            select s == '+' ? n : new NumberToken((n.GetValue() is float m ? m : (object)((long)n.GetValue() * -1)));
 
         public static readonly Parser<object> BraceStartParser = Parse.Char('{').Select(c => (object)c);
         public static readonly Parser<object> BraceEndParser = Parse.Char('}').Select(c => (object)c);
