@@ -158,22 +158,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y : null);
 
         public static readonly ToastCommand Else =
-                ToastCommand.CreateFunc<CommandNode, ToastContext, object, object>("else", (x, ctx, y) =>
-                {
-                    if (x.Command != If)
-                    {
-                        throw new InvalidCommandNodeException("else", x.Command.Name);
-                    }
-
-                    if ((bool)ToastExecutor.Execute(ctx, x.Parameters[0], typeof(bool)))
-                    {
-                        return ToastExecutor.Execute(ctx, x.Parameters[1]);
-                    }
-                    else
-                    {
-                        return y;
-                    }
-                });
+                ToastCommand.CreateFunc<object, ToastContext, object, object>("else", (x, ctx, y) => x ?? y);
 
         public static readonly ToastCommand Repeat =
                 ToastCommand.CreateFunc<ToastContext, object, int, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(x, y).ToArray());
