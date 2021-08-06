@@ -253,7 +253,7 @@ namespace Toast
                 });
 
         public static readonly ToastCommand Split =
-                ToastCommand.CreateFunc<ToastContext, string, string, string[]>("split", (ctx, x, y) => x.Split(y));
+                ToastCommand.CreateFunc<ToastContext, string, string, object[]>("split", (ctx, x, y) => x.Split(y));
 
         public static readonly ToastCommand Reverse =
                 ToastCommand.CreateFunc<ToastContext, string, string>("reverse", (ctx, s) => new string(s.Reverse().ToArray()));
