@@ -202,7 +202,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y, ctx));
 
         public static readonly ToastCommand Random =
-                ToastCommand.CreateFunc<ToastContext, int, int, int>("random", (ctx, x, y) => new Random().Next(x, y));
+                ToastCommand.CreateFunc<ToastContext, int, int, long>("random", (ctx, x, y) => new Random().Next(x, y));
 
         public static readonly ToastCommand RandomChoice =
                 ToastCommand.CreateFunc<ToastContext, object[], object>("randomChoice", (ctx, x) => x[new Random().Next(0, x.Length)]);
