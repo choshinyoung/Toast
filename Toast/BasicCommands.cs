@@ -32,7 +32,7 @@ namespace Toast
 
         public static ToastCommand[] Others => new ToastCommand[]
         {
-            Print, Input, Assign, Execute
+            Print, Input, Assign, Execute, Random, RandomChoice
         };
 
         public static ToastCommand[] Lists => new ToastCommand[]
@@ -215,6 +215,12 @@ namespace Toast
 
         public static readonly ToastCommand Execute =
                 ToastCommand.CreateFunc<ToastContext, FunctionNode, object[], object>("execute", (ctx, x, y) => ctx.Toaster.ExecuteFunction(x, y, ctx));
+
+        public static readonly ToastCommand Random =
+                ToastCommand.CreateFunc<ToastContext, int, int, int>("random", (ctx, x, y) => new Random().Next(x, y));
+
+        public static readonly ToastCommand RandomChoice =
+                ToastCommand.CreateFunc<ToastContext, object[], object>("randomChoice", (ctx, x) => x[new Random().Next(0, x.Length)]);
 
         public static readonly ToastCommand Member =
                 ToastCommand.CreateFunc<ToastContext, int, object[], object>("member", (ctx, x, y) => y[x]);
