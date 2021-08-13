@@ -274,7 +274,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, string, int, int, string>("substring", (ctx, x, y, z) => x.Substring(y, z));
 
         public static readonly ToastCommand Join =
-                ToastCommand.CreateFunc<ToastContext, string, string, string>("join", (ctx, x, y) => x + y);
+                ToastCommand.CreateFunc<string, ToastContext, string, string>("join", (x, ctx, y) => x + y);
 
         public static readonly ToastCommand Replace =
                 ToastCommand.CreateFunc<ToastContext, string, string, string, string>("replace", (ctx, x, y, z) => x.Replace(y, z));
