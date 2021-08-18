@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31410.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Toast", "Toast\Toast.csproj", "{004DD223-2A3E-4710-858F-8EE90551AE34}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example", "Example\Example.csproj", "{CF6B8760-CD31-489A-885F-9207293856C5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Examples", "Examples\Examples.csproj", "{7D519158-A308-4268-AB6B-5305DEB70F3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{004DD223-2A3E-4710-858F-8EE90551AE34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{004DD223-2A3E-4710-858F-8EE90551AE34}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{004DD223-2A3E-4710-858F-8EE90551AE34}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CF6B8760-CD31-489A-885F-9207293856C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CF6B8760-CD31-489A-885F-9207293856C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CF6B8760-CD31-489A-885F-9207293856C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CF6B8760-CD31-489A-885F-9207293856C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D519158-A308-4268-AB6B-5305DEB70F3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D519158-A308-4268-AB6B-5305DEB70F3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D519158-A308-4268-AB6B-5305DEB70F3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D519158-A308-4268-AB6B-5305DEB70F3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
