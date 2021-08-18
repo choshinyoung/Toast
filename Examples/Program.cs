@@ -1,4 +1,5 @@
 ﻿using System;
+using Toast;
 
 namespace Examples
 {
@@ -6,7 +7,23 @@ namespace Examples
     {
         static void Main()
         {
-            CustomContextExample.Run();
+            Toaster toaster = new();
+
+            toaster.AddCommand(BasicCommands.All);
+            toaster.AddConverter(BasicConverters.All);
+
+            while (true)
+            {
+                Console.Write("> ");
+                string line = Console.ReadLine();
+
+                object result = toaster.Execute(line);
+
+                if (result is not null)
+                {
+                    Console.WriteLine(result);
+                }
+            }
         }
     }
 }
