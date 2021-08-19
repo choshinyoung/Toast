@@ -17,7 +17,7 @@ namespace Examples
                 Console.Write("> ");
                 string line = Console.ReadLine();
 
-                object result = toaster.Execute(line);
+                object result = toaster.ExecuteConverter<string>(toaster.Execute(line));
 
                 if (result is not null)
                 {
