@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.1.5</Version>
-    <PackageReleaseNotes>improve Join command</PackageReleaseNotes>
+    <Version>1.1.6</Version>
+    <PackageReleaseNotes>Improve string converter</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
