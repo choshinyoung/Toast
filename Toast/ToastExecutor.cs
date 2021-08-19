@@ -124,6 +124,10 @@ namespace Toast
                 {
                     return $"[{string.Join(", ", arr.Select(a => ConvertParameter(context, typeof(string), a)))}]";
                 }
+                if (parameter is bool b)
+                {
+                    return b ? "true" : "false";
+                }
 
                 return parameter.ToString();
             }
