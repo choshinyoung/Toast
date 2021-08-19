@@ -164,6 +164,13 @@ namespace Toast
             return result;
         }
 
+        public object ExecuteConverter<T>(object obj, ToastContext context = null)
+        {
+            context = GetContext(context);
+
+            return ToastExecutor.ConvertParameter(context, typeof(T), obj);
+        }
+
         private ToastContext GetContext(ToastContext context)
         {
             if (context is null)
