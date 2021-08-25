@@ -116,20 +116,13 @@ namespace Toast
             }
             else if (targetType == typeof(string))
             {
-                if (parameter is FunctionNode function)
+                return parameter switch
                 {
-                    return $"funtion ({string.Join(", ", function.Parameters)}) {{ }}";
-                }
-                if (parameter is object[] arr)
-                {
-                    return $"[{string.Join(", ", arr.Select(a => ConvertParameter(context, typeof(string), a)))}]";
-                }
-                if (parameter is bool b)
-                {
-                    return b ? "true" : "false";
-                }
-
-                return parameter.ToString();
+                    FunctionNode function => $"funtion ({string.Join(", ", function.Parameters)}) {{ }}",
+                    object[] arr => $"[{string.Join(", ", arr.Select(a => ConvertParameter(context, typeof(string), a)))}]",
+                    bool b => b ? "true" : "false",
+                    _ => parameter.ToString()
+                };
             }
             else if (targetType == typeof(object))
             {
