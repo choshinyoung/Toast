@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Toast.Exceptions;
 using Toast.Nodes;
@@ -9,6 +10,13 @@ namespace Toast
     {
         private readonly List<ToastCommand> Commands;
         private readonly List<ToastConverter> Converters;
+
+        public readonly Dictionary<string, Type> TypeAliases = new()
+        {
+            { "text", typeof(string) },
+            { "number", typeof(long) },
+            { "float", typeof(float) },
+        };
 
         public Toaster()
         {
