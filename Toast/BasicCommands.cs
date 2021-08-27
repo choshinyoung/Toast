@@ -32,7 +32,7 @@ namespace Toast
 
         public static ToastCommand[] Others => new ToastCommand[]
         {
-            Print, Input, Assign, Execute, Random, RandomChoice
+            Print, Input, Assign, Convert, Execute, Random, RandomChoice
         };
 
         public static ToastCommand[] Lists => new ToastCommand[]
@@ -153,6 +153,17 @@ namespace Toast
                         ctx.Toaster.AddCommand(ToastCommand.CreateFunc<ToastContext, object>(name, (ctx) => value));
                     }
                 }, -1);
+
+        public static readonly ToastCommand Convert =
+                ToastCommand.CreateFunc<object, ToastContext, VariableNode, object>("to", (x, ctx, y) =>
+                {
+                    if (!ctx.Toaster.TypeAliases.ContainsKey(y.Name))
+                    {
+                        throw new Exception($"Cannot find a type '{y.Name}'.");
+                    }
+
+                    return ToastExecutor.ConvertParameter(ctx, ctx.Toaster.TypeAliases[y.Name], x);
+                });
 
         public static readonly ToastCommand If =
                 ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y : null);
