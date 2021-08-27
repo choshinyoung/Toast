@@ -127,7 +127,7 @@ namespace Toast
 
                     string name = ((VariableNode)x.Parameters[0]).Name;
 
-                    if (x.Command == Equal)
+                    if (x.Command.Name == "is")
                     {
                         object value = ToastExecutor.Execute(ctx, x.Parameters[1]);
                         setVariable(value);

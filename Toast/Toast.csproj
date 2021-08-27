@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.1.8</Version>
-    <PackageReleaseNotes>change name of basic command 'to' as 'as'</PackageReleaseNotes>
+    <Version>1.1.9</Version>
+    <PackageReleaseNotes>bug fix</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
