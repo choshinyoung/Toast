@@ -155,7 +155,7 @@ namespace Toast
                 }, -1);
 
         public static readonly ToastCommand Convert =
-                ToastCommand.CreateFunc<object, ToastContext, VariableNode, object>("to", (x, ctx, y) =>
+                ToastCommand.CreateFunc<object, ToastContext, VariableNode, object>("as", (x, ctx, y) =>
                 {
                     if (!ctx.Toaster.TypeAliases.ContainsKey(y.Name))
                     {
