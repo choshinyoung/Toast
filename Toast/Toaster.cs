@@ -16,7 +16,7 @@ namespace Toast
             { "text", typeof(string) },
             { "number", typeof(long) },
             { "float", typeof(float) },
-            { "array", typeof(object[]) },
+            { "list", typeof(object[]) },
         };
 
         public Toaster()
