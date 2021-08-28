@@ -70,7 +70,9 @@ namespace Toast
             from space in Parse.WhiteSpace.Many()
             from start in Parse.Char('{')
             from startSpace in Parse.WhiteSpace.Many()
-            from g in LineParser.DelimitedBy(Parse.LineEnd.Or(Parse.String(";")).AtLeastOnce()).Optional()
+            from g in LineParserWithoutSemicolon.DelimitedBy(Parse.LineEnd.Or(Parse.String(";")).AtLeastOnce()).Optional()
+            from semiSpace in Parse.WhiteSpace.Many()
+            from semicolon in Parse.Char(';').Optional()
             from endSpace in Parse.WhiteSpace.Many()
             from end in Parse.Char('}')
             select new FunctionToken(g.IsEmpty ? Array.Empty<Token[]>() : g.Get().ToArray(), parameters);
@@ -83,18 +85,25 @@ namespace Toast
 
         public static readonly Parser<Token> ListParser =
             from start in Parse.Char('[')
-            from l in LineParser.DelimitedBy(CommaDividerParser).Optional()
+            from l in LineParserWithoutSemicolon.DelimitedBy(CommaDividerParser).Optional()
             from end in Parse.Char(']')
             select new ListToken(l.IsEmpty ? Array.Empty<Token[]>() : l.Get().ToArray());
 
         public static readonly Parser<Token> ElementParser =
             NumberParser.Or(SignedNumberParser).Or(TextParser).Or(CommandParser).Or(FunctionParser).Or(ListParser).Or(GroupParser);
 
-        public static readonly Parser<Token[]> LineParser =
+        public static readonly Parser<Token[]> LineParserWithoutSemicolon =
             from startSpace in Parse.WhiteSpace.Many()
             from e in ElementParser.DelimitedBy(Parse.WhiteSpace.AtLeastOnce())
             from endSpace in Parse.WhiteSpace.Many()
             select e.ToArray();
+
+        public static readonly Parser<Token[]> LineParser =
+            from e in LineParserWithoutSemicolon
+            from startSpace in Parse.WhiteSpace.Many()
+            from semicolon in Parse.Char(';').Optional()
+            from endSpace in Parse.WhiteSpace.Many()
+            select e;
 
         public static Token[] Lexicalize(string line)
         {
