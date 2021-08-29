@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.1.11</Version>
-    <PackageReleaseNotes>change array to list</PackageReleaseNotes>
+    <Version>1.1.12</Version>
+    <PackageReleaseNotes>set ToastLexer internal</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
