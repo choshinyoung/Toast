@@ -6,7 +6,7 @@ using Toast.Tokens;
 
 namespace Toast
 {
-    public class ToastLexer
+    internal class ToastLexer
     {
         public static readonly Parser<char> UnderLine = Parse.Char('_');
         public static readonly Parser<Token> CommandParser =
