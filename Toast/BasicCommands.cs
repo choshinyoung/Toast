@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Toast.Exceptions;
 using Toast.Nodes;
@@ -27,7 +28,7 @@ namespace Toast
         public static ToastCommand[] Statements => new ToastCommand[]
         {
             If, Else,
-            While, Foreach
+            While, For
         };
 
         public static ToastCommand[] Others => new ToastCommand[]
@@ -37,7 +38,7 @@ namespace Toast
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort, Shuffle
+            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort, Shuffle, Range
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -180,13 +181,17 @@ namespace Toast
                     }
                 });
 
-        public static readonly ToastCommand Foreach =
-                ToastCommand.CreateAction<ToastContext, object[], FunctionNode>("for", (ctx, x, y) =>
+        public static readonly ToastCommand For =
+                ToastCommand.CreateFunc<ToastContext, object[], FunctionNode, object[]>("for", (ctx, x, y) =>
                 {
+                    List<object> arr = new();
+
                     foreach (object o in x)
                     {
-                        ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx);
+                        arr.Add(ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx));
                     }
+
+                    return arr.ToArray();
                 });
 
         public static readonly ToastCommand Print =
@@ -255,6 +260,9 @@ namespace Toast
                     Random random = new();
                     return x.OrderBy(a => random.Next()).ToArray();
                 });
+
+        public static readonly ToastCommand Range =
+                ToastCommand.CreateFunc<ToastContext, int, int, object[]>("range", (ctx, x, y) => Enumerable.Range(x, y).Select(a => (object)a).ToArray());
 
         public static readonly ToastCommand Split =
                 ToastCommand.CreateFunc<ToastContext, string, string, object[]>("split", (ctx, x, y) => x.Split(y).Select(s => (object)s).ToArray());
