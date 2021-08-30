@@ -37,7 +37,7 @@ namespace Toast
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort
+            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort, Shuffle
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -245,7 +245,7 @@ namespace Toast
                 ToastCommand.CreateFunc<ToastContext, object[], object[], object[]>("combine", (ctx, x, y) => x.Concat(y).ToArray());
 
         public static readonly ToastCommand Append =
-                ToastCommand.CreateFunc<ToastContext, object[], object, object[]>("append", (ctx, x, y) => x.Concat(new[] {y}).ToArray());
+                ToastCommand.CreateFunc<ToastContext, object[], object, object[]>("append", (ctx, x, y) => x.Concat(new[] { y }).ToArray());
 
         public static readonly ToastCommand Remove =
                 ToastCommand.CreateFunc<ToastContext, object[], object, object[]>("remove", (ctx, x, y) =>
@@ -261,6 +261,13 @@ namespace Toast
                     var list = x.ToList();
                     list.Sort();
                     return list.ToArray();
+                });
+
+        public static readonly ToastCommand Shuffle =
+                ToastCommand.CreateFunc<ToastContext, object[], object[]>("shuffle", (ctx, x) =>
+                {
+                    Random random = new();
+                    return x.OrderBy(a => random.Next()).ToArray();
                 });
 
         public static readonly ToastCommand Split =
