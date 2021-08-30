@@ -27,7 +27,7 @@ namespace Toast
         public static ToastCommand[] Statements => new ToastCommand[]
         {
             If, Else,
-            Repeat, While, For, Foreach
+            While, Foreach
         };
 
         public static ToastCommand[] Others => new ToastCommand[]
@@ -171,9 +171,6 @@ namespace Toast
         public static readonly ToastCommand Else =
                 ToastCommand.CreateFunc<object, ToastContext, object, object>("else", (x, ctx, y) => x ?? y);
 
-        public static readonly ToastCommand Repeat =
-                ToastCommand.CreateFunc<ToastContext, object, int, object[]>("repeat", (ctx, x, y) => Enumerable.Repeat(x, y).ToArray());
-
         public static readonly ToastCommand While =
                 ToastCommand.CreateAction<ToastContext, INode, FunctionNode>("while", (ctx, x, y) =>
                 {
@@ -183,19 +180,8 @@ namespace Toast
                     }
                 });
 
-        public static readonly ToastCommand For =
-                ToastCommand.CreateAction<ToastContext, INode, INode, INode, FunctionNode>("for", (ctx, x, y, z, w) =>
-                {
-                    for (ctx.Toaster.ExecuteNode(x, ctx);
-                         (bool)ctx.Toaster.ExecuteNode(y, ctx);
-                         ctx.Toaster.ExecuteNode(z, ctx))
-                    {
-                        ctx.Toaster.ExecuteFunction(w, Array.Empty<object>(), ctx);
-                    }
-                });
-
         public static readonly ToastCommand Foreach =
-                ToastCommand.CreateAction<ToastContext, object[], FunctionNode>("foreach", (ctx, x, y) =>
+                ToastCommand.CreateAction<ToastContext, object[], FunctionNode>("for", (ctx, x, y) =>
                 {
                     foreach (object o in x)
                     {
