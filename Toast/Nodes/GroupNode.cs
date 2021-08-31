@@ -4,7 +4,7 @@
     {
         public readonly INode[] Values;
 
-        public GroupNode(INode[] values)
+        internal GroupNode(INode[] values)
         {
             Values = values;
         }

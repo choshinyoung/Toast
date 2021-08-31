@@ -4,7 +4,7 @@
     {
         public readonly object Value;
 
-        public ValueNode(object v)
+        internal ValueNode(object v)
         {
             Value = v;
         }

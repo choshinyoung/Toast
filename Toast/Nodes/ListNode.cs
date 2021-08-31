@@ -4,7 +4,7 @@
     {
         public readonly INode[] Value;
 
-        public ListNode(INode[] list)
+        internal ListNode(INode[] list)
         {
             Value = list;
         }

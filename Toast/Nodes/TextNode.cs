@@ -4,7 +4,7 @@
     {
         public readonly object[] Values;
 
-        public TextNode(object[] v)
+        internal TextNode(object[] v)
         {
             Values = v;
         }

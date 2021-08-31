@@ -4,7 +4,7 @@
     {
         public readonly string Name;
 
-        public VariableNode(string n)
+        internal VariableNode(string n)
         {
             Name = n;
         }
