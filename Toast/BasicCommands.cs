@@ -130,13 +130,13 @@ namespace Toast
 
                     if (x.Command.Name == "is")
                     {
-                        object value = ToastExecutor.Execute(ctx, x.Parameters[1]);
+                        object value = ctx.Toaster.ExecuteNode(x.Parameters[1], ctx);
                         setVariable(value);
                     }
                     else if (x.Command == Addition || x.Command == Subtraction || x.Command == Multiplication || x.Command == Division || x.Command == Modulus || x.Command == Exponentiation || x.Command == FloorDivision ||
                             x.Command == BitwiseAnd || x.Command == BitwiseOr || x.Command == BitwiseXor || x.Command == LeftShift || x.Command == RightShift)
                     {
-                        setVariable(ToastExecutor.Execute(ctx, x));
+                        setVariable(ctx.Toaster.ExecuteNode(x, ctx));
                     }
                     else
                     {
@@ -163,7 +163,7 @@ namespace Toast
                         throw new Exception($"Cannot find a type '{y.Name}'.");
                     }
 
-                    return ToastExecutor.ConvertParameter(ctx, ctx.Toaster.TypeAliases[y.Name], x);
+                    return ctx.Toaster.ExecuteConverter(x, ctx.Toaster.TypeAliases[y.Name], ctx);
                 });
 
         public static readonly ToastCommand If =

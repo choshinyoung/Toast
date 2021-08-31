@@ -6,7 +6,7 @@ using Toast.Nodes;
 
 namespace Toast
 {
-    public class ToastExecutor
+    internal class ToastExecutor
     {
         public static object Execute(ToastContext context, INode node, Type target = null)
         {
@@ -32,16 +32,16 @@ namespace Toast
                         parameters.Add(Execute(context, c.Parameters[i],  c.Command.Parameters[i]));
                     }
 
-                    return ConvertParameter(context, target, context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context));
+                    return ConvertParameter(context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context), target, context);
                 case VariableNode v:
                     if (target == typeof(VariableNode))
                     {
                         return v;
                     }
 
-                    return ConvertParameter(context, target, context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context));
+                    return ConvertParameter(context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context), target, context);
                 case FunctionNode f:
-                    return ConvertParameter(context, target, f);
+                    return ConvertParameter(f, target, context);
                 case ListNode l:
                     List<object> list = new();
 
@@ -50,7 +50,7 @@ namespace Toast
                         list.Add(Execute(context, n));
                     }
 
-                    return ConvertParameter(context, target, list.ToArray());
+                    return ConvertParameter(list.ToArray(), target, context);
                 case TextNode t:
                     string result = "";
 
@@ -68,23 +68,23 @@ namespace Toast
 
                     return result;
                 case ValueNode v:
-                    return ConvertParameter(context, target, v.Value);
+                    return ConvertParameter(v.Value, target, context);
                 default:
                     throw new InvalidParameterTypeException(node);
             }
         }
 
-        public static object[] ConvertParameters(ToastContext context, Type[] targets, object[] parameters)
+        public static object[] ConvertParameters(object[] parameters, Type[] targets, ToastContext context)
         {
             for (int i = 0; i < targets.Length; i++)
             {
-                parameters[i] = ConvertParameter(context, targets[i], parameters[i]);
+                parameters[i] = ConvertParameter(parameters[i], targets[i], context);
             }
 
             return parameters;
         }
 
-        public static object ConvertParameter(ToastContext context, Type targetType, object parameter)
+        public static object ConvertParameter(object parameter, Type targetType, ToastContext context)
         {
             if (parameter is null) return parameter;
 
@@ -96,15 +96,15 @@ namespace Toast
 
             if (converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
             {
-                return ExecuteConverter(context, c1, parameter);
+                return context.Toaster.ExecuteConverter(c1, parameter, context);
             }
             else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
             {
-                return ExecuteConverter(context, c2, Convert.ChangeType(parameter, c2.From));
+                return context.Toaster.ExecuteConverter(c2, Convert.ChangeType(parameter, c2.From), context);
             }
             else if (IsNumber(targetType) && converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
             {
-                return Convert.ChangeType(ExecuteConverter(context, c3, parameter), targetType);
+                return Convert.ChangeType(context.Toaster.ExecuteConverter(c3, parameter, context), targetType);
             }
             else if (IsNumber(targetType) && IsNumber(paramType))
             {
@@ -119,7 +119,7 @@ namespace Toast
                 return parameter switch
                 {
                     FunctionNode function => $"funtion ({string.Join(", ", function.Parameters)}) {{ }}",
-                    object[] arr => $"[{string.Join(", ", arr.Select(a => ConvertParameter(context, typeof(string), a)))}]",
+                    object[] arr => $"[{string.Join(", ", arr.Select(a => ConvertParameter(a, typeof(string), context)))}]",
                     bool b => b ? "true" : "false",
                     _ => parameter.ToString()
                 };
@@ -132,11 +132,6 @@ namespace Toast
             {
                 throw new ParameterConvertException(paramType, targetType);
             }
-        }
-
-        public static object ExecuteConverter(ToastContext context, ToastConverter cvt, object parameter)
-        {
-            return cvt.Method.Invoke(cvt.Target, new[] { context, parameter });
         }
 
         public static bool IsNumber(Type type)

@@ -134,7 +134,7 @@ namespace Toast
         {
             context = GetContext(context);
 
-            var prms = ToastExecutor.ConvertParameters(context, cmd.Parameters, parameters).ToList();
+            var prms = ToastExecutor.ConvertParameters(parameters, cmd.Parameters, context).ToList();
 
             prms.Insert(cmd.NamePosition, context);
 
@@ -177,7 +177,21 @@ namespace Toast
         {
             context = GetContext(context);
 
-            return ToastExecutor.ConvertParameter(context, typeof(T), obj);
+            return ToastExecutor.ConvertParameter(obj, typeof(T), context);
+        }
+
+        public object ExecuteConverter(object obj, Type type, ToastContext context = null)
+        {
+            context = GetContext(context);
+
+            return ToastExecutor.ConvertParameter(obj, type, context);
+        }
+
+        public object ExecuteConverter(ToastConverter cvt, object parameter, ToastContext context = null)
+        {
+            context = GetContext(context);
+
+            return cvt.Method.Invoke(cvt.Target, new[] { context, parameter });
         }
 
         private ToastContext GetContext(ToastContext context)
