@@ -16,6 +16,7 @@ namespace Toast
             { "text", typeof(string) },
             { "number", typeof(long) },
             { "float", typeof(float) },
+            { "bool", typeof(bool) },
             { "list", typeof(object[]) },
         };
 
