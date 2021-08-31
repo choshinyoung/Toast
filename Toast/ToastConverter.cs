@@ -8,7 +8,7 @@ namespace Toast
     {
         public MethodInfo Method { get; private init; }
 
-        public object Target { get; private init; }
+        internal object Target { get; private init; }
 
         public Type From { get; private init; }
 
