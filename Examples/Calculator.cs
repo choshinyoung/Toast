@@ -9,7 +9,7 @@ namespace Examples
         {
             Toaster toaster = new();
 
-            toaster.AddCommand(ToastCommand.CreateFunc("add", (float x, ToastContext ctx, float y) => x + y));
+            toaster.AddCommand(ToastCommand.CreateFunc<float, ToastContext, float, float>("add", (x, ctx, y) => x + y));
             toaster.AddCommand(ToastCommand.CreateFunc<float, ToastContext, float, float>("sub", (x, ctx, y) => x - y));
 
             // Set priority as 1 so it is parsed first.
