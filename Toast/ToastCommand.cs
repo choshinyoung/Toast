@@ -82,17 +82,17 @@ namespace Toast
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8>(string name, Action<T1, T2, T3, T4, T5, T6, T8> method, int priority = 0)
+        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string name, Action<T1, T2, T3, T4, T5, T6, T8, T9> method, int priority = 0)
+        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8, T9>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(string name, Action<T1, T2, T3, T4, T5, T6, T8, T9, T10> method, int priority = 0)
+        public static ToastCommand CreateAction<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(string name, Action<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
@@ -142,7 +142,7 @@ namespace Toast
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateFunc<T1, T2, T3, T4, TResult>(string name, Func<T1, T2, T4, T4, TResult> method, int priority = 0)
+        public static ToastCommand CreateFunc<T1, T2, T3, T4, TResult>(string name, Func<T1, T2, T3, T4, TResult> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
@@ -162,17 +162,17 @@ namespace Toast
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, TResult> method, int priority = 0)
+        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, TResult> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, T9, TResult> method, int priority = 0)
+        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, TResult> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
 
-        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T8, T9, T10, TResult> method, int priority = 0)
+        public static ToastCommand CreateFunc<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult>(string name, Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, TResult> method, int priority = 0)
         {
             return Create(name, method.Method, method.Target, priority);
         }
