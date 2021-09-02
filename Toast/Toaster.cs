@@ -174,11 +174,11 @@ namespace Toast
             return result;
         }
 
-        public object ExecuteConverter<T>(object obj, ToastContext context = null)
+        public T ExecuteConverter<T>(object obj, ToastContext context = null)
         {
             context = GetContext(context);
 
-            return ToastExecutor.ConvertParameter(obj, typeof(T), context);
+            return (T)ToastExecutor.ConvertParameter(obj, typeof(T), context);
         }
 
         public object ExecuteConverter(object obj, Type type, ToastContext context = null)
