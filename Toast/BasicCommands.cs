@@ -176,8 +176,8 @@ namespace Toast
                     throw new Exception("else 문 앞에는 if문이 필요해요");
                 }
 
-                return (bool)ctx.Toaster.ExecuteNode(x.Parameters[0]) ?
-                        ctx.Toaster.ExecuteFunction((FunctionNode)ctx.Toaster.ExecuteNode(x.Parameters[1]), Array.Empty<object>(), ctx) :
+                return (bool)ctx.Toaster.ExecuteNode(x.Parameters[0], ctx) ?
+                        ctx.Toaster.ExecuteFunction((FunctionNode)ctx.Toaster.ExecuteNode(x.Parameters[1], ctx), Array.Empty<object>(), ctx) :
                         ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx);
             });
 
