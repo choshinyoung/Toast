@@ -167,10 +167,10 @@ namespace Toast
             });
 
         public static readonly ToastCommand If =
-            ToastCommand.CreateFunc<ToastContext, bool, object, object>("if", (ctx, x, y) => x ? y : null);
+            ToastCommand.CreateFunc<ToastContext, bool, FunctionNode, object>("if", (ctx, x, y) => x ? ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx) : null);
 
         public static readonly ToastCommand Else =
-            ToastCommand.CreateFunc<object, ToastContext, object, object>("else", (x, ctx, y) => x ?? y);
+            ToastCommand.CreateFunc<object, ToastContext, FunctionNode, object>("else", (x, ctx, y) => x ?? ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx));
 
         public static readonly ToastCommand While =
             ToastCommand.CreateAction<ToastContext, INode, FunctionNode>("while", (ctx, x, y) =>
