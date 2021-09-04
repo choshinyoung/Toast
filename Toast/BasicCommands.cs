@@ -191,17 +191,7 @@ namespace Toast
             });
 
         public static readonly ToastCommand For =
-            ToastCommand.CreateFunc<ToastContext, object[], FunctionNode, object[]>("for", (ctx, x, y) =>
-            {
-                List<object> arr = new();
-
-                foreach (object o in x)
-                {
-                    arr.Add(ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx));
-                }
-
-                return arr.ToArray();
-            });
+            ToastCommand.CreateAction<ToastContext, object[], FunctionNode>("for", (ctx, x, y) => x.ToList().ForEach(o => ctx.Toaster.ExecuteFunction(y, new[] { o }, ctx)));
 
         public static readonly ToastCommand Print =
             ToastCommand.CreateAction<ToastContext, object>("print", (ctx, x) => Console.WriteLine(x), -2);
