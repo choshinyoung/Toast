@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.3.3</Version>
-    <PackageReleaseNotes>change for command to Action</PackageReleaseNotes>
+    <Version>1.3.4</Version>
+    <PackageReleaseNotes>add SortAs command</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

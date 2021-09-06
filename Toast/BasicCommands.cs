@@ -38,7 +38,7 @@ namespace Toast
 
         public static ToastCommand[] Lists => new ToastCommand[]
         {
-            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort, Shuffle, Range
+            Member, Length, IndexOf, Filter, Map, Combine, Append, Remove, Sort, SortAs, Shuffle, Range
         };
 
         public static ToastCommand[] Strings => new ToastCommand[]
@@ -250,6 +250,14 @@ namespace Toast
             {
                 var list = x.ToList();
                 list.Sort();
+                return list.ToArray();
+            });
+
+        public static readonly ToastCommand SortAs =
+            ToastCommand.CreateFunc<ToastContext, object[], FunctionNode, object[]>("sortAs", (ctx, x, y) =>
+            {
+                var list = x.ToList();
+                list.Sort((obj1, obj2) => ((IComparable)ctx.Toaster.ExecuteFunction(y, new[] { obj1 }, ctx)).CompareTo((IComparable)ctx.Toaster.ExecuteFunction(y, new[] { obj2 }, ctx)));
                 return list.ToArray();
             });
 
