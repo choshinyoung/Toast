@@ -132,7 +132,7 @@ namespace Toast
             }
             else if (paramType == targetType)
             {
-                return paramType;
+                return parameter;
             }
             else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
             {
