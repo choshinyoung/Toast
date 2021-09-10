@@ -124,13 +124,15 @@ namespace Toast
 
             Type paramType = parameter.GetType();
 
-            if (paramType == targetType) return parameter;
-
             List<ToastConverter> converters = context.Toaster.GetConverters().ToList();
 
             if (converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
             {
                 return context.Toaster.ExecuteConverter(c1, parameter, context);
+            }
+            else if (paramType == targetType)
+            {
+                return paramType;
             }
             else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
             {
