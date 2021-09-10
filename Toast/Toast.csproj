@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.4.0</Version>
-    <PackageReleaseNotes>command depth limit</PackageReleaseNotes>
+    <Version>1.4.1</Version>
+    <PackageReleaseNotes>fix bugs</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
