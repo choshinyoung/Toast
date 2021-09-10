@@ -24,7 +24,12 @@ namespace Toast
 
             object result;
 
-            if (target == typeof(INode)) result = node;
+            if (target == typeof(INode))
+            {
+                context.Depth--;
+
+                return node;
+            }
 
             switch (node)
             {
