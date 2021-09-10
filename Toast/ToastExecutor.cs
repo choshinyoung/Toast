@@ -10,19 +10,30 @@ namespace Toast
     {
         public static object Execute(ToastContext context, INode node, Type target = null)
         {
+            context.Depth++;
+
+            if (context.Depth > context.Toaster.MaxDepth)
+            {
+                throw new CommandDepthLimitException();
+            }
+
             if (target is null)
             {
                 target = typeof(object);
             }
 
-            if (target == typeof(INode)) return node;
+            object result;
+
+            if (target == typeof(INode)) result = node;
 
             switch (node)
             {
                 case CommandNode c:
                     if (target == typeof(CommandNode))
                     {
-                        return c;
+                        result = c;
+
+                        break;
                     }
 
                     List<object> parameters = new();
@@ -32,16 +43,24 @@ namespace Toast
                         parameters.Add(Execute(context, c.Parameters[i],  c.Command.Parameters[i]));
                     }
 
-                    return ConvertParameter(context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context), target, context);
+                    result = ConvertParameter(context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context), target, context);
+
+                    break;
                 case VariableNode v:
                     if (target == typeof(VariableNode))
                     {
-                        return v;
+                        result = v;
+
+                        break;
                     }
 
-                    return ConvertParameter(context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context), target, context);
+                    result = ConvertParameter(context.Toaster.ExecuteCommand(context.Toaster.GetCommand(v.Name), Array.Empty<object>(), context: context), target, context);
+
+                    break;
                 case FunctionNode f:
-                    return ConvertParameter(f, target, context);
+                    result = ConvertParameter(f, target, context);
+
+                    break;
                 case ListNode l:
                     List<object> list = new();
 
@@ -50,28 +69,38 @@ namespace Toast
                         list.Add(Execute(context, n));
                     }
 
-                    return ConvertParameter(list.ToArray(), target, context);
+                    result = ConvertParameter(list.ToArray(), target, context);
+
+                    break;
                 case TextNode t:
-                    string result = "";
+                    string res = "";
 
                     foreach (object o in t.Values)
                     {
                         if (o is string s)
                         {
-                            result += s;
+                            res += s;
                         }
                         else if (o is INode n)
                         {
-                            result += Execute(context, n, typeof(string));
+                            res += Execute(context, n, typeof(string));
                         }
                     }
 
-                    return result;
+                    result = res;
+
+                    break;
                 case ValueNode v:
-                    return ConvertParameter(v.Value, target, context);
+                    result = ConvertParameter(v.Value, target, context);
+
+                    break;
                 default:
                     throw new InvalidParameterTypeException(node);
             }
+
+            context.Depth--;
+
+            return result;
         }
 
         public static object[] ConvertParameters(object[] parameters, Type[] targets, ToastContext context)

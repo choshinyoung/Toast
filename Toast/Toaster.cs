@@ -20,6 +20,8 @@ namespace Toast
             { "list", typeof(object[]) },
         };
 
+        public int MaxDepth = 256;
+
         public Toaster()
         {
             Commands = new();
