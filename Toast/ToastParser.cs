@@ -11,8 +11,8 @@ namespace Toast
     {
         public static INode Parse(Toaster toaster, Token[] tokens)
         {
-            List<INode> nodes = new();
-            List<(ToastCommand command, CommandNode node)> commands = new();
+            List<INode> nodes = new List<INode>();
+            List<(ToastCommand command, CommandNode node)> commands = new List<(ToastCommand command, CommandNode node)>();
 
             foreach (Token token in tokens)
             {
@@ -24,7 +24,7 @@ namespace Toast
                             ToastCommand toastCmd = toaster.GetCommand(c.GetValue());
                             if (toastCmd.Parameters.Length > 0)
                             {
-                                CommandNode node = new(toastCmd, Array.Empty<INode>());
+                                CommandNode node = new CommandNode(toastCmd, Array.Empty<INode>());
 
                                 nodes.Add(node);
                                 commands.Add((toastCmd, node));
@@ -37,7 +37,7 @@ namespace Toast
 
                         break;
                     case GroupToken g:
-                        List<INode> values = new();
+                        List<INode> values = new List<INode>();
 
                         foreach (Token[] e in g.GetValue())
                         {
@@ -48,7 +48,7 @@ namespace Toast
 
                         break;
                     case FunctionToken f:
-                        List<INode> lines = new();
+                        List<INode> lines = new List<INode>();
 
                         foreach (Token[] e in f.GetValue())
                         {
@@ -59,7 +59,7 @@ namespace Toast
 
                         break;
                     case ListToken l:
-                        List<INode> members = new();
+                        List<INode> members = new List<INode>();
 
                         foreach (Token[] e in l.GetValue())
                         {
@@ -70,7 +70,7 @@ namespace Toast
 
                         break;
                     case TextToken t:
-                        List<object> contents = new();
+                        List<object> contents = new List<object>();
 
                         string tmp = "";
                         foreach (object o in t.GetValue())
@@ -96,11 +96,14 @@ namespace Toast
                         nodes.Add(new TextNode(contents.ToArray()));
 
                         break;
-                    case NumberToken:
-                        nodes.Add(new ValueNode(token.GetValue()));
-
-                        break;
                     default:
+                        if (token is NumberToken)
+                        {
+                            nodes.Add(new ValueNode(token.GetValue()));
+
+                            break;
+                        }
+
                         throw new InvalidParameterTypeException(token);
                 }
             }
@@ -131,7 +134,7 @@ namespace Toast
 
         private static INode[] GetParameters(List<INode> nodes, int start, bool isRight, int count)
         {
-            List<INode> parameters = new();
+            List<INode> parameters = new List<INode>();
 
             int index = start;
 

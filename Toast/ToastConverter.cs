@@ -6,17 +6,17 @@ namespace Toast
 {
     public class ToastConverter
     {
-        public MethodInfo Method { get; private init; }
+        public MethodInfo Method { get; private set; }
 
-        internal object Target { get; private init; }
+        internal object Target { get; private set; }
 
-        public Type From { get; private init; }
+        public Type From { get; private set; }
 
-        public Type To { get; private init; }
+        public Type To { get; private set; }
 
         public static ToastConverter Create<T, TResult>(Func<ToastContext, T, TResult> method)
         {
-            ToastConverter cvt = new()
+            ToastConverter cvt = new ToastConverter()
             {
                 Method = method.Method,
                 Target = method.Target,

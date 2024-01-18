@@ -11,7 +11,7 @@ namespace Toast
         private readonly List<ToastCommand> Commands;
         private readonly List<ToastConverter> Converters;
 
-        public readonly Dictionary<string, Type> TypeAliases = new()
+        public readonly Dictionary<string, Type> TypeAliases = new Dictionary<string, Type>()
         {
             { "text", typeof(string) },
             { "number", typeof(long) },
@@ -24,8 +24,8 @@ namespace Toast
 
         public Toaster()
         {
-            Commands = new();
-            Converters = new();
+            Commands = new List<ToastCommand>();
+            Converters = new List<ToastConverter>();
         }
 
         public IReadOnlyList<ToastCommand> GetCommands()
@@ -158,7 +158,7 @@ namespace Toast
             for (int i = 0; i < parameters.Length; i++)
             {
                 ToastCommand cmd = Commands.Find(c => c.Name == func.Parameters[i]);
-                if (cmd is not null)
+                if (cmd != null)
                 {
                     RemoveCommand(cmd);
                 }

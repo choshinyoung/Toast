@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>choshinyoung</Authors>
     <Description>Simple command language builder package</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
     <PackageId>choshinyoung.Toast</PackageId>
-    <Version>1.4.2</Version>
+    <Version>1.4.3</Version>
     <PackageReleaseNotes>fix minor bug</PackageReleaseNotes>
   </PropertyGroup>
 

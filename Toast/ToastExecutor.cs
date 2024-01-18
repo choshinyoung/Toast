@@ -41,11 +41,11 @@ namespace Toast
                         break;
                     }
 
-                    List<object> parameters = new();
+                    List<object> parameters = new List<object>();
 
                     for (int i = 0; i < c.Parameters.Length; i++)
                     {
-                        parameters.Add(Execute(context, c.Parameters[i],  c.Command.Parameters[i]));
+                        parameters.Add(Execute(context, c.Parameters[i], c.Command.Parameters[i]));
                     }
 
                     result = ConvertParameter(context.Toaster.ExecuteCommand(c.Command, parameters.ToArray(), context: context), target, context);
@@ -67,7 +67,7 @@ namespace Toast
 
                     break;
                 case ListNode l:
-                    List<object> list = new();
+                    List<object> list = new List<object>();
 
                     foreach (INode n in l.Value)
                     {
@@ -126,7 +126,11 @@ namespace Toast
 
             List<ToastConverter> converters = context.Toaster.GetConverters().ToList();
 
-            if (converters.Find(c => c.From == paramType && c.To == targetType) is not null and ToastConverter c1)
+            ToastConverter c1 = converters.Find(c => c.From == paramType && c.To == targetType),
+                c2 = converters.Find(c => IsNumber(c.From) && c.To == targetType),
+                c3 = converters.Find(c => IsNumber(c.To) && c.From == paramType);
+
+            if (c1 != null)
             {
                 return context.Toaster.ExecuteConverter(c1, parameter, context);
             }
@@ -134,11 +138,11 @@ namespace Toast
             {
                 return parameter;
             }
-            else if (IsNumber(paramType) && converters.Find(c => IsNumber(c.From) && c.To == targetType) is not null and ToastConverter c2)
+            else if (IsNumber(paramType) && c2 != null)
             {
                 return context.Toaster.ExecuteConverter(c2, Convert.ChangeType(parameter, c2.From), context);
             }
-            else if (IsNumber(targetType) && converters.Find(c => IsNumber(c.To) && c.From == paramType) is not null and ToastConverter c3)
+            else if (IsNumber(targetType) && c3 != null)
             {
                 return Convert.ChangeType(context.Toaster.ExecuteConverter(c3, parameter, context), targetType);
             }
@@ -146,7 +150,7 @@ namespace Toast
             {
                 return Convert.ChangeType(parameter, targetType);
             }
-            else if (targetType == typeof(INode) && paramType.IsAssignableTo(typeof(INode)))
+            else if (targetType == typeof(INode) && typeof(INode).IsAssignableFrom(paramType))
             {
                 return (INode)parameter;
             }

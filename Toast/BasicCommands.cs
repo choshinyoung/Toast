@@ -121,7 +121,7 @@ namespace Toast
         public static readonly ToastCommand Assign =
             ToastCommand.CreateAction<ToastContext, CommandNode>("var", (ctx, x) =>
             {
-                if (x.Parameters[0] is not VariableNode)
+                if (!(x.Parameters[0] is VariableNode))
                 {
                     throw new InvalidCommandNodeException("var", x.Command.Name);
                 }
@@ -146,7 +146,7 @@ namespace Toast
                 void setVariable(object value)
                 {
                     ToastCommand cmd = ctx.Toaster.GetCommands().ToList().Find(c => c.Name == name);
-                    if (cmd is not null)
+                    if (cmd != null)
                     {
                         ctx.Toaster.RemoveCommand(cmd);
                     }
@@ -170,7 +170,8 @@ namespace Toast
             ToastCommand.CreateFunc<ToastContext, bool, FunctionNode, object>("if", (ctx, x, y) => x ? ctx.Toaster.ExecuteFunction(y, Array.Empty<object>(), ctx) : null);
 
         public static readonly ToastCommand Else =
-            ToastCommand.CreateFunc<CommandNode, ToastContext, FunctionNode, object>("else", (x, ctx, y) => {
+            ToastCommand.CreateFunc<CommandNode, ToastContext, FunctionNode, object>("else", (x, ctx, y) =>
+            {
                 if (x.Command.Name != "if")
                 {
                     throw new Exception("else 문 앞에는 if문이 필요해요");
@@ -264,7 +265,7 @@ namespace Toast
         public static readonly ToastCommand Shuffle =
             ToastCommand.CreateFunc<ToastContext, object[], object[]>("shuffle", (ctx, x) =>
             {
-                Random random = new();
+                Random random = new System.Random();
                 return x.OrderBy(a => random.Next()).ToArray();
             });
 

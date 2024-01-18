@@ -7,33 +7,33 @@ namespace Toast
 {
     public class ToastCommand
     {
-        public string Name { get; private init; }
+        public string Name { get; private set; }
 
-        public MethodInfo Method { get; private init; }
+        public MethodInfo Method { get; private set; }
 
-        internal object Target { get; private init; }
+        internal object Target { get; private set; }
 
-        public Type[] Parameters { get; private init; }
+        public Type[] Parameters { get; private set; }
 
-        public Type Return { get; private init; }
+        public Type Return { get; private set; }
 
-        public int NamePosition { get; private init; }
+        public int NamePosition { get; private set; }
 
-        public int Priority { get; private init; }
-        
+        public int Priority { get; private set; }
+
         private static ToastCommand Create(string name, MethodInfo method, object target, int priority)
         {
             var parameters = method.GetParameters().ToList();
 
-            if (parameters.Count(p => p.ParameterType.IsAssignableTo(typeof(ToastContext))) != 1)
+            if (parameters.Count(p => typeof(ToastContext).IsAssignableFrom(p.ParameterType)) != 1)
             {
                 throw new ContextCountException();
             }
 
-            int contextIndex = parameters.FindIndex(p => p.ParameterType.IsAssignableTo(typeof(ToastContext)));
+            int contextIndex = parameters.FindIndex(p => typeof(ToastContext).IsAssignableFrom(p.ParameterType));
             parameters.RemoveAt(contextIndex);
 
-            ToastCommand cmd = new()
+            ToastCommand cmd = new ToastCommand()
             {
                 Name = name,
                 Method = method,
