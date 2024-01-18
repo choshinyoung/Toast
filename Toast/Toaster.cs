@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Toast.Exceptions;
 using Toast.Nodes;
+using Toast.Tokens;
 
 namespace Toast
 {
@@ -100,6 +101,13 @@ namespace Toast
         public INode Parse(string line)
         {
             var lexerResult = ToastLexer.Lexicalize(line);
+            var parserResult = ToastParser.Parse(this, lexerResult);
+
+            return parserResult;
+        }
+
+        public INode Parse(Token[] lexerResult)
+        {
             var parserResult = ToastParser.Parse(this, lexerResult);
 
             return parserResult;
