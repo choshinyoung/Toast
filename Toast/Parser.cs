@@ -1,103 +1,25 @@
 namespace Toast;
 
-public class Parser
+public class Parser(
+    List<Token> _tokens,
+    Dictionary<string, int> _precedences,
+    HashSet<string> _prefixes
+)
 {
-    private readonly List<Token> _tokens;
-    private int _position;
-
-    private readonly HashSet<string> _prefixes;
-    private readonly Dictionary<string, int> _precedences;
+    private int _position = 0;
 
     private const int PrefixPrecedence = 9;
     private const int InfixPrecedence = 6;
 
-    public Parser(List<Token> tokens, List<string> operators, List<string> prefixes)
-    {
-        _tokens = tokens;
-        _position = 0;
-
-        var precedences = new Dictionary<string, int>();
-
-        operators.Add("+");
-        operators.Add("*");
-
-        foreach (string op in operators)
-        {
-            if (op is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "=>" or "->")
-            {
-                precedences[op] = 1;
-            }
-            else if (op is "&&" or "||")
-            {
-                precedences[op] = 2;
-            }
-            else
-            {
-                precedences[op] = op[0] switch
-                {
-                    '.' => 10,
-                    '*' or '/' or '%' => 8,
-                    '+' or '-' => 7,
-                    '@' or '#' or '$' or '?' or ':' or '~' => 6,
-                    '<' or '>' => 5,
-                    '!' or '=' => 4,
-                    '&' or '|' or '^' => 3,
-                    _ => InfixPrecedence,
-                };
-            }
-        }
-
-        _prefixes = [.. prefixes];
-        _precedences = precedences;
-    }
-
     public static ProgramNode Parse(List<Token> tokens)
     {
         var filtered = tokens.Where(x => x.Kind != TokenKind.NewLine).ToList();
-        var operators = ScanInfixOperators(filtered);
+
+        // 임시
+        var operators = new Dictionary<string, int>() { { "+", 7 }, { "*", 8 } };
 
         var parser = new Parser(filtered, operators, []);
         return parser.ParseProgram();
-    }
-
-    private static List<string> ScanInfixOperators(List<Token> tokens)
-    {
-        var customOperators = new List<string>();
-        var scopeDepth = 0;
-
-        for (var i = 0; i < tokens.Count - 3; i++)
-        {
-            if (tokens[i].Kind == TokenKind.LBrace)
-            {
-                scopeDepth++;
-                continue;
-            }
-
-            if (tokens[i].Kind == TokenKind.RBrace)
-            {
-                scopeDepth--;
-                continue;
-            }
-
-            if (
-                tokens[i] is { Kind: TokenKind.Identifier, Value: "fun" }
-                && tokens[i + 1] is { Kind: TokenKind.Symbol, Value: "~" }
-                && tokens[i + 2] is { Kind: TokenKind.Identifier }
-            )
-            {
-                if (scopeDepth == 0)
-                {
-                    customOperators.Add(tokens[i + 2].Value!);
-                    i += 2;
-                }
-                else
-                {
-                    throw new Exception("중위 연산자는 최상위에서 선언되어야 함");
-                }
-            }
-        }
-
-        return customOperators;
     }
 
     public ProgramNode ParseProgram()
@@ -199,7 +121,7 @@ public class Parser
                 return ParseList();
             default:
                 throw new InvalidOperationException(
-                    $"Unexpected token '{current.Kind}' ('{current.Value}') for prefix expression."
+                    $"Unexpected token '{current.Kind}' ('{current.Value}')."
                 );
         }
     }
@@ -322,21 +244,12 @@ public class Parser
         return _precedences.GetValueOrDefault(token.Value!, 0);
     }
 
-    private bool CanBeArgument(Token token)
-    {
-        if (
-            token.Kind == TokenKind.RParen
-            || token.Kind == TokenKind.RBrace
-            || token.Kind == TokenKind.RBracket
-            || token.Kind == TokenKind.Comma
-            || IsInfixOperator(token)
-        )
-        {
-            return false;
-        }
-
-        return true;
-    }
+    private bool CanBeArgument(Token token) =>
+        token.Kind != TokenKind.RParen
+        && token.Kind != TokenKind.RBrace
+        && token.Kind != TokenKind.RBracket
+        && token.Kind != TokenKind.Comma
+        && !IsInfixOperator(token);
 
     private Token Peek() => _tokens[_position];
 
