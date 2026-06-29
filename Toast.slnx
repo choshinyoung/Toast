@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="Toast.Test/Toast.Test.csproj" />
+  <Project Path="Toast.Interactive/Toast.Interactive.csproj" />
   <Project Path="Toast/Toast.csproj" />
 </Solution>
