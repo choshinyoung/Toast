@@ -16,8 +16,6 @@ public sealed record TypeNode(string Name, bool IsArray) : Node;
 
 public sealed record CallNode(Node Callee, IReadOnlyList<Node> Arguments) : Node;
 
-public sealed record GroupNode(Node Expression) : Node;
-
 public sealed record IdentifierNode(string Name) : Node;
 
 // 타입 Enum화

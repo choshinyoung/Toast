@@ -1,57 +1,49 @@
 namespace Toast;
 
-public enum Associativity
-{
-    Left,
-    Right,
-}
-
-public sealed record OperatorInfo(int Precedence, Associativity Associativity);
-
 public class Parser
 {
     private readonly List<Token> _tokens;
     private int _position;
 
-    private readonly Dictionary<string, OperatorInfo> _infixOperators;
+    private readonly Dictionary<string, int> _precedences;
 
     private const int PrefixPrecedence = 9;
     private const int InfixPrecedence = 6;
 
-    public Parser(List<Token> tokens, Dictionary<string, OperatorInfo> infixOperators)
+    public Parser(List<Token> tokens, Dictionary<string, int> precedences)
     {
         _tokens = tokens;
         _position = 0;
 
-        var operators = new Dictionary<string, OperatorInfo>();
+        var pre = new Dictionary<string, int>();
 
-        foreach (var op in infixOperators)
+        foreach (var op in precedences)
         {
             if (op.Key is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "=>" or "->")
             {
-                operators[op.Key] = new(1, Associativity.Right);
+                pre[op.Key] = 1;
             }
             else if (op.Key is "&&" or "||")
             {
-                operators[op.Key] = new(2, Associativity.Right);
+                pre[op.Key] = 2;
             }
             else
             {
-                operators[op.Key] = op.Key[0] switch
+                pre[op.Key] = op.Key[0] switch
                 {
-                    '.' => new(10, Associativity.Left),
-                    '*' or '/' or '%' => new(8, Associativity.Left),
-                    '+' or '-' => new(7, Associativity.Left),
-                    '<' or '>' => new(5, Associativity.Left),
-                    '!' or '=' => new(4, Associativity.Left),
-                    '&' or '|' or '^' => new(3, Associativity.Left),
-                    '@' or '#' or '$' or '?' or ':' or '~' => new(6, Associativity.Left),
-                    _ => new(InfixPrecedence, Associativity.Left),
+                    '.' => 10,
+                    '*' or '/' or '%' => 8,
+                    '+' or '-' => 7,
+                    '<' or '>' => 5,
+                    '!' or '=' => 4,
+                    '&' or '|' or '^' => 3,
+                    '@' or '#' or '$' or '?' or ':' or '~' => 6,
+                    _ => InfixPrecedence,
                 };
             }
         }
 
-        _infixOperators = operators;
+        _precedences = pre;
     }
 
     public static ProgramNode Parse(List<Token> tokens)
@@ -63,9 +55,9 @@ public class Parser
         return parser.ParseProgram();
     }
 
-    private static Dictionary<string, OperatorInfo> ScanInfixOperators(List<Token> tokens)
+    private static Dictionary<string, int> ScanInfixOperators(List<Token> tokens)
     {
-        var customOperators = new Dictionary<string, OperatorInfo>();
+        var customOperators = new Dictionary<string, int>();
         var scopeDepth = 0;
 
         for (var i = 0; i < tokens.Count - 3; i++)
@@ -92,7 +84,7 @@ public class Parser
                 if (scopeDepth == 0)
                 {
                     var name = tokens[i + 2].Value!;
-                    customOperators[name] = new OperatorInfo(InfixPrecedence, Associativity.Left);
+                    customOperators[name] = InfixPrecedence;
                     i += 2;
                 }
                 else
@@ -193,7 +185,7 @@ public class Parser
             case TokenKind.LParen:
                 var expr = ParseExpression();
                 Expect(TokenKind.RParen, "Expected ')' after expression in group.");
-                return new GroupNode(expr);
+                return expr;
             case TokenKind.LBrace:
                 return ParseBlock();
             case TokenKind.LBracket:
@@ -255,10 +247,9 @@ public class Parser
     private CallNode ParseInfix(Node left)
     {
         var opToken = Consume();
-        var opInfo = _infixOperators[opToken.Value!];
+        int precedence = _precedences[opToken.Value!];
 
-        var rightAssociativityCorrection = opInfo.Associativity == Associativity.Right ? -1 : 0;
-        var right = ParseExpression(opInfo.Precedence + rightAssociativityCorrection);
+        var right = ParseExpression(precedence);
 
         return new CallNode(new IdentifierNode(opToken.Value!), [left, right]);
     }
@@ -312,7 +303,7 @@ public class Parser
     private bool IsInfixOperator(Token token)
     {
         return token.Kind is TokenKind.Symbol or TokenKind.Identifier
-            && _infixOperators.ContainsKey(token.Value!);
+            && _precedences.ContainsKey(token.Value!);
     }
 
     private int GetInfixPrecedence(Token token)
@@ -322,7 +313,7 @@ public class Parser
             return 0;
         }
 
-        return _infixOperators.TryGetValue(token.Value!, out var info) ? info.Precedence : 0;
+        return _precedences.GetValueOrDefault(token.Value!, 0);
     }
 
     private bool CanBeArgument(Token token)
