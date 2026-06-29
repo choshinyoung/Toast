@@ -74,17 +74,14 @@ public class Parser
             }
 
             if (
-                tokens[i].Kind == TokenKind.Identifier
-                && tokens[i].Value == "fun"
-                && tokens[i + 1].Kind == TokenKind.Symbol
-                && tokens[i + 1].Value == "~"
-                && tokens[i + 2].Kind == TokenKind.Identifier
+                tokens[i] is { Kind: TokenKind.Identifier, Value: "fun" }
+                && tokens[i + 1] is { Kind: TokenKind.Symbol, Value: "~" }
+                && tokens[i + 2] is { Kind: TokenKind.Identifier }
             )
             {
                 if (scopeDepth == 0)
                 {
-                    var name = tokens[i + 2].Value!;
-                    customOperators[name] = InfixPrecedence;
+                    customOperators[tokens[i + 2].Value!] = InfixPrecedence;
                     i += 2;
                 }
                 else
@@ -93,6 +90,7 @@ public class Parser
                 }
             }
         }
+
         return customOperators;
     }
 
@@ -140,6 +138,7 @@ public class Parser
     private BlockNode ParseBlock()
     {
         var statements = new List<Node>();
+
         if (!Check(TokenKind.RBrace))
         {
             do
@@ -147,7 +146,9 @@ public class Parser
                 statements.Add(ParseExpression());
             } while (!IsAtEnd() && !Check(TokenKind.RBrace));
         }
+
         Expect(TokenKind.RBrace, "Expected '}' to close block.");
+
         return new BlockNode(statements);
     }
 
@@ -185,12 +186,12 @@ public class Parser
             case TokenKind.LParen:
                 var expr = ParseExpression();
                 Expect(TokenKind.RParen, "Expected ')' after expression in group.");
+
                 return expr;
             case TokenKind.LBrace:
                 return ParseBlock();
             case TokenKind.LBracket:
-                var listNode = ParseList();
-                return listNode;
+                return ParseList();
             default:
                 throw new InvalidOperationException(
                     $"Unexpected token '{current.Kind}' ('{current.Value}') for prefix expression."
@@ -203,25 +204,27 @@ public class Parser
         var parameters = ParseParameters();
         Expect(TokenKind.Symbol, "=>", "Expected '=>' after parameters to define function body.");
         var body = ParseExpression();
+
         return new FunctionNode(parameters, body);
     }
 
     private List<ParameterNode> ParseParameters()
     {
-        var parameters = new List<ParameterNode>();
         Expect(TokenKind.LParen, "Expected '(' for function parameters.");
+
+        var parameters = new List<ParameterNode>();
 
         if (!Check(TokenKind.RParen))
         {
             do
             {
-                // `~` for parameters not yet implemented per spec, but placeholder logic can be added here
                 var name = Expect(TokenKind.Identifier, "Expected parameter name.").Value!;
                 parameters.Add(new ParameterNode(name, null));
             } while (Match(TokenKind.Comma));
         }
 
         Expect(TokenKind.RParen, "Expected ')' after parameters.");
+
         return parameters;
     }
 
