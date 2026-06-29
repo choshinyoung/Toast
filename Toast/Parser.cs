@@ -63,6 +63,30 @@ public class Parser(
         return left;
     }
 
+    private Node ParseGroup()
+    {
+        var items = new List<Node>();
+
+        while (!Check(TokenKind.RParen))
+        {
+            items.Add(ParseExpression());
+
+            if (!Match(TokenKind.Comma))
+            {
+                break;
+            }
+        }
+
+        Expect(TokenKind.RParen, "Expected ')' after expression in group.");
+
+        if (items.Count == 1)
+        {
+            return items[0];
+        }
+
+        return new GroupNode(items);
+    }
+
     private BlockNode ParseBlock()
     {
         var statements = new List<Node>();
@@ -112,9 +136,7 @@ public class Parser(
             case TokenKind.String:
                 return new LiteralNode("String", current.Value!.Trim('"'));
             case TokenKind.LParen:
-                var expr = ParseExpression();
-                Expect(TokenKind.RParen, "Expected ')' after expression in group.");
-                return expr;
+                return ParseGroup();
             case TokenKind.LBrace:
                 return ParseBlock();
             case TokenKind.LBracket:

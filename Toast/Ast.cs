@@ -4,6 +4,8 @@ public abstract record Node;
 
 public sealed record ProgramNode(IReadOnlyList<Node> Statements) : Node;
 
+public sealed record GroupNode(IReadOnlyList<Node> Items) : Node;
+
 public sealed record BlockNode(IReadOnlyList<Node> Statements) : Node;
 
 public sealed record ListNode(IReadOnlyList<Node> Items) : Node;
