@@ -5,45 +5,50 @@ public class Parser
     private readonly List<Token> _tokens;
     private int _position;
 
+    private readonly HashSet<string> _prefixes;
     private readonly Dictionary<string, int> _precedences;
 
     private const int PrefixPrecedence = 9;
     private const int InfixPrecedence = 6;
 
-    public Parser(List<Token> tokens, Dictionary<string, int> precedences)
+    public Parser(List<Token> tokens, List<string> operators, List<string> prefixes)
     {
         _tokens = tokens;
         _position = 0;
 
-        var pre = new Dictionary<string, int>();
+        var precedences = new Dictionary<string, int>();
 
-        foreach (var op in precedences)
+        operators.Add("+");
+        operators.Add("*");
+
+        foreach (string op in operators)
         {
-            if (op.Key is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "=>" or "->")
+            if (op is "=" or "+=" or "-=" or "*=" or "/=" or "%=" or "=>" or "->")
             {
-                pre[op.Key] = 1;
+                precedences[op] = 1;
             }
-            else if (op.Key is "&&" or "||")
+            else if (op is "&&" or "||")
             {
-                pre[op.Key] = 2;
+                precedences[op] = 2;
             }
             else
             {
-                pre[op.Key] = op.Key[0] switch
+                precedences[op] = op[0] switch
                 {
                     '.' => 10,
                     '*' or '/' or '%' => 8,
                     '+' or '-' => 7,
+                    '@' or '#' or '$' or '?' or ':' or '~' => 6,
                     '<' or '>' => 5,
                     '!' or '=' => 4,
                     '&' or '|' or '^' => 3,
-                    '@' or '#' or '$' or '?' or ':' or '~' => 6,
                     _ => InfixPrecedence,
                 };
             }
         }
 
-        _precedences = pre;
+        _prefixes = [.. prefixes];
+        _precedences = precedences;
     }
 
     public static ProgramNode Parse(List<Token> tokens)
@@ -51,13 +56,13 @@ public class Parser
         var filtered = tokens.Where(x => x.Kind != TokenKind.NewLine).ToList();
         var operators = ScanInfixOperators(filtered);
 
-        var parser = new Parser(filtered, operators);
+        var parser = new Parser(filtered, operators, []);
         return parser.ParseProgram();
     }
 
-    private static Dictionary<string, int> ScanInfixOperators(List<Token> tokens)
+    private static List<string> ScanInfixOperators(List<Token> tokens)
     {
-        var customOperators = new Dictionary<string, int>();
+        var customOperators = new List<string>();
         var scopeDepth = 0;
 
         for (var i = 0; i < tokens.Count - 3; i++)
@@ -67,6 +72,7 @@ public class Parser
                 scopeDepth++;
                 continue;
             }
+
             if (tokens[i].Kind == TokenKind.RBrace)
             {
                 scopeDepth--;
@@ -81,7 +87,7 @@ public class Parser
             {
                 if (scopeDepth == 0)
                 {
-                    customOperators[tokens[i + 2].Value!] = InfixPrecedence;
+                    customOperators.Add(tokens[i + 2].Value!);
                     i += 2;
                 }
                 else
@@ -186,7 +192,6 @@ public class Parser
             case TokenKind.LParen:
                 var expr = ParseExpression();
                 Expect(TokenKind.RParen, "Expected ')' after expression in group.");
-
                 return expr;
             case TokenKind.LBrace:
                 return ParseBlock();
@@ -291,16 +296,14 @@ public class Parser
         }
     }
 
-    private static bool IsPrefixOperator(Token token)
+    private bool IsPrefixOperator(Token token)
     {
         if (token.Kind != TokenKind.Symbol)
         {
             return false;
         }
 
-        var op = token.Value;
-        // 임시
-        return op is "-" or "+" or "!" or "~" or "*";
+        return _prefixes.Contains(token.Value!);
     }
 
     private bool IsInfixOperator(Token token)
