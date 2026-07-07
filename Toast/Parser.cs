@@ -45,6 +45,8 @@ public class Parser(
 
         while (!IsAtEnd() && CanBeArgument(Peek()))
         {
+            var beforePos = _position;
+
             if (left is CallNode callNode)
             {
                 var arguments = new List<Node>(callNode.Arguments)
@@ -57,6 +59,12 @@ public class Parser(
             {
                 var arguments = new[] { ParseExpression(GetInfixPrecedence(Peek())) };
                 left = new CallNode(left, arguments);
+            }
+
+            if (_position == beforePos)
+            {
+                throw new InvalidOperationException(
+                    $"Parser stuck at position {_position}: no progress while parsing arguments.");
             }
         }
 
@@ -281,11 +289,12 @@ public class Parser(
 
     private Token Consume()
     {
-        if (!IsAtEnd())
+        if (IsAtEnd())
         {
-            _position++;
+            throw new InvalidOperationException("Unexpected end of input.");
         }
 
+        _position++;
         return Previous();
     }
 
