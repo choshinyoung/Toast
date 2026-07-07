@@ -64,7 +64,8 @@ public class Parser(
             if (_position == beforePos)
             {
                 throw new InvalidOperationException(
-                    $"Parser stuck at position {_position}: no progress while parsing arguments.");
+                    $"Parser stuck at position {_position}: no progress while parsing arguments."
+                );
             }
         }
 
