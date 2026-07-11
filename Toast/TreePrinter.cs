@@ -31,9 +31,10 @@ public static class TreePrinter
         {
             ProgramNode program => $"Program ({program.Statements.Count} statements)",
             GroupNode group => $"Group ({group.Items.Count} items)",
-            BlockNode block => $"Block ({block.Statements.Count} statements)",
             ListNode list => $"List ({list.Items.Count} items)",
-            FunctionNode function => $"Function ({function.Parameters.Count} params)",
+            FunctionNode function => function.Parameters.Count == 0
+                ? $"Block ({function.Statements.Count} statements)"
+                : $"Function ({function.Parameters.Count} params)",
             CallNode call => $"Call {Describe(call.Callee)}",
             IdentifierNode identifier => $"Identifier {identifier.Name}",
             LiteralNode literal => $"Literal {literal.Type}: {literal.Value}",
@@ -60,9 +61,8 @@ public static class TreePrinter
         {
             ProgramNode program => program.Statements,
             GroupNode group => group.Items,
-            BlockNode block => block.Statements,
             ListNode list => list.Items,
-            FunctionNode function => function.Parameters.Cast<Node>().Concat([function.Body]),
+            FunctionNode function => function.Parameters.Cast<Node>().Concat(function.Statements),
             CallNode call => new[] { call.Callee }.Concat(call.Arguments),
             ParameterNode parameter => parameter.Type is null ? [] : [parameter.Type],
             _ => [],

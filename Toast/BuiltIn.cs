@@ -34,22 +34,15 @@ public static class BuiltIn
             }
         );
 
-        // 2. 대입 연산자 = (지연 평가)
+        // 2. 대입 연산자 = (조기 평가)
         toast.RegisterOperator(
             "=",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, MemoryAddress addr, object? rightVal) =>
             {
-                var leftVal = t.Evaluate(args[0], context);
-                if (leftVal is MemoryAddress addr)
-                {
-                    var rightVal = t.Evaluate(args[1], context);
-                    context.SetValueAtAddress(addr, rightVal);
-                    return rightVal;
-                }
-                throw new InvalidOperationException("L-value of '=' must be a MemoryAddress.");
+                context.SetValueAtAddress(addr, rightVal);
+                return rightVal;
             },
-            precedence: 1,
-            isRightAssociative: true
+            precedence: 1
         );
 
         // 3. 전위 역참조 *
@@ -225,9 +218,13 @@ public static class BuiltIn
                 if (cond)
                 {
                     var val = t.Evaluate(args[1], context);
-                    return new IfResult(true, val);
+                    if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+                    {
+                        return funcVal.Execute([]);
+                    }
+                    return val;
                 }
-                return new IfResult(false, null);
+                return null;
             }
         );
 
@@ -236,31 +233,55 @@ public static class BuiltIn
             "else",
             object? (Context context, List<Node> args, Toaster t) =>
             {
-                var leftVal = t.Evaluate(args[0], context);
-                if (leftVal is IfResult ifResult)
+                var leftNode = args[0];
+                while (leftNode is GroupNode gn && gn.Items.Count == 1)
                 {
-                    if (ifResult.Executed)
-                    {
-                        return ifResult.Value;
-                    }
-                    return t.Evaluate(args[1], context);
+                    leftNode = gn.Items[0];
                 }
+
+                if (
+                    leftNode is CallNode callNode
+                    && callNode.Callee is IdentifierNode idNode
+                    && idNode.Name == "if"
+                    && callNode.Arguments.Count == 2
+                )
+                {
+                    var cond = (bool)t.Evaluate(callNode.Arguments[0], context)!;
+                    if (cond)
+                    {
+                        var val = t.Evaluate(callNode.Arguments[1], context);
+                        if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+                        {
+                            return funcVal.Execute([]);
+                        }
+                        return val;
+                    }
+                    else
+                    {
+                        var val = t.Evaluate(args[1], context);
+                        if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+                        {
+                            return funcVal.Execute([]);
+                        }
+                        return val;
+                    }
+                }
+
                 throw new InvalidOperationException(
                     "Left side of 'else' must be an 'if' expression."
                 );
             },
             precedence: 6,
+            isRightAssociative: true, // Make else right-associative!
             isInfix: true
         );
 
-        // 23. 덧셈 후 대입 += (지연 평가)
+        // 23. 덧셈 후 대입 += (조기 평가)
         toast.RegisterOperator(
             "+=",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, MemoryAddress addr, object? rightVal) =>
             {
-                var addr = t.Evaluate(args[0], context) as MemoryAddress;
-                var currentVal = context.GetValueAtAddress(addr!);
-                var rightVal = t.Evaluate(args[1], context);
+                var currentVal = context.GetValueAtAddress(addr);
                 object newVal;
                 if (currentVal is string || rightVal is string)
                 {
@@ -274,21 +295,18 @@ public static class BuiltIn
                 {
                     newVal = Convert.ToInt32(currentVal) + Convert.ToInt32(rightVal);
                 }
-                context.SetValueAtAddress(addr!, newVal);
+                context.SetValueAtAddress(addr, newVal);
                 return newVal;
             },
-            precedence: 1,
-            isRightAssociative: true
+            precedence: 1
         );
 
-        // 24. 뺄셈 후 대입 -= (지연 평가)
+        // 24. 뺄셈 후 대입 -= (조기 평가)
         toast.RegisterOperator(
             "-=",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, MemoryAddress addr, object? rightVal) =>
             {
-                var addr = t.Evaluate(args[0], context) as MemoryAddress;
-                var currentVal = context.GetValueAtAddress(addr!);
-                var rightVal = t.Evaluate(args[1], context);
+                var currentVal = context.GetValueAtAddress(addr);
                 object newVal;
                 if (currentVal is double || rightVal is double)
                 {
@@ -298,11 +316,10 @@ public static class BuiltIn
                 {
                     newVal = Convert.ToInt32(currentVal) - Convert.ToInt32(rightVal);
                 }
-                context.SetValueAtAddress(addr!, newVal);
+                context.SetValueAtAddress(addr, newVal);
                 return newVal;
             },
-            precedence: 1,
-            isRightAssociative: true
+            precedence: 1
         );
 
         // 25. 멤버 접근 .

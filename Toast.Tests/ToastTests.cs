@@ -181,4 +181,46 @@ public class ToastTests
         var valQuoteTrueCall = Evaluate("`true()", context);
         Assert.Equal(true, valQuoteTrueCall);
     }
+
+    [Fact]
+    public void TestBlockAsParameterlessFunction()
+    {
+        var context = new Context();
+        // A block '{ 42 }' itself should evaluate to a FunctionValue
+        var valBlock = Evaluate("{ 42 }", context);
+        var funcVal = Assert.IsType<FunctionValue>(valBlock);
+        Assert.Empty(funcVal.Parameters);
+
+        // We can execute it
+        Assert.Equal(42, funcVal.Execute([]));
+
+        // Storing a block in a variable and retrieving it:
+        // var b = { 10 }
+        // Evaluating 'b' directly should execute it automatically because it is a parameterless function!
+        Evaluate("var b = { 10 }", context);
+        Assert.Equal(10, Evaluate("b", context));
+    }
+
+    [Fact]
+    public void TestConditionalSyntaxExtensions()
+    {
+        // 1. Basic if-else without braces
+        AssertResult("if (true) 100 else 200", 100);
+        AssertResult("if (false) 100 else 200", 200);
+
+        // 2. else if chain without braces
+        AssertResult("if (false) 100 else if (true) 200 else 300", 200);
+        AssertResult("if (false) 100 else if (false) 200 else 300", 300);
+
+        // 3. Verify inactive branch is NOT eagerly evaluated
+        var context = new Context();
+        Evaluate("var x = 0", context);
+        // The true branch should run, but the false branch (which assigns x = 5) should NOT run!
+        Evaluate("if (true) 10 else (x = 5)", context);
+        Assert.Equal(0, Evaluate("x", context));
+
+        // The false branch should run, but the true branch (which assigns x = 5) should NOT run!
+        Evaluate("if (false) (x = 5) else 20", context);
+        Assert.Equal(0, Evaluate("x", context));
+    }
 }

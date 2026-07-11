@@ -1,16 +1,37 @@
 namespace Toast;
 
-public record IfResult(bool Executed, object? Value);
+
 
 public class FunctionValue(
     IReadOnlyList<ParameterNode> parameters,
-    Node body,
-    Context closureContext
+    IReadOnlyList<Node> statements,
+    Context closureContext,
+    Toaster toast
 )
 {
     public IReadOnlyList<ParameterNode> Parameters { get; } = parameters;
-    public Node Body { get; } = body;
+    public IReadOnlyList<Node> Statements { get; } = statements;
     public Context ClosureContext { get; } = closureContext;
+    public Toaster Toast { get; } = toast;
+
+    public object? Execute(List<object?> evalArgs)
+    {
+        var executor = new Executor(Toast);
+        var runContext = new Context(ClosureContext);
+        for (int i = 0; i < Parameters.Count; i++)
+        {
+            var param = Parameters[i];
+            var addr = runContext.GetOrCreateAddress(param.Name);
+            runContext.SetValueAtAddress(addr, evalArgs[i]);
+        }
+
+        object? lastVal = null;
+        foreach (var stmt in Statements)
+        {
+            lastVal = executor.Evaluate(stmt, runContext);
+        }
+        return lastVal;
+    }
 }
 
 public class Toaster

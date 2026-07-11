@@ -122,7 +122,7 @@ public class Parser(
         return new GroupNode(items);
     }
 
-    private BlockNode ParseBlock()
+    private FunctionNode ParseBlock()
     {
         var statements = new List<Node>();
 
@@ -139,7 +139,7 @@ public class Parser(
 
         Expect(TokenKind.RBrace, "Expected '}' to close block.");
 
-        return new BlockNode(statements);
+        return new FunctionNode([], statements);
     }
 
     public ListNode ParseList()
@@ -190,9 +190,17 @@ public class Parser(
     {
         var parameters = ParseParameters();
         Expect(TokenKind.Symbol, "=>", "Expected '=>' after parameters to define function body.");
-        var body = ParseExpression();
 
-        return new FunctionNode(parameters, body);
+        if (Match(TokenKind.LBrace))
+        {
+            var blockFunc = ParseBlock();
+            return new FunctionNode(parameters, blockFunc.Statements);
+        }
+        else
+        {
+            var body = ParseExpression();
+            return new FunctionNode(parameters, [body]);
+        }
     }
 
     private List<ParameterNode> ParseParameters()

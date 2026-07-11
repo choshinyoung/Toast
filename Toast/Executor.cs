@@ -41,10 +41,14 @@ public class Executor(Toaster _toast)
                 suppressZeroArgFunction
             ),
             ProgramNode program => EvaluateProgram(program, context),
-            BlockNode block => EvaluateBlock(block, context),
             GroupNode group => EvaluateGroup(group, context),
             ListNode list => EvaluateList(list, context),
-            FunctionNode function => new FunctionValue(function.Parameters, function.Body, context),
+            FunctionNode function => new FunctionValue(
+                function.Parameters,
+                function.Statements,
+                context,
+                _toast
+            ),
             CallNode call => EvaluateCall(call, context),
             _ => throw new NotSupportedException(
                 $"Node type '{node.GetType().Name}' is not supported."
@@ -103,25 +107,6 @@ public class Executor(Toaster _toast)
         foreach (var stmt in program.Statements)
         {
             lastVal = Evaluate(stmt, context);
-        }
-        if (lastVal is IfResult ifRes)
-        {
-            lastVal = ifRes.Value;
-        }
-        return lastVal;
-    }
-
-    private object? EvaluateBlock(BlockNode block, Context context)
-    {
-        var blockContext = new Context(context);
-        object? lastVal = null;
-        foreach (var stmt in block.Statements)
-        {
-            lastVal = Evaluate(stmt, blockContext);
-        }
-        if (lastVal is IfResult ifRes)
-        {
-            lastVal = ifRes.Value;
         }
         return lastVal;
     }
@@ -258,21 +243,8 @@ public class Executor(Toaster _toast)
         }
     }
 
-    private object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)
+    private static object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)
     {
-        var runContext = new Context(funcVal.ClosureContext);
-        for (int i = 0; i < funcVal.Parameters.Count; i++)
-        {
-            var param = funcVal.Parameters[i];
-            var addr = runContext.GetOrCreateAddress(param.Name);
-            runContext.SetValueAtAddress(addr, evalArgs[i]);
-        }
-
-        var res = Evaluate(funcVal.Body, runContext);
-        if (res is IfResult ifRes)
-        {
-            res = ifRes.Value;
-        }
-        return res;
+        return funcVal.Execute(evalArgs);
     }
 }
