@@ -2,23 +2,21 @@ namespace Toast;
 
 public class Parser(
     List<Token> _tokens,
-    Dictionary<string, int> _precedences,
-    HashSet<string> _prefixes
+    Func<Token, (int Precedence, bool IsRight)> _infixResolver,
+    Func<Token, bool> _prefixResolver
 )
 {
     private int _position = 0;
 
     private const int PrefixPrecedence = 9;
-    private const int InfixPrecedence = 6;
 
-    public static ProgramNode Parse(List<Token> tokens)
+    public static ProgramNode Parse(
+        List<Token> tokens,
+        Func<Token, (int Precedence, bool IsRight)> infixResolver,
+        Func<Token, bool> prefixResolver
+    )
     {
-        var filtered = tokens.Where(x => x.Kind != TokenKind.NewLine).ToList();
-
-        // 임시
-        var operators = new Dictionary<string, int>() { { "+", 7 }, { "*", 8 } };
-
-        var parser = new Parser(filtered, operators, []);
+        var parser = new Parser(tokens, infixResolver, prefixResolver);
         return parser.ParseProgram();
     }
 
@@ -28,7 +26,14 @@ public class Parser(
 
         while (!IsAtEnd())
         {
+            MatchWhileNewLine();
+
+            if (IsAtEnd())
+                break;
+
             expressions.Add(ParseExpression());
+
+            MatchWhileNewLine();
         }
 
         return new ProgramNode(expressions);
@@ -38,35 +43,43 @@ public class Parser(
     {
         var left = ParsePrefix();
 
-        while (!IsAtEnd() && precedence < GetInfixPrecedence(Peek()))
+        while (true)
         {
-            left = ParseInfix(left);
-        }
-
-        while (!IsAtEnd() && CanBeArgument(Peek()))
-        {
-            var beforePos = _position;
-
-            if (left is CallNode callNode)
+            if (!IsAtEnd() && precedence < GetInfixPrecedence(Peek()))
             {
-                var arguments = new List<Node>(callNode.Arguments)
+                left = ParseInfix(left);
+                continue;
+            }
+
+            if (!IsAtEnd() && precedence < PrefixPrecedence && CanBeArgument(Peek()))
+            {
+                var beforePos = _position;
+
+                if (left is CallNode callNode)
                 {
-                    ParseExpression(GetInfixPrecedence(Peek())),
-                };
-                left = callNode with { Arguments = arguments };
-            }
-            else
-            {
-                var arguments = new[] { ParseExpression(GetInfixPrecedence(Peek())) };
-                left = new CallNode(left, arguments);
+                    var arguments = new List<Node>(callNode.Arguments)
+                    {
+                        ParseExpression(PrefixPrecedence),
+                    };
+                    left = callNode with { Arguments = arguments };
+                }
+                else
+                {
+                    var arguments = new[] { ParseExpression(PrefixPrecedence) };
+                    left = new CallNode(left, arguments);
+                }
+
+                if (_position == beforePos)
+                {
+                    throw new InvalidOperationException(
+                        $"Parser stuck at position {_position}: no progress while parsing arguments."
+                    );
+                }
+
+                continue;
             }
 
-            if (_position == beforePos)
-            {
-                throw new InvalidOperationException(
-                    $"Parser stuck at position {_position}: no progress while parsing arguments."
-                );
-            }
+            break;
         }
 
         return left;
@@ -99,12 +112,14 @@ public class Parser(
     private BlockNode ParseBlock()
     {
         var statements = new List<Node>();
+        MatchWhileNewLine();
 
         if (!Check(TokenKind.RBrace))
         {
             do
             {
                 statements.Add(ParseExpression());
+                MatchWhileNewLine();
             } while (!IsAtEnd() && !Check(TokenKind.RBrace));
         }
 
@@ -134,27 +149,19 @@ public class Parser(
 
     private Node ParsePrimary(Token current)
     {
-        switch (current.Kind)
+        return current.Kind switch
         {
-            case TokenKind.Identifier:
-                return new IdentifierNode(current.Value!);
-            case TokenKind.Integer:
-                return new LiteralNode("Integer", int.Parse(current.Value!));
-            case TokenKind.Float:
-                return new LiteralNode("Float", double.Parse(current.Value!));
-            case TokenKind.String:
-                return new LiteralNode("String", current.Value!.Trim('"'));
-            case TokenKind.LParen:
-                return ParseGroup();
-            case TokenKind.LBrace:
-                return ParseBlock();
-            case TokenKind.LBracket:
-                return ParseList();
-            default:
-                throw new InvalidOperationException(
-                    $"Unexpected token '{current.Kind}' ('{current.Value}')."
-                );
-        }
+            TokenKind.Identifier => new IdentifierNode(current.Value!),
+            TokenKind.Integer => new LiteralNode("Integer", int.Parse(current.Value!)),
+            TokenKind.Float => new LiteralNode("Float", double.Parse(current.Value!)),
+            TokenKind.String => new LiteralNode("String", current.Value!.Trim('"')),
+            TokenKind.LParen => ParseGroup(),
+            TokenKind.LBrace => ParseBlock(),
+            TokenKind.LBracket => ParseList(),
+            _ => throw new InvalidOperationException(
+                $"Unexpected token '{current.Kind}' ('{current.Value}')."
+            ),
+        };
     }
 
     private FunctionNode ParseFunctionLiteral()
@@ -208,9 +215,10 @@ public class Parser(
     private CallNode ParseInfix(Node left)
     {
         var opToken = Consume();
-        int precedence = _precedences[opToken.Value!];
+        var (precedence, isRight) = GetInfixInfo(opToken);
 
-        var right = ParseExpression(precedence);
+        var nextPrecedence = isRight ? precedence - 1 : precedence;
+        var right = ParseExpression(nextPrecedence);
 
         return new CallNode(new IdentifierNode(opToken.Value!), [left, right]);
     }
@@ -251,28 +259,26 @@ public class Parser(
 
     private bool IsPrefixOperator(Token token)
     {
-        if (token.Kind != TokenKind.Symbol)
-        {
-            return false;
-        }
-
-        return _prefixes.Contains(token.Value!);
+        return _prefixResolver(token);
     }
 
     private bool IsInfixOperator(Token token)
     {
-        return token.Kind is TokenKind.Symbol or TokenKind.Identifier
-            && _precedences.ContainsKey(token.Value!);
+        return _infixResolver(token).Precedence > 0;
+    }
+
+    private (int Precedence, bool IsRight) GetInfixInfo(Token token)
+    {
+        if (IsAtEnd())
+        {
+            return (0, false);
+        }
+        return _infixResolver(token);
     }
 
     private int GetInfixPrecedence(Token token)
     {
-        if (IsAtEnd() || !IsInfixOperator(token))
-        {
-            return 0;
-        }
-
-        return _precedences.GetValueOrDefault(token.Value!, 0);
+        return GetInfixInfo(token).Precedence;
     }
 
     private bool CanBeArgument(Token token) =>
@@ -280,6 +286,7 @@ public class Parser(
         && token.Kind != TokenKind.RBrace
         && token.Kind != TokenKind.RBracket
         && token.Kind != TokenKind.Comma
+        && token.Kind != TokenKind.NewLine
         && !IsInfixOperator(token);
 
     private Token Peek() => _tokens[_position];
@@ -300,6 +307,11 @@ public class Parser(
     }
 
     private bool Check(TokenKind kind) => !IsAtEnd() && Peek().Kind == kind;
+
+    private void MatchWhileNewLine()
+    {
+        while (Match(TokenKind.NewLine)) { }
+    }
 
     private bool Match(TokenKind kind)
     {
