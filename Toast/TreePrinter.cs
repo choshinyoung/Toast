@@ -35,7 +35,7 @@ public static class TreePrinter
             FunctionNode function => $"Function ({function.Parameters.Count} params)",
             CallNode call => $"Call {Describe(call.Callee)}",
             IdentifierNode identifier => $"Identifier {identifier.Name}",
-            LiteralNode literal => $"Literal {literal.Kind}: {literal.Value}",
+            LiteralNode literal => $"Literal {literal.Type}: {literal.Value}",
             ParameterNode parameter => parameter.Type is null
                 ? $"Parameter {parameter.Name}"
                 : $"Parameter {parameter.Name}: {DescribeType(parameter.Type)}",
@@ -52,7 +52,7 @@ public static class TreePrinter
         };
 
     private static string DescribeType(TypeNode type) =>
-        type.IsArray ? $"{type.Name}[]" : type.Name;
+        type.IsArray ? $"{type.Type}[]" : type.Type.ToString();
 
     private static IEnumerable<Node> Children(Node node) =>
         node switch

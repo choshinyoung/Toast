@@ -18,7 +18,6 @@ public class Context(Context? parent = null)
 
     public MemoryAddress GetOrCreateAddress(string name)
     {
-        // 1. 기존 바인딩이 있는지 상위 스코프까지 탐색
         var addr = LookupAddress(name);
         if (addr != null)
         {

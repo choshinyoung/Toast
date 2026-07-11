@@ -26,14 +26,14 @@ public class Parser(
 
         while (!IsAtEnd())
         {
-            MatchWhileNewLine();
+            MatchWhileNewline();
 
             if (IsAtEnd())
                 break;
 
             expressions.Add(ParseExpression());
 
-            MatchWhileNewLine();
+            MatchWhileNewline();
         }
 
         return new ProgramNode(expressions);
@@ -75,7 +75,6 @@ public class Parser(
                         $"Parser stuck at position {_position}: no progress while parsing arguments."
                     );
                 }
-
                 continue;
             }
 
@@ -112,14 +111,15 @@ public class Parser(
     private BlockNode ParseBlock()
     {
         var statements = new List<Node>();
-        MatchWhileNewLine();
+
+        MatchWhileNewline();
 
         if (!Check(TokenKind.RBrace))
         {
             do
             {
                 statements.Add(ParseExpression());
-                MatchWhileNewLine();
+                MatchWhileNewline();
             } while (!IsAtEnd() && !Check(TokenKind.RBrace));
         }
 
@@ -149,19 +149,27 @@ public class Parser(
 
     private Node ParsePrimary(Token current)
     {
-        return current.Kind switch
+        switch (current.Kind)
         {
-            TokenKind.Identifier => new IdentifierNode(current.Value!),
-            TokenKind.Integer => new LiteralNode("Integer", int.Parse(current.Value!)),
-            TokenKind.Float => new LiteralNode("Float", double.Parse(current.Value!)),
-            TokenKind.String => new LiteralNode("String", current.Value!.Trim('"')),
-            TokenKind.LParen => ParseGroup(),
-            TokenKind.LBrace => ParseBlock(),
-            TokenKind.LBracket => ParseList(),
-            _ => throw new InvalidOperationException(
-                $"Unexpected token '{current.Kind}' ('{current.Value}')."
-            ),
-        };
+            case TokenKind.Identifier:
+                return new IdentifierNode(current.Value!);
+            case TokenKind.Integer:
+                return new LiteralNode(ToastType.Integer, int.Parse(current.Value!));
+            case TokenKind.Float:
+                return new LiteralNode(ToastType.Float, double.Parse(current.Value!));
+            case TokenKind.String:
+                return new LiteralNode(ToastType.String, current.Value!.Trim('"'));
+            case TokenKind.LParen:
+                return ParseGroup();
+            case TokenKind.LBrace:
+                return ParseBlock();
+            case TokenKind.LBracket:
+                return ParseList();
+            default:
+                throw new InvalidOperationException(
+                    $"Unexpected token '{current.Kind}' ('{current.Value}')."
+                );
+        }
     }
 
     private FunctionNode ParseFunctionLiteral()
@@ -184,13 +192,40 @@ public class Parser(
             do
             {
                 var name = Expect(TokenKind.Identifier, "Expected parameter name.").Value!;
-                parameters.Add(new ParameterNode(name, null));
+                TypeNode? type = null;
+                if (Match(TokenKind.Symbol, ":"))
+                {
+                    type = ParseType();
+                }
+                parameters.Add(new ParameterNode(name, type));
             } while (Match(TokenKind.Comma));
         }
 
         Expect(TokenKind.RParen, "Expected ')' after parameters.");
 
         return parameters;
+    }
+
+    private TypeNode ParseType()
+    {
+        var typeToken = Expect(TokenKind.Identifier, "Expected type name.");
+        ToastType typeEnum = typeToken.Value switch
+        {
+            "string" => ToastType.String,
+            "integer" => ToastType.Integer,
+            "float" => ToastType.Float,
+            "boolean" => ToastType.Boolean,
+            _ => throw new InvalidOperationException($"Unknown type: {typeToken.Value}"),
+        };
+
+        bool isArray = false;
+        if (Match(TokenKind.LBracket))
+        {
+            Expect(TokenKind.RBracket, "Expected ']' after '[' in array type.");
+            isArray = true;
+        }
+
+        return new TypeNode(typeEnum, isArray);
     }
 
     private Node ParsePrefix()
@@ -308,11 +343,6 @@ public class Parser(
 
     private bool Check(TokenKind kind) => !IsAtEnd() && Peek().Kind == kind;
 
-    private void MatchWhileNewLine()
-    {
-        while (Match(TokenKind.NewLine)) { }
-    }
-
     private bool Match(TokenKind kind)
     {
         if (!Check(kind))
@@ -333,6 +363,11 @@ public class Parser(
 
         _position++;
         return true;
+    }
+
+    private void MatchWhileNewline()
+    {
+        while (Match(TokenKind.NewLine)) { }
     }
 
     private Token Expect(TokenKind kind, string message)
