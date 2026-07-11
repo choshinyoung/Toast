@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace Toast;
 
 public static class BuiltIn
@@ -8,16 +6,49 @@ public static class BuiltIn
     {
         // Register Converters
         toast.RegisterConverter(
-            new TypeConverter(ToastType.Integer, ToastType.Float, val => Convert.ToDouble(val))
+            new TypeConverter(ToastType.Integer, ToastType.Float, (_, val) => Convert.ToDouble(val))
         );
         toast.RegisterConverter(
-            new TypeConverter(ToastType.Integer, ToastType.String, val => val?.ToString())
+            new TypeConverter(ToastType.Integer, ToastType.String, (_, val) => val?.ToString())
         );
         toast.RegisterConverter(
-            new TypeConverter(ToastType.Float, ToastType.String, val => val?.ToString())
+            new TypeConverter(ToastType.Float, ToastType.String, (_, val) => val?.ToString())
         );
         toast.RegisterConverter(
-            new TypeConverter(ToastType.Boolean, ToastType.String, val => val?.ToString())
+            new TypeConverter(ToastType.Boolean, ToastType.String, (_, val) => val?.ToString())
+        );
+        toast.RegisterConverter(
+            new TypeConverter(
+                ToastType.List,
+                ToastType.String,
+                (ctx, val) =>
+                {
+                    if (val is System.Collections.IEnumerable enumerable)
+                    {
+                        var list = new List<string>();
+                        foreach (var x in enumerable)
+                        {
+                            var type = Executor.GetToastType(x);
+                            if (
+                                ctx.Toaster.TryConvert(
+                                    x,
+                                    type,
+                                    ToastType.String,
+                                    ctx,
+                                    out var converted
+                                )
+                            )
+                            {
+                                list.Add(converted?.ToString() ?? "null");
+                                continue;
+                            }
+                            list.Add(x?.ToString() ?? "null");
+                        }
+                        return $"[{string.Join(", ", list)}]";
+                    }
+                    return "[]";
+                }
+            )
         );
 
         // 0. 리터럴 상수 무인자 함수 등록
@@ -346,7 +377,7 @@ public static class BuiltIn
         // 27. 중위 식별자 in
         toast.RegisterFunction(
             "in",
-            (Context context, object? left, IEnumerable right) =>
+            (Context context, object? left, System.Collections.IEnumerable right) =>
             {
                 foreach (var item in right)
                 {
@@ -407,7 +438,7 @@ public static class BuiltIn
 
                 if (t.Converters.TryGetValue((sourceType, targetType), out var converter))
                 {
-                    return converter.ConvertFunc(leftVal);
+                    return converter.ConvertFunc(context, leftVal);
                 }
 
                 throw new InvalidOperationException(

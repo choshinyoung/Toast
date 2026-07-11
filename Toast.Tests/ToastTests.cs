@@ -13,7 +13,7 @@ public class ToastTests
 
     private void AssertResult(string source, object? expected, Context? context = null)
     {
-        context ??= new Context();
+        context ??= new Context(_toast);
         var result = Evaluate(source, context);
 
         if (expected is string s && s == "MemoryAddress")
@@ -48,7 +48,7 @@ public class ToastTests
     [Fact]
     public void TestVariableAssignment()
     {
-        var context = new Context();
+        var context = new Context(_toast);
 
         // var x
         var tokens = Lexer.Tokenize("var x");
@@ -57,7 +57,7 @@ public class ToastTests
         Assert.IsType<MemoryAddress>(xAddr);
 
         // Assignment & Retrieval
-        var ctxAss = new Context();
+        var ctxAss = new Context(_toast);
         AssertResult("var x = 42", 42, ctxAss);
         AssertResult("x", 42, ctxAss);
     }
@@ -65,7 +65,7 @@ public class ToastTests
     [Fact]
     public void TestPointersAndDereferences()
     {
-        var context = new Context();
+        var context = new Context(_toast);
         AssertResult("var c = 10\n var a = (var c)", "MemoryAddress", context);
         AssertResult("a = 20", 20, context);
         AssertResult("*a", 20, context);
@@ -78,7 +78,7 @@ public class ToastTests
         AssertResult("if (true) { 100 } else { 200 }", 100);
         AssertResult("if (false) { 100 } else { 200 }", 200);
 
-        var context = new Context();
+        var context = new Context(_toast);
         AssertResult("var cond = true\n if (cond) { 10 } else { 20 }", 10, context);
     }
 
@@ -87,7 +87,7 @@ public class ToastTests
     {
         AssertResult("1 to 5", new List<int> { 1, 2, 3, 4, 5 });
 
-        var context = new Context();
+        var context = new Context(_toast);
         AssertResult("var r = 1 to 5\n 3 in r", true, context);
         AssertResult("6 in (1 to 5)", false);
     }
@@ -102,7 +102,7 @@ public class ToastTests
     [Fact]
     public void TestParameterlessFunctionExecution()
     {
-        var context = new Context();
+        var context = new Context(_toast);
 
         // Define parameterless function: var a = () => 1
         var tokens = Lexer.Tokenize("var a = () => 1");
@@ -133,7 +133,7 @@ public class ToastTests
     [Fact]
     public void TestMultipleArgumentsCalls()
     {
-        var context = new Context();
+        var context = new Context(_toast);
 
         // Define function with multiple parameters: var b = (x, y) => x + y
         var tokens = Lexer.Tokenize("var b = (x, y) => x + y");
@@ -152,7 +152,7 @@ public class ToastTests
     [Fact]
     public void TestBuiltInCommandsAsFunctions()
     {
-        var context = new Context();
+        var context = new Context(_toast);
 
         // 1. Quoted operator '`(+)' should evaluate to a Command object
         var valQuotePlus = Evaluate("`(+)", context);
@@ -185,7 +185,7 @@ public class ToastTests
     [Fact]
     public void TestBlockAsParameterlessFunction()
     {
-        var context = new Context();
+        var context = new Context(_toast);
         // A block '{ 42 }' itself should evaluate to a FunctionValue
         var valBlock = Evaluate("{ 42 }", context);
         var funcVal = Assert.IsType<FunctionValue>(valBlock);
@@ -213,7 +213,7 @@ public class ToastTests
         AssertResult("if (false) 100 else if (false) 200 else 300", 300);
 
         // 3. Verify inactive branch is NOT eagerly evaluated
-        var context = new Context();
+        var context = new Context(_toast);
         Evaluate("var x = 0", context);
         // The true branch should run, but the false branch (which assigns x = 5) should NOT run!
         Evaluate("if (true) 10 else (x = 5)", context);
@@ -222,5 +222,28 @@ public class ToastTests
         // The false branch should run, but the true branch (which assigns x = 5) should NOT run!
         Evaluate("if (false) (x = 5) else 20", context);
         Assert.Equal(0, Evaluate("x", context));
+    }
+
+    [Fact]
+    public void TestListToStringConverter()
+    {
+        // Get the converter from the toaster
+        var sourceTarget = (ToastType.List, ToastType.String);
+        Assert.True(_toast.Converters.TryGetValue(sourceTarget, out var converter));
+
+        // Test normal list
+        var list = new List<object> { 1, 2, 3 };
+        var str = converter.ConvertFunc(_toast.GlobalContext, list);
+        Assert.Equal("[1, 2, 3]", str);
+
+        // Test nested list
+        var nestedList = new List<object>
+        {
+            1,
+            new List<object> { 2, 3 },
+            4,
+        };
+        var nestedStr = converter.ConvertFunc(_toast.GlobalContext, nestedList);
+        Assert.Equal("[1, [2, 3], 4]", nestedStr);
     }
 }

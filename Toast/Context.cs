@@ -8,13 +8,17 @@ public class MemoryAddress(string name, Guid id)
     public override string ToString() => $"Ref({Name}:{Id.ToString()[..8]})";
 }
 
-public class Context(Context? parent = null)
+public class Context(Toaster toaster, Context? parent = null)
 {
     private readonly Context? _parent = parent;
     private readonly Dictionary<string, MemoryAddress> _bindings = [];
     private readonly Dictionary<MemoryAddress, object?> _memory = [];
 
+    public Toaster Toaster { get; } = toaster;
     public int Depth { get; } = parent == null ? 0 : parent.Depth + 1;
+
+    public Context(Context parent)
+        : this(parent.Toaster, parent) { }
 
     public MemoryAddress GetOrCreateAddress(string name)
     {

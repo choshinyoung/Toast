@@ -212,7 +212,7 @@ public class Executor(Toaster _toast)
             var expected = cmd.ParameterTypes[i];
             var actual = actualTypes[i];
 
-            if (_toast.TryConvert(evalArgs[i], actual, expected, out var converted))
+            if (_toast.TryConvert(evalArgs[i], actual, expected, context, out var converted))
             {
                 {
                     finalArgs.Add(converted);

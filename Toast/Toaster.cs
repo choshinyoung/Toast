@@ -1,7 +1,5 @@
 namespace Toast;
 
-
-
 public class FunctionValue(
     IReadOnlyList<ParameterNode> parameters,
     IReadOnlyList<Node> statements,
@@ -40,10 +38,11 @@ public class Toaster
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<string, Command> IdentifierCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
-    public readonly Context GlobalContext = new();
+    public readonly Context GlobalContext;
 
     public Toaster(bool useBuiltIn = false)
     {
+        GlobalContext = new Context(this);
         if (useBuiltIn)
         {
             BuiltIn.Register(this);
@@ -159,7 +158,13 @@ public class Toaster
         return executor.Evaluate(node, context);
     }
 
-    public bool TryConvert(object? obj, ToastType actual, ToastType expected, out object? result)
+    public bool TryConvert(
+        object? obj,
+        ToastType actual,
+        ToastType expected,
+        Context context,
+        out object? result
+    )
     {
         if (expected == ToastType.Any || expected == actual)
         {
@@ -169,7 +174,7 @@ public class Toaster
         }
         else if (Converters.TryGetValue((actual, expected), out var conv))
         {
-            result = conv.ConvertFunc(obj);
+            result = conv.ConvertFunc(context, obj);
             return true;
         }
 

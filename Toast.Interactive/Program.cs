@@ -35,7 +35,15 @@ while (true)
         else
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine(result);
+            var toastType = Executor.GetToastType(result);
+            if (toast.Converters.TryGetValue((toastType, ToastType.String), out var converter))
+            {
+                Console.WriteLine(converter.ConvertFunc(toast.GlobalContext, result));
+            }
+            else
+            {
+                Console.WriteLine(result);
+            }
         }
 
         Console.ResetColor();
