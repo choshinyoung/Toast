@@ -30,6 +30,7 @@ public static class TreePrinter
         node switch
         {
             ProgramNode program => $"Program ({program.Statements.Count} statements)",
+            GroupNode group => $"Group ({group.Items.Count} items)",
             BlockNode block => $"Block ({block.Statements.Count} statements)",
             ListNode list => $"List ({list.Items.Count} items)",
             FunctionNode function => $"Function ({function.Parameters.Count} params)",
@@ -58,6 +59,7 @@ public static class TreePrinter
         node switch
         {
             ProgramNode program => program.Statements,
+            GroupNode group => group.Items,
             BlockNode block => block.Statements,
             ListNode list => list.Items,
             FunctionNode function => function.Parameters.Cast<Node>().Concat([function.Body]),

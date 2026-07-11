@@ -30,12 +30,12 @@ public class Executor(Toaster _toast)
         return EvaluateProgram(ast, _toast.GlobalContext);
     }
 
-    public object? Evaluate(Node node, Context context)
+    public object? Evaluate(Node node, Context context, bool suppressZeroArgFunction = false)
     {
         return node switch
         {
             LiteralNode literal => literal.Value,
-            IdentifierNode identifier => EvaluateIdentifier(identifier, context),
+            IdentifierNode identifier => EvaluateIdentifier(identifier, context, suppressZeroArgFunction),
             ProgramNode program => EvaluateProgram(program, context),
             BlockNode block => EvaluateBlock(block, context),
             GroupNode group => EvaluateGroup(group, context),
@@ -48,11 +48,16 @@ public class Executor(Toaster _toast)
         };
     }
 
-    private object? EvaluateIdentifier(IdentifierNode identifier, Context context)
+    private object? EvaluateIdentifier(IdentifierNode identifier, Context context, bool suppressZeroArgFunction)
     {
         if (context.LookupAddress(identifier.Name) != null)
         {
-            return context.GetValue(identifier.Name);
+            var val = context.GetValue(identifier.Name);
+            if (!suppressZeroArgFunction && val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+            {
+                return ExecuteFunction(funcVal, []);
+            }
+            return val;
         }
 
         if (_toast.IdentifierCommands.TryGetValue(identifier.Name, out var cmd))
@@ -106,8 +111,12 @@ public class Executor(Toaster _toast)
 
     private object? EvaluateGroup(GroupNode group, Context context)
     {
+        if (group.Items.Count == 1)
+        {
+            return Evaluate(group.Items[0], context, suppressZeroArgFunction: true);
+        }
         var evaluatedItems = group.Items.Select(item => Evaluate(item, context)).ToList();
-        return evaluatedItems.Count == 1 ? evaluatedItems[0] : evaluatedItems;
+        return evaluatedItems;
     }
 
     private object? EvaluateList(ListNode list, Context context)
@@ -155,14 +164,20 @@ public class Executor(Toaster _toast)
                 }
 
                 // 2. 조기 평가 커맨드 (ParameterTypes != null) 매개변수 타입 검증 및 변환
-                if (cmd.ParameterTypes.Count != call.Arguments.Count)
+                var callArgs = call.Arguments.ToList();
+                if (callArgs.Count == 1 && callArgs[0] is GroupNode gn && gn.Items.Count == 0)
+                {
+                    callArgs.Clear();
+                }
+
+                if (cmd.ParameterTypes.Count != callArgs.Count)
                 {
                     throw new InvalidOperationException(
-                        $"Arity mismatch: command '{cmd.Name}' expects {cmd.ParameterTypes.Count} arguments, but got {call.Arguments.Count}."
+                        $"Arity mismatch: command '{cmd.Name}' expects {cmd.ParameterTypes.Count} arguments, but got {callArgs.Count}."
                     );
                 }
 
-                var evalArgs = call.Arguments.Select(arg => Evaluate(arg, context)).ToList();
+                var evalArgs = callArgs.Select(arg => Evaluate(arg, context)).ToList();
                 var actualTypes = evalArgs.Select(GetToastType).ToList();
 
                 var finalArgs = new List<object?>();
@@ -204,33 +219,44 @@ public class Executor(Toaster _toast)
             }
         }
 
-        var calleeVal = Evaluate(call.Callee, context);
+        var calleeVal = Evaluate(call.Callee, context, suppressZeroArgFunction: true);
         if (calleeVal is FunctionValue funcVal)
         {
-            if (funcVal.Parameters.Count != call.Arguments.Count)
+            var callArgs = call.Arguments.ToList();
+            if (callArgs.Count == 1 && callArgs[0] is GroupNode gn && gn.Items.Count == 0)
+            {
+                callArgs.Clear();
+            }
+
+            if (funcVal.Parameters.Count != callArgs.Count)
             {
                 throw new InvalidOperationException(
-                    $"Arity mismatch: function expects {funcVal.Parameters.Count} arguments, but got {call.Arguments.Count}."
+                    $"Arity mismatch: function expects {funcVal.Parameters.Count} arguments, but got {callArgs.Count}."
                 );
             }
 
-            var evalArgs = call.Arguments.Select(arg => Evaluate(arg, context)).ToList();
-            var runContext = new Context(funcVal.ClosureContext);
-            for (int i = 0; i < funcVal.Parameters.Count; i++)
-            {
-                var param = funcVal.Parameters[i];
-                var addr = runContext.GetOrCreateAddress(param.Name);
-                runContext.SetValueAtAddress(addr, evalArgs[i]);
-            }
-
-            var res = Evaluate(funcVal.Body, runContext);
-            if (res is IfResult ifRes)
-            {
-                res = ifRes.Value;
-            }
-            return res;
+            var evalArgs = callArgs.Select(arg => Evaluate(arg, context)).ToList();
+            return ExecuteFunction(funcVal, evalArgs);
         }
 
         throw new InvalidOperationException($"Callee is not a callable function or command.");
+    }
+
+    private object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)
+    {
+        var runContext = new Context(funcVal.ClosureContext);
+        for (int i = 0; i < funcVal.Parameters.Count; i++)
+        {
+            var param = funcVal.Parameters[i];
+            var addr = runContext.GetOrCreateAddress(param.Name);
+            runContext.SetValueAtAddress(addr, evalArgs[i]);
+        }
+
+        var res = Evaluate(funcVal.Body, runContext);
+        if (res is IfResult ifRes)
+        {
+            res = ifRes.Value;
+        }
+        return res;
     }
 }

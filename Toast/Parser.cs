@@ -100,11 +100,6 @@ public class Parser(
 
         Expect(TokenKind.RParen, "Expected ')' after expression in group.");
 
-        if (items.Count == 1)
-        {
-            return items[0];
-        }
-
         return new GroupNode(items);
     }
 

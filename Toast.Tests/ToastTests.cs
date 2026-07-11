@@ -98,4 +98,31 @@ public class ToastTests
         AssertResult("1 as float", 1.0);
         AssertResult("true as string", "True");
     }
+
+    [Fact]
+    public void TestParameterlessFunctionExecution()
+    {
+        var context = new Context();
+
+        // Define parameterless function: var a = () => 1
+        var tokens = Lexer.Tokenize("var a = () => 1");
+        var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
+        _toast.Evaluate(ast, context);
+
+        // 1. Direct variable call 'a' should evaluate and return 1
+        var valA = Evaluate("a", context);
+        Assert.Equal(1, valA);
+
+        // 2. Parenthesized '(a)' should evaluate to the FunctionValue itself
+        var valParenA = Evaluate("(a)", context);
+        Assert.IsType<FunctionValue>(valParenA);
+
+        // 3. Parenthesized with explicit call '(a)()' should evaluate and return 1
+        var valParenACall = Evaluate("(a)()", context);
+        Assert.Equal(1, valParenACall);
+
+        // 4. Direct call 'a()' should evaluate and return 1
+        var valACall = Evaluate("a()", context);
+        Assert.Equal(1, valACall);
+    }
 }
