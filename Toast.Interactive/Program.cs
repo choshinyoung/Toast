@@ -6,6 +6,7 @@ Console.WriteLine("========================================");
 Console.WriteLine("Type exit or quit to end the session.\n");
 
 var toast = new Toaster(useBuiltIn: true);
+toast.RegisterFunction("exit", (Context context) => Environment.Exit(0));
 
 while (true)
 {
@@ -18,10 +19,6 @@ while (true)
     }
 
     var trimmed = input.Trim();
-    if (trimmed == "exit")
-    {
-        break;
-    }
     if (string.IsNullOrWhiteSpace(trimmed))
     {
         continue;
