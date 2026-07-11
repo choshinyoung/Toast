@@ -53,7 +53,7 @@ public static class TreePrinter
         };
 
     private static string DescribeType(TypeNode type) =>
-        type.IsArray ? $"{type.Type}[]" : type.Type.ToString();
+        type.IsList ? $"{type.Type}[]" : type.Type.ToString();
 
     private static IEnumerable<Node> Children(Node node) =>
         node switch

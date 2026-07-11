@@ -110,7 +110,7 @@ public class Command
         if (type == typeof(FunctionValue) || type == typeof(Command))
             return ToastType.Function;
         if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
-            return ToastType.Array;
+            return ToastType.List;
         return ToastType.Any;
     }
 }

@@ -19,7 +19,7 @@ public class Executor(Toaster _toast)
         if (val is FunctionValue or Command)
             return ToastType.Function;
         if (val is System.Collections.IEnumerable)
-            return ToastType.Array;
+            return ToastType.List;
         return ToastType.Any;
     }
 
@@ -226,13 +226,12 @@ public class Executor(Toaster _toast)
         {
             var expected = cmd.ParameterTypes[i];
             var actual = actualTypes[i];
-            if (expected == ToastType.Any || expected == actual)
+
+            if (_toast.TryConvert(evalArgs[i], expected, actual, out var converted))
             {
-                finalArgs.Add(evalArgs[i]);
-            }
-            else if (_toast.Converters.TryGetValue((actual, expected), out var conv))
-            {
-                finalArgs.Add(conv.ConvertFunc(evalArgs[i]));
+                {
+                    finalArgs.Add(converted);
+                }
             }
             else
             {

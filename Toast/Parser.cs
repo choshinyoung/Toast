@@ -232,14 +232,14 @@ public class Parser(
             _ => throw new InvalidOperationException($"Unknown type: {typeToken.Value}"),
         };
 
-        bool isArray = false;
+        bool isList = false;
         if (Match(TokenKind.LBracket))
         {
-            Expect(TokenKind.RBracket, "Expected ']' after '[' in array type.");
-            isArray = true;
+            Expect(TokenKind.RBracket, "Expected ']' after '[' in list type.");
+            isList = true;
         }
 
-        return new TypeNode(typeEnum, isArray);
+        return new TypeNode(typeEnum, isList);
     }
 
     private Node ParsePrefix()

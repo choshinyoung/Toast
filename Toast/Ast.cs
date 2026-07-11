@@ -6,7 +6,7 @@ public enum ToastType
     Integer,
     Float,
     Boolean,
-    Array,
+    List,
     Identifier,
     Function,
     Null,
@@ -27,7 +27,7 @@ public sealed record FunctionNode(IReadOnlyList<ParameterNode> Parameters, Node 
 
 public sealed record ParameterNode(string Name, TypeNode? Type) : Node;
 
-public sealed record TypeNode(ToastType Type, bool IsArray) : Node;
+public sealed record TypeNode(ToastType Type, bool IsList) : Node;
 
 public sealed record CallNode(Node Callee, IReadOnlyList<Node> Arguments) : Node;
 

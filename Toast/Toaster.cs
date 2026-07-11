@@ -137,11 +137,22 @@ public class Toaster
         var executor = new Executor(this);
         return executor.Evaluate(node, context);
     }
-}
 
-public class TypeConverter(ToastType source, ToastType target, Func<object?, object?> convertFunc)
-{
-    public ToastType Source { get; } = source;
-    public ToastType Target { get; } = target;
-    public Func<object?, object?> ConvertFunc { get; } = convertFunc;
+    public bool TryConvert(object? obj, ToastType actual, ToastType expected, out object? result)
+    {
+        if (expected == ToastType.Any || expected == actual)
+        {
+            result = obj;
+
+            return true;
+        }
+        else if (Converters.TryGetValue((actual, expected), out var conv))
+        {
+            result = conv.ConvertFunc(obj);
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
 }
