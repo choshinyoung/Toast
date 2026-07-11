@@ -107,7 +107,7 @@ public class Command
             return ToastType.Boolean;
         if (type == typeof(MemoryAddress))
             return ToastType.Identifier;
-        if (type == typeof(FunctionValue))
+        if (type == typeof(FunctionValue) || type == typeof(Command))
             return ToastType.Function;
         if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
             return ToastType.Array;

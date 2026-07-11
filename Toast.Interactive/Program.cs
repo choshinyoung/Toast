@@ -18,7 +18,7 @@ while (true)
     }
 
     var trimmed = input.Trim();
-    if (trimmed is "exit" or "quit")
+    if (trimmed == "exit")
     {
         break;
     }

@@ -113,16 +113,72 @@ public class ToastTests
         var valA = Evaluate("a", context);
         Assert.Equal(1, valA);
 
-        // 2. Parenthesized '(a)' should evaluate to the FunctionValue itself
+        // 2. Parenthesized '(a)' should also evaluate to 1 (rollback of suppression)
         var valParenA = Evaluate("(a)", context);
-        Assert.IsType<FunctionValue>(valParenA);
+        Assert.Equal(1, valParenA);
 
-        // 3. Parenthesized with explicit call '(a)()' should evaluate and return 1
-        var valParenACall = Evaluate("(a)()", context);
-        Assert.Equal(1, valParenACall);
+        // 3. Quoted '`a' should evaluate to the FunctionValue itself
+        var valQuoteA = Evaluate("`a", context);
+        Assert.IsType<FunctionValue>(valQuoteA);
 
-        // 4. Direct call 'a()' should evaluate and return 1
+        // 4. Quoted with explicit call '`a()' should evaluate and return 1
+        var valQuoteACall = Evaluate("`a()", context);
+        Assert.Equal(1, valQuoteACall);
+
+        // 5. Direct call 'a()' should evaluate and return 1
         var valACall = Evaluate("a()", context);
         Assert.Equal(1, valACall);
+    }
+
+    [Fact]
+    public void TestMultipleArgumentsCalls()
+    {
+        var context = new Context();
+
+        // Define function with multiple parameters: var b = (x, y) => x + y
+        var tokens = Lexer.Tokenize("var b = (x, y) => x + y");
+        var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
+        _toast.Evaluate(ast, context);
+
+        // 1. Calling with space-separated args 'b 1 2' should evaluate to 3
+        var valSpace = Evaluate("b 1 2", context);
+        Assert.Equal(3, valSpace);
+
+        // 2. Calling with parenthesized comma-separated args 'b(1, 2)' should also evaluate to 3
+        var valParen = Evaluate("b(1, 2)", context);
+        Assert.Equal(3, valParen);
+    }
+
+    [Fact]
+    public void TestBuiltInCommandsAsFunctions()
+    {
+        var context = new Context();
+
+        // 1. Quoted operator '`(+)' should evaluate to a Command object
+        var valQuotePlus = Evaluate("`(+)", context);
+        Assert.IsType<Command>(valQuotePlus);
+
+        // 2. Quoted operator '`(+)' invoked with two space-separated arguments should return 3
+        var valSpacePlus = Evaluate("`(+) 1 2", context);
+        Assert.Equal(3, valSpacePlus);
+
+        // 3. Quoted operator '`(+)' invoked with parenthesized arguments should return 3
+        var valParenPlus = Evaluate("`(+)(1, 2)", context);
+        Assert.Equal(3, valParenPlus);
+
+        // 4. (true) and (false) should evaluate to boolean values (no suppression)
+        var valParenTrue = Evaluate("(true)", context);
+        Assert.Equal(true, valParenTrue);
+
+        var valParenFalse = Evaluate("(false)", context);
+        Assert.Equal(false, valParenFalse);
+
+        // 5. Quoted '`true' should evaluate to a Command object
+        var valQuoteTrue = Evaluate("`true", context);
+        Assert.IsType<Command>(valQuoteTrue);
+
+        // 6. Invoking '`true()' should return true
+        var valQuoteTrueCall = Evaluate("`true()", context);
+        Assert.Equal(true, valQuoteTrueCall);
     }
 }

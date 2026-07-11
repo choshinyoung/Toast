@@ -55,7 +55,11 @@ public class Parser(
             {
                 var beforePos = _position;
 
-                if (left is CallNode callNode)
+                bool isPrefixCall =
+                    left is CallNode cn
+                    && cn.Callee is IdentifierNode id
+                    && IsPrefixOperator(new Token(TokenKind.Symbol, id.Name));
+                if (left is CallNode callNode && !isPrefixCall)
                 {
                     var arguments = new List<Node>(callNode.Arguments)
                     {
@@ -90,7 +94,22 @@ public class Parser(
 
         while (!Check(TokenKind.RParen))
         {
-            items.Add(ParseExpression());
+            if (
+                Peek().Kind == TokenKind.Symbol
+                && _position + 1 < _tokens.Count
+                && (
+                    _tokens[_position + 1].Kind == TokenKind.RParen
+                    || _tokens[_position + 1].Kind == TokenKind.Comma
+                )
+            )
+            {
+                var opToken = Consume();
+                items.Add(new IdentifierNode(opToken.Value!));
+            }
+            else
+            {
+                items.Add(ParseExpression());
+            }
 
             if (!Match(TokenKind.Comma))
             {

@@ -400,5 +400,37 @@ public static class BuiltIn
             precedence: 6,
             isInfix: true
         );
+
+        // 27. 인용 ` (지연 평가 전위 연산자)
+        toast.RegisterOperator(
+            "`",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var node = args[0];
+                if (node is IdentifierNode idNode)
+                {
+                    if (t.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
+                        return infixCmd;
+                    if (t.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
+                        return prefixCmd;
+                }
+                else if (
+                    node is GroupNode gn
+                    && gn.Items.Count == 1
+                    && gn.Items[0] is IdentifierNode innerId
+                )
+                {
+                    if (t.InfixCommands.TryGetValue(innerId.Name, out var infixCmd))
+                        return infixCmd;
+                    if (t.PrefixCommands.TryGetValue(innerId.Name, out var prefixCmd))
+                        return prefixCmd;
+                }
+
+                var executor = new Executor(t);
+                return executor.Evaluate(node, context, suppressZeroArgFunction: true);
+            },
+            precedence: 9,
+            isPrefix: true
+        );
     }
 }
