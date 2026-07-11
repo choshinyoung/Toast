@@ -18,9 +18,16 @@ public class Toaster
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<string, Command> IdentifierCommands = [];
-    public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters =
-        new();
+    public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
     public readonly Context GlobalContext = new();
+
+    public Toaster(bool useBuiltIn = false)
+    {
+        if (useBuiltIn)
+        {
+            BuiltIn.Register(this);
+        }
+    }
 
     public void RegisterCommand(Command command)
     {

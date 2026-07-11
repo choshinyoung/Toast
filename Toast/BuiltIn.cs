@@ -1,0 +1,404 @@
+using System.Collections;
+
+namespace Toast;
+
+public static class BuiltIn
+{
+    public static void Register(Toaster toast)
+    {
+        // Register Converters
+        toast.RegisterConverter(
+            new TypeConverter(ToastType.Integer, ToastType.Float, val => Convert.ToDouble(val))
+        );
+        toast.RegisterConverter(
+            new TypeConverter(ToastType.Integer, ToastType.String, val => val?.ToString())
+        );
+        toast.RegisterConverter(
+            new TypeConverter(ToastType.Float, ToastType.String, val => val?.ToString())
+        );
+        toast.RegisterConverter(
+            new TypeConverter(ToastType.Boolean, ToastType.String, val => val?.ToString())
+        );
+
+        // 0. 리터럴 상수 무인자 함수 등록
+        toast.RegisterFunction("true", (Context context) => true);
+        toast.RegisterFunction("false", (Context context) => false);
+
+        // 1. var 변수 생성 (지연 평가)
+        toast.RegisterFunction(
+            "var",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var idNode = (IdentifierNode)args[0];
+                return context.GetOrCreateAddress(idNode.Name);
+            }
+        );
+
+        // 2. 대입 연산자 = (지연 평가)
+        toast.RegisterOperator(
+            "=",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var leftVal = t.Evaluate(args[0], context);
+                if (leftVal is MemoryAddress addr)
+                {
+                    var rightVal = t.Evaluate(args[1], context);
+                    context.SetValueAtAddress(addr, rightVal);
+                    return rightVal;
+                }
+                throw new InvalidOperationException("L-value of '=' must be a MemoryAddress.");
+            },
+            precedence: 1,
+            isRightAssociative: true
+        );
+
+        // 3. 전위 역참조 *
+        toast.RegisterOperator(
+            "*",
+            object? (Context context, MemoryAddress addr) =>
+            {
+                return context.GetValueAtAddress(addr);
+            },
+            precedence: 9,
+            isPrefix: true
+        );
+
+        // 4. 중위 곱셈 *
+        toast.RegisterOperator(
+            "*",
+            object? (Context context, object? left, object? right) =>
+            {
+                if (left is double || right is double || left is float || right is float)
+                {
+                    return Convert.ToDouble(left) * Convert.ToDouble(right);
+                }
+                return Convert.ToInt32(left) * Convert.ToInt32(right);
+            },
+            precedence: 8
+        );
+
+        // 5. 전위 단항 +
+        toast.RegisterOperator(
+            "+",
+            (Context context, double val) => val,
+            precedence: 9,
+            isPrefix: true
+        );
+
+        // 6. 중위 덧셈 +
+        toast.RegisterOperator(
+            "+",
+            object? (Context context, object? left, object? right) =>
+            {
+                if (left is string || right is string)
+                {
+                    return left?.ToString() + right?.ToString();
+                }
+                if (left is double || right is double || left is float || right is float)
+                {
+                    return Convert.ToDouble(left) + Convert.ToDouble(right);
+                }
+                return Convert.ToInt32(left) + Convert.ToInt32(right);
+            },
+            precedence: 7
+        );
+
+        // 7. 전위 단항 -
+        toast.RegisterOperator(
+            "-",
+            (Context context, double val) => -val,
+            precedence: 9,
+            isPrefix: true
+        );
+
+        // 8. 중위 뺄셈 -
+        toast.RegisterOperator(
+            "-",
+            (Context context, double left, double right) => left - right,
+            precedence: 7
+        );
+
+        // 9. 중위 나눗셈 /
+        toast.RegisterOperator(
+            "/",
+            (Context context, double left, double right) => left / right,
+            precedence: 8
+        );
+
+        // 10. 중위 나머지 %
+        toast.RegisterOperator(
+            "%",
+            (Context context, double left, double right) => left % right,
+            precedence: 8
+        );
+
+        // 11. 전위 부정 !
+        toast.RegisterOperator(
+            "!",
+            (Context context, bool val) => !val,
+            precedence: 9,
+            isPrefix: true
+        );
+
+        // 12. 전위 비트 반전 ~
+        toast.RegisterOperator(
+            "~",
+            (Context context, int val) => ~val,
+            precedence: 9,
+            isPrefix: true
+        );
+
+        // 13. 중위 논리곱 && (지연 평가)
+        toast.RegisterOperator(
+            "&&",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var left = (bool)t.Evaluate(args[0], context)!;
+                if (!left)
+                    return false;
+                return (bool)t.Evaluate(args[1], context)!;
+            },
+            precedence: 2
+        );
+
+        // 14. 중위 논리합 || (지연 평가)
+        toast.RegisterOperator(
+            "||",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var left = (bool)t.Evaluate(args[0], context)!;
+                if (left)
+                    return true;
+                return (bool)t.Evaluate(args[1], context)!;
+            },
+            precedence: 2
+        );
+
+        // 15. 중위 동등 ==
+        toast.RegisterOperator(
+            "==",
+            (Context context, object? left, object? right) => Equals(left, right),
+            precedence: 4
+        );
+
+        // 16. 중위 부등 !=
+        toast.RegisterOperator(
+            "!=",
+            (Context context, object? left, object? right) => !Equals(left, right),
+            precedence: 4
+        );
+
+        // 17. 중위 비교 <
+        toast.RegisterOperator(
+            "<",
+            (Context context, double left, double right) => left < right,
+            precedence: 5
+        );
+
+        // 18. 중위 비교 >
+        toast.RegisterOperator(
+            ">",
+            (Context context, double left, double right) => left > right,
+            precedence: 5
+        );
+
+        // 19. 중위 비교 <=
+        toast.RegisterOperator(
+            "<=",
+            (Context context, double left, double right) => left <= right,
+            precedence: 5
+        );
+
+        // 20. 중위 비교 >=
+        toast.RegisterOperator(
+            ">=",
+            (Context context, double left, double right) => left >= right,
+            precedence: 5
+        );
+
+        // 21. 조건문 if (지연 평가)
+        toast.RegisterFunction(
+            "if",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var cond = (bool)t.Evaluate(args[0], context)!;
+                if (cond)
+                {
+                    var val = t.Evaluate(args[1], context);
+                    return new IfResult(true, val);
+                }
+                return new IfResult(false, null);
+            }
+        );
+
+        // 22. 조건문 else (지연 평가)
+        toast.RegisterFunction(
+            "else",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var leftVal = t.Evaluate(args[0], context);
+                if (leftVal is IfResult ifResult)
+                {
+                    if (ifResult.Executed)
+                    {
+                        return ifResult.Value;
+                    }
+                    return t.Evaluate(args[1], context);
+                }
+                throw new InvalidOperationException(
+                    "Left side of 'else' must be an 'if' expression."
+                );
+            },
+            precedence: 6,
+            isInfix: true
+        );
+
+        // 23. 덧셈 후 대입 += (지연 평가)
+        toast.RegisterOperator(
+            "+=",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var addr = t.Evaluate(args[0], context) as MemoryAddress;
+                var currentVal = context.GetValueAtAddress(addr!);
+                var rightVal = t.Evaluate(args[1], context);
+                object newVal;
+                if (currentVal is string || rightVal is string)
+                {
+                    newVal = (currentVal?.ToString() ?? "") + (rightVal?.ToString() ?? "");
+                }
+                else if (currentVal is double || rightVal is double)
+                {
+                    newVal = Convert.ToDouble(currentVal) + Convert.ToDouble(rightVal);
+                }
+                else
+                {
+                    newVal = Convert.ToInt32(currentVal) + Convert.ToInt32(rightVal);
+                }
+                context.SetValueAtAddress(addr!, newVal);
+                return newVal;
+            },
+            precedence: 1,
+            isRightAssociative: true
+        );
+
+        // 24. 뺄셈 후 대입 -= (지연 평가)
+        toast.RegisterOperator(
+            "-=",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var addr = t.Evaluate(args[0], context) as MemoryAddress;
+                var currentVal = context.GetValueAtAddress(addr!);
+                var rightVal = t.Evaluate(args[1], context);
+                object newVal;
+                if (currentVal is double || rightVal is double)
+                {
+                    newVal = Convert.ToDouble(currentVal) - Convert.ToDouble(rightVal);
+                }
+                else
+                {
+                    newVal = Convert.ToInt32(currentVal) - Convert.ToInt32(rightVal);
+                }
+                context.SetValueAtAddress(addr!, newVal);
+                return newVal;
+            },
+            precedence: 1,
+            isRightAssociative: true
+        );
+
+        // 25. 멤버 접근 .
+        toast.RegisterOperator(
+            ".",
+            (Context context, object? left, object? right) =>
+            {
+                return $"{left}.{right}";
+            },
+            precedence: 10
+        );
+
+        // 26. 중위 식별자 to
+        toast.RegisterFunction(
+            "to",
+            (Context context, int left, int right) =>
+            {
+                return Enumerable.Range(left, right - left + 1).ToList();
+            },
+            precedence: 6,
+            isInfix: true
+        );
+
+        // 27. 중위 식별자 in
+        toast.RegisterFunction(
+            "in",
+            (Context context, object? left, IEnumerable right) =>
+            {
+                foreach (var item in right)
+                {
+                    if (Equals(item, left))
+                        return true;
+                }
+                return false;
+            },
+            precedence: 6,
+            isInfix: true
+        );
+
+        // 28. 중위 식별자 is
+        toast.RegisterFunction(
+            "is",
+            (Context context, object? left, object? right) =>
+            {
+                var typeStr = right is IdentifierNode typeId ? typeId.Name : right?.ToString();
+                return left?.GetType().Name.ToLower() == typeStr?.ToLower();
+            },
+            precedence: 6,
+            isInfix: true
+        );
+
+        // 29. 명시적 형변환 as 연산자 등록
+        toast.RegisterFunction(
+            "as",
+            object? (Context context, List<Node> args, Toaster t) =>
+            {
+                var leftVal = t.Evaluate(args[0], context);
+                var sourceType = Executor.GetToastType(leftVal);
+
+                ToastType targetType;
+                if (args[1] is TypeNode typeNode)
+                {
+                    targetType = typeNode.Type;
+                }
+                else if (args[1] is IdentifierNode idNode)
+                {
+                    targetType = idNode.Name.ToLower() switch
+                    {
+                        "string" => ToastType.String,
+                        "integer" => ToastType.Integer,
+                        "float" => ToastType.Float,
+                        "boolean" => ToastType.Boolean,
+                        _ => throw new InvalidOperationException(
+                            $"Invalid cast target type: {idNode.Name}"
+                        ),
+                    };
+                }
+                else
+                {
+                    throw new InvalidOperationException("Right side of 'as' must be a type.");
+                }
+
+                if (sourceType == targetType)
+                    return leftVal;
+
+                if (t.Converters.TryGetValue((sourceType, targetType), out var converter))
+                {
+                    return converter.ConvertFunc(leftVal);
+                }
+
+                throw new InvalidOperationException(
+                    $"No converter registered from {sourceType} to {targetType}."
+                );
+            },
+            precedence: 6,
+            isInfix: true
+        );
+    }
+}
