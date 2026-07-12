@@ -45,7 +45,7 @@ public class Toaster
         GlobalContext = new Context(this);
         if (useBuiltIn)
         {
-            BuiltIn.Register(this);
+            BuiltIns.BuiltIn.Register(this);
         }
     }
 
