@@ -58,9 +58,8 @@ public static class BuiltIn
         // 1. var 변수 생성 (지연 평가)
         toast.RegisterFunction(
             "var",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, IdentifierNode idNode) =>
             {
-                var idNode = (IdentifierNode)args[0];
                 return context.GetOrCreateAddress(idNode.Name);
             }
         );
@@ -175,12 +174,11 @@ public static class BuiltIn
         // 13. 중위 논리곱 && (지연 평가)
         toast.RegisterOperator(
             "&&",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, bool left, Node right) =>
             {
-                var left = (bool)t.Evaluate(args[0], context)!;
                 if (!left)
                     return false;
-                return (bool)t.Evaluate(args[1], context)!;
+                return (bool)context.Toaster.Evaluate(right, context)!;
             },
             precedence: 2
         );
@@ -188,12 +186,11 @@ public static class BuiltIn
         // 14. 중위 논리합 || (지연 평가)
         toast.RegisterOperator(
             "||",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, bool left, Node right) =>
             {
-                var left = (bool)t.Evaluate(args[0], context)!;
                 if (left)
                     return true;
-                return (bool)t.Evaluate(args[1], context)!;
+                return (bool)context.Toaster.Evaluate(right, context)!;
             },
             precedence: 2
         );
@@ -243,12 +240,11 @@ public static class BuiltIn
         // 21. 조건문 if (지연 평가)
         toast.RegisterFunction(
             "if",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, bool cond, Node body) =>
             {
-                var cond = (bool)t.Evaluate(args[0], context)!;
                 if (cond)
                 {
-                    var val = t.Evaluate(args[1], context);
+                    var val = context.Toaster.Evaluate(body, context);
                     if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
                     {
                         return funcVal.Execute([]);
@@ -262,9 +258,8 @@ public static class BuiltIn
         // 22. 조건문 else (지연 평가)
         toast.RegisterFunction(
             "else",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, Node leftNode, Node rightNode) =>
             {
-                var leftNode = args[0];
                 while (leftNode is GroupNode gn && gn.Items.Count == 1)
                 {
                     leftNode = gn.Items[0];
@@ -277,10 +272,10 @@ public static class BuiltIn
                     && callNode.Arguments.Count == 2
                 )
                 {
-                    var cond = (bool)t.Evaluate(callNode.Arguments[0], context)!;
+                    var cond = (bool)context.Toaster.Evaluate(callNode.Arguments[0], context)!;
                     if (cond)
                     {
-                        var val = t.Evaluate(callNode.Arguments[1], context);
+                        var val = context.Toaster.Evaluate(callNode.Arguments[1], context);
                         if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
                         {
                             return funcVal.Execute([]);
@@ -289,7 +284,7 @@ public static class BuiltIn
                     }
                     else
                     {
-                        var val = t.Evaluate(args[1], context);
+                        var val = context.Toaster.Evaluate(rightNode, context);
                         if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
                         {
                             return funcVal.Execute([]);
@@ -405,17 +400,16 @@ public static class BuiltIn
         // 29. 명시적 형변환 as 연산자 등록
         toast.RegisterFunction(
             "as",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, object? leftVal, Node targetNode) =>
             {
-                var leftVal = t.Evaluate(args[0], context);
                 var sourceType = Executor.GetToastType(leftVal);
 
                 ToastType targetType;
-                if (args[1] is TypeNode typeNode)
+                if (targetNode is TypeNode typeNode)
                 {
                     targetType = typeNode.Type;
                 }
-                else if (args[1] is IdentifierNode idNode)
+                else if (targetNode is IdentifierNode idNode)
                 {
                     targetType = idNode.Name.ToLower() switch
                     {
@@ -434,11 +428,21 @@ public static class BuiltIn
                 }
 
                 if (sourceType == targetType)
-                    return leftVal;
-
-                if (t.Converters.TryGetValue((sourceType, targetType), out var converter))
                 {
-                    return converter.ConvertFunc(context, leftVal);
+                    return leftVal;
+                }
+
+                if (
+                    context.Toaster.TryConvert(
+                        leftVal,
+                        sourceType,
+                        targetType,
+                        context,
+                        out var converted
+                    )
+                )
+                {
+                    return converted;
                 }
 
                 throw new InvalidOperationException(
@@ -452,14 +456,13 @@ public static class BuiltIn
         // 27. 인용 ` (지연 평가 전위 연산자)
         toast.RegisterOperator(
             "`",
-            object? (Context context, List<Node> args, Toaster t) =>
+            (Context context, Node node) =>
             {
-                var node = args[0];
                 if (node is IdentifierNode idNode)
                 {
-                    if (t.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
+                    if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
                         return infixCmd;
-                    if (t.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
+                    if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
                         return prefixCmd;
                 }
                 else if (
@@ -468,13 +471,13 @@ public static class BuiltIn
                     && gn.Items[0] is IdentifierNode innerId
                 )
                 {
-                    if (t.InfixCommands.TryGetValue(innerId.Name, out var infixCmd))
+                    if (context.Toaster.InfixCommands.TryGetValue(innerId.Name, out var infixCmd))
                         return infixCmd;
-                    if (t.PrefixCommands.TryGetValue(innerId.Name, out var prefixCmd))
+                    if (context.Toaster.PrefixCommands.TryGetValue(innerId.Name, out var prefixCmd))
                         return prefixCmd;
                 }
 
-                var executor = new Executor(t);
+                var executor = new Executor(context.Toaster);
                 return executor.Evaluate(node, context, suppressZeroArgFunction: true);
             },
             precedence: 9,

@@ -78,20 +78,9 @@ public class Executor(Toaster _toast)
 
         if (_toast.IdentifierCommands.TryGetValue(identifier.Name, out var cmd))
         {
-            if (
-                !suppressZeroArgFunction
-                && cmd.ParameterTypes != null
-                && cmd.ParameterTypes.Count == 0
-            )
+            if (!suppressZeroArgFunction && cmd.ParameterCount == 0)
             {
-                try
-                {
-                    return cmd.TargetDelegate.DynamicInvoke(context);
-                }
-                catch (System.Reflection.TargetInvocationException ex)
-                {
-                    throw ex.InnerException ?? ex;
-                }
+                return cmd.TargetDelegate(context, Array.Empty<object?>());
             }
             return cmd;
         }
@@ -182,65 +171,43 @@ public class Executor(Toaster _toast)
 
     private object? ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
     {
-        // 1. 지연 평가 커맨드 (ParameterTypes == null) 실행
-        if (cmd.ParameterTypes == null)
-        {
-            try
-            {
-                return cmd.TargetDelegate.DynamicInvoke(context, callArgs, _toast);
-            }
-            catch (System.Reflection.TargetInvocationException ex)
-            {
-                throw ex.InnerException ?? ex;
-            }
-        }
-
-        // 2. 조기 평가 커맨드 (ParameterTypes != null) 매개변수 타입 검증 및 변환
-        if (cmd.ParameterTypes.Count != callArgs.Count)
+        if (cmd.ParameterCount != callArgs.Count)
         {
             throw new InvalidOperationException(
-                $"Arity mismatch: command '{cmd.Name}' expects {cmd.ParameterTypes.Count} arguments, but got {callArgs.Count}."
+                $"Arity mismatch: command '{cmd.Name}' expects {cmd.ParameterCount} arguments, but got {callArgs.Count}."
             );
         }
 
-        var evalArgs = callArgs.Select(arg => Evaluate(arg, context)).ToList();
-        var actualTypes = evalArgs.Select(GetToastType).ToList();
-
-        var finalArgs = new List<object?>();
-        for (int i = 0; i < evalArgs.Count; i++)
+        var finalArgs = new object?[callArgs.Count];
+        for (int i = 0; i < callArgs.Count; i++)
         {
-            var expected = cmd.ParameterTypes[i];
-            var actual = actualTypes[i];
-
-            if (_toast.TryConvert(evalArgs[i], actual, expected, context, out var converted))
+            var isLazy = cmd.IsParameterLazy[i];
+            if (isLazy)
             {
-                {
-                    finalArgs.Add(converted);
-                }
+                finalArgs[i] = callArgs[i];
             }
             else
             {
-                throw new InvalidOperationException(
-                    $"Type mismatch: parameter {i} of '{cmd.Name}' expects {expected}, but got {actual}."
-                );
+                var evalVal = Evaluate(callArgs[i], context);
+                var actualType = GetToastType(evalVal);
+                var expectedType = cmd.ParameterTypes[i];
+
+                if (
+                    _toast.TryConvert(evalVal, actualType, expectedType, context, out var converted)
+                )
+                {
+                    finalArgs[i] = converted;
+                }
+                else
+                {
+                    throw new InvalidOperationException(
+                        $"Type mismatch: parameter {i} of '{cmd.Name}' expects {expectedType}, but got {actualType}."
+                    );
+                }
             }
         }
 
-        var invokeArgs = new object?[finalArgs.Count + 1];
-        invokeArgs[0] = context;
-        for (int i = 0; i < finalArgs.Count; i++)
-        {
-            invokeArgs[i + 1] = finalArgs[i];
-        }
-
-        try
-        {
-            return cmd.TargetDelegate.DynamicInvoke(invokeArgs);
-        }
-        catch (System.Reflection.TargetInvocationException ex)
-        {
-            throw ex.InnerException ?? ex;
-        }
+        return cmd.TargetDelegate(context, finalArgs);
     }
 
     private static object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)

@@ -1,14 +1,18 @@
+using System.Linq.Expressions;
+
 namespace Toast;
 
 public class Command
 {
     public string Name { get; }
-    public Delegate TargetDelegate { get; }
+    public Func<Context, object?[], object?> TargetDelegate { get; }
     public int Precedence { get; }
     public bool IsRightAssociative { get; }
     public bool IsPrefix { get; }
     public bool IsInfix { get; }
-    public IReadOnlyList<ToastType>? ParameterTypes { get; }
+    public IReadOnlyList<ToastType> ParameterTypes { get; }
+    public IReadOnlyList<bool> IsParameterLazy { get; }
+    public int ParameterCount => ParameterTypes.Count;
 
     public Command(
         string name,
@@ -20,7 +24,7 @@ public class Command
     )
     {
         Name = name;
-        TargetDelegate = targetDelegate;
+        TargetDelegate = CompileDelegate(targetDelegate);
         Precedence = precedence;
         IsRightAssociative = isRightAssociative;
         IsPrefix = isPrefix;
@@ -31,30 +35,73 @@ public class Command
 
         if (parameters.Length > 0 && typeof(Context).IsAssignableFrom(parameters[0].ParameterType))
         {
-            // 지연 평가 시그니처 감지: (Context, List<Node>, Toast)
-            if (
-                parameters.Length == 3
-                && typeof(List<Node>).IsAssignableFrom(parameters[1].ParameterType)
-                && typeof(Toaster).IsAssignableFrom(parameters[2].ParameterType)
-            )
+            var types = new List<ToastType>();
+            var isLazy = new List<bool>();
+            for (int i = 1; i < parameters.Length; i++)
             {
-                ParameterTypes = null;
+                var paramType = parameters[i].ParameterType;
+                bool lazy = typeof(Node).IsAssignableFrom(paramType);
+                isLazy.Add(lazy);
+                types.Add(MapToToastType(paramType));
             }
-            else
-            {
-                var types = new List<ToastType>();
-                for (int i = 1; i < parameters.Length; i++)
-                {
-                    types.Add(MapToToastType(parameters[i].ParameterType));
-                }
-                ParameterTypes = types;
-            }
+            ParameterTypes = types;
+            IsParameterLazy = isLazy;
         }
         else
         {
             throw new InvalidOperationException(
                 $"Command delegate for '{name}' must have Context as its first parameter."
             );
+        }
+    }
+
+    private static Func<Context, object?[], object?> CompileDelegate(Delegate del)
+    {
+        if (del is Func<Context, object?[], object?> fastFunc)
+        {
+            return fastFunc;
+        }
+
+        var method = del.Method;
+        var target = del.Target;
+        var parameters = method.GetParameters();
+
+        var contextParam = Expression.Parameter(typeof(Context), "context");
+        var argsParam = Expression.Parameter(typeof(object?[]), "args");
+
+        var callArgs = new List<Expression> { contextParam };
+
+        for (int i = 1; i < parameters.Length; i++)
+        {
+            var paramType = parameters[i].ParameterType;
+            var arrayIndex = Expression.ArrayIndex(argsParam, Expression.Constant(i - 1));
+            var cast = Expression.Convert(arrayIndex, paramType);
+            callArgs.Add(cast);
+        }
+
+        Expression call;
+        if (target != null)
+        {
+            call = Expression.Call(Expression.Constant(target), method, callArgs);
+        }
+        else
+        {
+            call = Expression.Call(method, callArgs);
+        }
+
+        if (method.ReturnType == typeof(void))
+        {
+            var block = Expression.Block(call, Expression.Constant(null, typeof(object)));
+            return Expression
+                .Lambda<Func<Context, object?[], object?>>(block, contextParam, argsParam)
+                .Compile();
+        }
+        else
+        {
+            var castResult = Expression.Convert(call, typeof(object));
+            return Expression
+                .Lambda<Func<Context, object?[], object?>>(castResult, contextParam, argsParam)
+                .Compile();
         }
     }
 
