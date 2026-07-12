@@ -51,6 +51,35 @@ public static class BuiltIn
             )
         );
 
+        toast.RegisterConverter(
+            new TypeConverter(
+                ToastType.String,
+                ToastType.Integer,
+                (_, val) => int.Parse((string)val!)
+            )
+        );
+        toast.RegisterConverter(
+            new TypeConverter(
+                ToastType.String,
+                ToastType.Float,
+                (_, val) => double.Parse((string)val!)
+            )
+        );
+        toast.RegisterConverter(
+            new TypeConverter(
+                ToastType.String,
+                ToastType.Boolean,
+                (_, val) => bool.Parse((string)val!)
+            )
+        );
+        toast.RegisterConverter(
+            new TypeConverter(
+                ToastType.String,
+                ToastType.List,
+                (_, val) => ((string)val!).Select(c => c.ToString()).ToList()
+            )
+        );
+
         // 0. 리터럴 상수 무인자 함수 등록
         toast.RegisterFunction("true", (Context context) => true);
         toast.RegisterFunction("false", (Context context) => false);
@@ -358,6 +387,21 @@ public static class BuiltIn
             precedence: 10
         );
 
+        // 25-1. 리스트 인덱스 접근 #
+        toast.RegisterOperator(
+            "#",
+            (Context context, System.Collections.IEnumerable list, int index) =>
+            {
+                if (list is string str)
+                {
+                    return str[index].ToString();
+                }
+                var items = list.Cast<object?>().ToList();
+                return items[index];
+            },
+            precedence: 10
+        );
+
         // 26. 중위 식별자 to
         toast.RegisterFunction(
             "to",
@@ -417,6 +461,7 @@ public static class BuiltIn
                         "integer" => ToastType.Integer,
                         "float" => ToastType.Float,
                         "boolean" => ToastType.Boolean,
+                        "list" => ToastType.List,
                         _ => throw new InvalidOperationException(
                             $"Invalid cast target type: {idNode.Name}"
                         ),
@@ -482,6 +527,328 @@ public static class BuiltIn
             },
             precedence: 9,
             isPrefix: true
+        );
+
+        // 추가 기본 리터럴
+        toast.RegisterFunction("null", (Context context) => (object?)null);
+
+        // 추가 연산자 / 함수
+        toast.RegisterOperator("&", (Context ctx, int x, int y) => x & y, precedence: 6);
+        toast.RegisterOperator("|", (Context ctx, int x, int y) => x | y, precedence: 6);
+        toast.RegisterOperator("^", (Context ctx, int x, int y) => x ^ y, precedence: 6);
+        toast.RegisterOperator("<<", (Context ctx, int x, int y) => x << y, precedence: 8);
+        toast.RegisterOperator(">>", (Context ctx, int x, int y) => x >> y, precedence: 8);
+        toast.RegisterOperator(
+            "**",
+            (Context ctx, double x, double y) => Math.Pow(x, y),
+            precedence: 8
+        );
+        toast.RegisterFunction(
+            "floorDiv",
+            (Context ctx, int x, int y) => x / y,
+            precedence: 8,
+            isInfix: true
+        );
+
+        // 제어문
+        toast.RegisterFunction(
+            "while",
+            (Context context, Node cond, Node body) =>
+            {
+                object? lastVal = null;
+                while (true)
+                {
+                    var condVal = context.Toaster.Evaluate(cond, context);
+                    if (!(condVal is bool b && b))
+                    {
+                        break;
+                    }
+                    var val = context.Toaster.Evaluate(body, context);
+                    if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+                    {
+                        lastVal = funcVal.Execute([]);
+                    }
+                    else
+                    {
+                        lastVal = val;
+                    }
+                }
+                return lastVal;
+            }
+        );
+
+        toast.RegisterFunction(
+            "for",
+            (Context context, System.Collections.IEnumerable items, Node body) =>
+            {
+                object? lastVal = null;
+                var bodyVal = context.Toaster.Evaluate(body, context);
+                if (bodyVal is FunctionValue funcVal)
+                {
+                    foreach (var item in items)
+                    {
+                        if (funcVal.Parameters.Count > 0)
+                        {
+                            lastVal = funcVal.Execute([item]);
+                        }
+                        else
+                        {
+                            lastVal = funcVal.Execute([]);
+                        }
+                    }
+                }
+                return lastVal;
+            }
+        );
+
+        // 기타 기능
+        toast.RegisterFunction(
+            "print",
+            (Context context, object? val) =>
+            {
+                Console.WriteLine(val);
+                return val;
+            }
+        );
+
+        toast.RegisterFunction("input", (Context context) => Console.ReadLine());
+
+        toast.RegisterFunction(
+            "execute",
+            (Context context, FunctionValue func, System.Collections.IEnumerable args) =>
+            {
+                var argList = args.Cast<object?>().ToList();
+                return func.Execute(argList);
+            }
+        );
+
+        toast.RegisterFunction(
+            "random",
+            (Context context, int min, int max) =>
+            {
+                return new Random().Next(min, max);
+            }
+        );
+
+        toast.RegisterFunction(
+            "randomChoice",
+            (Context context, System.Collections.IEnumerable list) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                if (items.Count == 0)
+                    return null;
+                return items[new Random().Next(0, items.Count)];
+            }
+        );
+
+        // 리스트 관련 기능
+        toast.RegisterFunction(
+            "len",
+            (Context context, System.Collections.IEnumerable list) =>
+            {
+                if (list is string str)
+                    return str.Length;
+                var items = list.Cast<object?>().ToList();
+                return items.Count;
+            }
+        );
+
+        toast.RegisterFunction(
+            "indexOf",
+            (Context context, System.Collections.IEnumerable list, object? item) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                return items.IndexOf(item);
+            }
+        );
+
+        toast.RegisterFunction(
+            "filter",
+            (Context context, System.Collections.IEnumerable list, FunctionValue predicate) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                var result = new List<object?>();
+                foreach (var item in items)
+                {
+                    var res = predicate.Execute([item]);
+                    if (res is bool b && b)
+                    {
+                        result.Add(item);
+                    }
+                }
+                return result;
+            }
+        );
+
+        toast.RegisterFunction(
+            "map",
+            (Context context, System.Collections.IEnumerable list, FunctionValue mapper) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                var result = new List<object?>();
+                foreach (var item in items)
+                {
+                    result.Add(mapper.Execute([item]));
+                }
+                return result;
+            }
+        );
+
+        toast.RegisterFunction(
+            "combine",
+            (
+                Context context,
+                System.Collections.IEnumerable list1,
+                System.Collections.IEnumerable list2
+            ) =>
+            {
+                var items1 = list1.Cast<object?>();
+                var items2 = list2.Cast<object?>();
+                return items1.Concat(items2).ToList();
+            }
+        );
+
+        toast.RegisterFunction(
+            "append",
+            (Context context, System.Collections.IEnumerable list, object? item) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                items.Add(item);
+                return items;
+            }
+        );
+
+        toast.RegisterFunction(
+            "remove",
+            (Context context, System.Collections.IEnumerable list, object? item) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                items.Remove(item);
+                return items;
+            }
+        );
+
+        toast.RegisterFunction(
+            "sort",
+            (Context context, System.Collections.IEnumerable list) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                items.Sort();
+                return items;
+            }
+        );
+
+        toast.RegisterFunction(
+            "sortAs",
+            (Context context, System.Collections.IEnumerable list, FunctionValue keySelector) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                items.Sort(
+                    (a, b) =>
+                    {
+                        if (
+                            keySelector.Execute([a]) is not IComparable ka
+                            || keySelector.Execute([b]) is not IComparable kb
+                        )
+                            return 0;
+                        return ka.CompareTo(kb);
+                    }
+                );
+                return items;
+            }
+        );
+
+        toast.RegisterFunction(
+            "shuffle",
+            (Context context, System.Collections.IEnumerable list) =>
+            {
+                var items = list.Cast<object?>().ToList();
+                var random = new Random();
+                return items.OrderBy(x => random.Next()).ToList();
+            }
+        );
+
+        // 문자열 관련 기능
+        toast.RegisterFunction(
+            "split",
+            (Context context, string str, string separator) =>
+            {
+                return str.Split(separator).ToList();
+            }
+        );
+
+        toast.RegisterFunction(
+            "reverse",
+            (Context context, string str) =>
+            {
+                var chars = str.ToCharArray();
+                Array.Reverse(chars);
+                return new string(chars);
+            }
+        );
+
+        toast.RegisterFunction(
+            "startsWith",
+            (Context context, string str, string prefix) =>
+            {
+                return str.StartsWith(prefix);
+            }
+        );
+
+        toast.RegisterFunction(
+            "endsWith",
+            (Context context, string str, string suffix) =>
+            {
+                return str.EndsWith(suffix);
+            }
+        );
+
+        toast.RegisterFunction(
+            "contains",
+            (Context context, string str, string substring) =>
+            {
+                return str.Contains(substring);
+            }
+        );
+
+        toast.RegisterFunction(
+            "trim",
+            (Context context, string str) =>
+            {
+                return str.Trim();
+            }
+        );
+
+        toast.RegisterFunction(
+            "substring",
+            (Context context, string str, int startIndex, int length) =>
+            {
+                return str.Substring(startIndex, length);
+            }
+        );
+
+        toast.RegisterFunction(
+            "replace",
+            (Context context, string str, string oldValue, string newValue) =>
+            {
+                return str.Replace(oldValue, newValue);
+            }
+        );
+
+        toast.RegisterFunction(
+            "toUpper",
+            (Context context, string str) =>
+            {
+                return str.ToUpper();
+            }
+        );
+
+        toast.RegisterFunction(
+            "toLower",
+            (Context context, string str) =>
+            {
+                return str.ToLower();
+            }
         );
     }
 }

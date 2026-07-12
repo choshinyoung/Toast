@@ -57,14 +57,18 @@ public class Command
 
     private static Func<Context, object?[], object?> CompileDelegate(Delegate del)
     {
-        if (del is Func<Context, object?[], object?> fastFunc)
-        {
-            return fastFunc;
-        }
-
         var method = del.Method;
         var target = del.Target;
         var parameters = method.GetParameters();
+
+        if (
+            del is Func<Context, object?[], object?> fastFunc
+            && parameters.Length == 2
+            && parameters[1].ParameterType == typeof(object?[])
+        )
+        {
+            return fastFunc;
+        }
 
         var contextParam = Expression.Parameter(typeof(Context), "context");
         var argsParam = Expression.Parameter(typeof(object?[]), "args");
