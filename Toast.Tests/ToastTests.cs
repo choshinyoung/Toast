@@ -337,4 +337,25 @@ public class ToastTests
         Evaluate("ptr = 100", context);
         Assert.Equal(100, Evaluate("*ptr", context));
     }
+
+    [Fact]
+    public void TestMultilineExpression()
+    {
+        // 1. Enclosed in parentheses (Alternative 2)
+        AssertResult("(2\n* 3)", 6);
+        AssertResult("(2\n\n*\n\n3)", 6);
+
+        // 2. Operator at the end of the line (continues naturally)
+        AssertResult("2 *\n3", 6);
+        AssertResult("2 *\n\n3", 6);
+
+        // 3. Top-level without parentheses and operator at the start of the line
+        // should evaluate as two separate statements (resolves the *ptr ambiguity).
+        var context = new Context(_toast);
+        Evaluate("var x = 10", context);
+        Evaluate("var ptr = (var x)", context);
+        // *ptr on a new line is a separate statement, not multiplied to 10
+        Evaluate("var dummy = 10\n*ptr", context);
+        Assert.Equal(10, Evaluate("*ptr", context));
+    }
 }

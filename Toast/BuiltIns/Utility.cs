@@ -7,7 +7,6 @@ public static class Utility
         (Context context, object? val) =>
         {
             Console.WriteLine(val);
-            return val;
         }
     );
 

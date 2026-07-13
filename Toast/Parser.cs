@@ -7,6 +7,7 @@ public class Parser(
 )
 {
     private int _position = 0;
+    private int _depth = 0;
 
     private const int PrefixPrecedence = 9;
 
@@ -88,38 +89,46 @@ public class Parser(
         return left;
     }
 
-    private Node ParseGroup()
+    private GroupNode ParseGroup()
     {
-        var items = new List<Node>();
-
-        while (!Check(TokenKind.RParen))
+        _depth++;
+        try
         {
-            if (
-                Peek().Kind == TokenKind.Symbol
-                && _position + 1 < _tokens.Count
-                && (
-                    _tokens[_position + 1].Kind == TokenKind.RParen
-                    || _tokens[_position + 1].Kind == TokenKind.Comma
+            var items = new List<Node>();
+
+            while (!Check(TokenKind.RParen))
+            {
+                if (
+                    Peek().Kind == TokenKind.Symbol
+                    && _position + 1 < _tokens.Count
+                    && (
+                        _tokens[_position + 1].Kind == TokenKind.RParen
+                        || _tokens[_position + 1].Kind == TokenKind.Comma
+                    )
                 )
-            )
-            {
-                var opToken = Consume();
-                items.Add(new IdentifierNode(opToken.Value!));
-            }
-            else
-            {
-                items.Add(ParseExpression());
+                {
+                    var opToken = Consume();
+                    items.Add(new IdentifierNode(opToken.Value!));
+                }
+                else
+                {
+                    items.Add(ParseExpression());
+                }
+
+                if (!Match(TokenKind.Comma))
+                {
+                    break;
+                }
             }
 
-            if (!Match(TokenKind.Comma))
-            {
-                break;
-            }
+            Expect(TokenKind.RParen, "Expected ')' after expression in group.");
+
+            return new GroupNode(items);
         }
-
-        Expect(TokenKind.RParen, "Expected ')' after expression in group.");
-
-        return new GroupNode(items);
+        finally
+        {
+            _depth--;
+        }
     }
 
     private FunctionNode ParseBlock()
@@ -144,46 +153,46 @@ public class Parser(
 
     public ListNode ParseList()
     {
-        var items = new List<Node>();
-
-        while (!Check(TokenKind.RBracket))
+        _depth++;
+        try
         {
-            items.Add(ParseExpression());
+            var items = new List<Node>();
 
-            if (!Match(TokenKind.Comma))
+            while (!Check(TokenKind.RBracket))
             {
-                break;
+                items.Add(ParseExpression());
+
+                if (!Match(TokenKind.Comma))
+                {
+                    break;
+                }
             }
+
+            Expect(TokenKind.RBracket, "Expected ']' to close list.");
+
+            return new ListNode(items);
         }
-
-        Expect(TokenKind.RBracket, "Expected ']' to close list.");
-
-        return new ListNode(items);
+        finally
+        {
+            _depth--;
+        }
     }
 
     private Node ParsePrimary(Token current)
     {
-        switch (current.Kind)
+        return current.Kind switch
         {
-            case TokenKind.Identifier:
-                return new IdentifierNode(current.Value!);
-            case TokenKind.Integer:
-                return new LiteralNode(ToastType.Integer, int.Parse(current.Value!));
-            case TokenKind.Float:
-                return new LiteralNode(ToastType.Float, double.Parse(current.Value!));
-            case TokenKind.String:
-                return new LiteralNode(ToastType.String, current.Value!.Trim('"'));
-            case TokenKind.LParen:
-                return ParseGroup();
-            case TokenKind.LBrace:
-                return ParseBlock();
-            case TokenKind.LBracket:
-                return ParseList();
-            default:
-                throw new InvalidOperationException(
-                    $"Unexpected token '{current.Kind}' ('{current.Value}')."
-                );
-        }
+            TokenKind.Identifier => new IdentifierNode(current.Value!),
+            TokenKind.Integer => new LiteralNode(ToastType.Integer, int.Parse(current.Value!)),
+            TokenKind.Float => new LiteralNode(ToastType.Float, double.Parse(current.Value!)),
+            TokenKind.String => new LiteralNode(ToastType.String, current.Value!.Trim('"')),
+            TokenKind.LParen => ParseGroup(),
+            TokenKind.LBrace => ParseBlock(),
+            TokenKind.LBracket => ParseList(),
+            _ => throw new InvalidOperationException(
+                $"Unexpected token '{current.Kind}' ('{current.Value}')."
+            ),
+        };
     }
 
     private FunctionNode ParseFunctionLiteral()
@@ -274,6 +283,8 @@ public class Parser(
         var opToken = Consume();
         var (precedence, isRight) = GetInfixInfo(opToken);
 
+        MatchWhileNewline();
+
         var nextPrecedence = isRight ? precedence - 1 : precedence;
         var right = ParseExpression(nextPrecedence);
 
@@ -346,21 +357,40 @@ public class Parser(
         && token.Kind != TokenKind.NewLine
         && !IsInfixOperator(token);
 
-    private Token Peek() => _tokens[_position];
+    private void SkipIgnoredNewlines()
+    {
+        if (_depth > 0)
+        {
+            while (_position < _tokens.Count && _tokens[_position].Kind == TokenKind.NewLine)
+            {
+                _position++;
+            }
+        }
+    }
 
-    private bool IsAtEnd() => _position >= _tokens.Count;
+    private Token Peek()
+    {
+        SkipIgnoredNewlines();
+        return _position < _tokens.Count ? _tokens[_position] : _tokens[^1];
+    }
 
-    private Token Previous() => _tokens[_position - 1];
+    private bool IsAtEnd()
+    {
+        SkipIgnoredNewlines();
+        return _position >= _tokens.Count;
+    }
 
     private Token Consume()
     {
+        SkipIgnoredNewlines();
         if (IsAtEnd())
         {
-            throw new InvalidOperationException("Unexpected end of input.");
+            throw new InvalidOperationException("Unexpected end of file.");
         }
 
+        var token = _tokens[_position];
         _position++;
-        return Previous();
+        return token;
     }
 
     private bool Check(TokenKind kind) => !IsAtEnd() && Peek().Kind == kind;
@@ -372,7 +402,7 @@ public class Parser(
             return false;
         }
 
-        _position++;
+        Consume();
         return true;
     }
 
@@ -383,7 +413,7 @@ public class Parser(
             return false;
         }
 
-        _position++;
+        Consume();
         return true;
     }
 
