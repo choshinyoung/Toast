@@ -13,18 +13,14 @@
 
 ---
 
-## 🛠️ 대화형 도구
+## 🛠️ 대화형 도구 (CLI Tool)
 
-### 1. 설치
-대화형 인터프리터 셸을 전역 도구로 설치하여 Toast를 바로 실행할 수 있습니다.
-
+전역 도구 설치:
 ```bash
 dotnet tool install -g choshinyoung.Toast.Interactive --version 2.0.0-beta
 ```
 
-### 2. 사용
-터미널에서 아래와 같이 실행할 수 있습니다.
-
+대화형 도구 실행:
 ```bash
 toast
 ```
@@ -33,19 +29,16 @@ toast
 
 ## 📦 라이브러리
 
-### 1. 설치
+라이브러리 설치:
 ```bash
 dotnet add package choshinyoung.Toast --version 2.0.0-beta
 ```
 
-### 2. 사용
-
+C# 코드 사용 예시:
 ```csharp
 using Toast;
 
-// Toaster 생성 및 스크립트 실행
 var toaster = new Toaster(useBuiltIn: true);
 var result = toaster.Execute("1 + 2 * 3");
-
-Console.WriteLine(result); // 출력: 7
+Console.WriteLine(result); // 출력 결과: 7
 ```
