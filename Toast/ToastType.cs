@@ -11,6 +11,7 @@ public record ToastType(string Name)
     public static readonly ToastType Identifier = new("identifier");
     public static readonly ToastType Null = new("null");
     public static readonly ToastType Any = new("any");
+    public static readonly ToastType Reference = new("reference");
 
     public override string ToString() => Name;
 }

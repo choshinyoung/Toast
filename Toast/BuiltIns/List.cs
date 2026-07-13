@@ -41,23 +41,30 @@ public static class List
             int idx = (int)index.Value;
             if (list is StringValue str)
             {
+                if (context.Toaster.Executor.SuppressDereference)
+                {
+                    throw new InvalidOperationException(
+                        "Strings are immutable and cannot be modified via index assignment."
+                    );
+                }
                 return new StringValue(str.Value[idx].ToString());
             }
             if (list is ListValue listVal)
             {
+                if (idx < 0 || idx >= listVal.Elements.Count)
+                    throw new IndexOutOfRangeException(
+                        $"Index {idx} is out of range for list of length {listVal.Elements.Count}."
+                    );
+
+                if (context.Toaster.Executor.SuppressDereference)
+                {
+                    return new ReferenceValue(new ListIndexAssignTarget(listVal, idx));
+                }
                 return listVal.Elements[idx];
             }
             throw new InvalidOperationException("Can only index strings and lists.");
         },
         precedence: 10
-    );
-
-    public static readonly Command Member = Command.CreateFunction(
-        "member",
-        (Context context, NumberValue index, ListValue list) =>
-        {
-            return list.Elements[(int)index.Value];
-        }
     );
 
     public static readonly Command Len = Command.CreateFunction(
@@ -213,7 +220,6 @@ public static class List
         toast.RegisterCommand(RangeTo);
         toast.RegisterCommand(ListIn);
         toast.RegisterCommand(IndexAccess);
-        toast.RegisterCommand(Member);
         toast.RegisterCommand(Len);
         toast.RegisterCommand(IndexOf);
         toast.RegisterCommand(Filter);

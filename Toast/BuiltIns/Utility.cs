@@ -106,7 +106,12 @@ public static class Utility
             }
 
             var executor = context.Toaster.Executor;
-            return executor.Evaluate(node, context, suppressZeroArgFunction: true);
+            return executor.Evaluate(
+                node,
+                context,
+                suppressZeroArgFunction: true,
+                suppressDereference: false
+            );
         },
         precedence: 9,
         isPrefix: true

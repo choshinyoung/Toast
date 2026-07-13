@@ -106,3 +106,10 @@ public sealed record AstNodeValue(Node Node) : ToastObject
 
     public override string ToString() => Node.ToString();
 }
+
+public sealed record ReferenceValue(IAssignTarget Target) : ToastObject
+{
+    public override ToastType Type => ToastType.Reference;
+
+    public override string ToString() => Target.GetValue().ToString();
+}

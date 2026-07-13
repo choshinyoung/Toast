@@ -10,14 +10,25 @@ public class Executor(Toaster _toast)
     }
 
     public bool SuppressZeroArgFunction { get; set; } = false;
+    public bool SuppressDereference { get; set; } = false;
 
-    public ToastObject Evaluate(Node node, Context context, bool suppressZeroArgFunction = false)
+    public ToastObject Evaluate(Node node, Context context)
+    {
+        return Evaluate(node, context, suppressZeroArgFunction: false, suppressDereference: false);
+    }
+
+    internal ToastObject Evaluate(
+        Node node,
+        Context context,
+        bool suppressZeroArgFunction,
+        bool suppressDereference
+    )
     {
         var prevSuppress = SuppressZeroArgFunction;
-        if (suppressZeroArgFunction)
-        {
-            SuppressZeroArgFunction = true;
-        }
+        SuppressZeroArgFunction = suppressZeroArgFunction;
+
+        var prevSuppressRef = SuppressDereference;
+        SuppressDereference = suppressDereference;
         try
         {
             return node switch
@@ -46,6 +57,7 @@ public class Executor(Toaster _toast)
         finally
         {
             SuppressZeroArgFunction = prevSuppress;
+            SuppressDereference = prevSuppressRef;
         }
     }
 
@@ -57,6 +69,11 @@ public class Executor(Toaster _toast)
     {
         if (context.HasVariable(identifier.Name))
         {
+            if (SuppressDereference)
+            {
+                return new ReferenceValue(new VariableAssignTarget(context, identifier.Name));
+            }
+
             var val = context.GetValue(identifier.Name);
             if (
                 !suppressZeroArgFunction
@@ -96,7 +113,7 @@ public class Executor(Toaster _toast)
     {
         if (group.Items.Count == 1)
         {
-            return Evaluate(group.Items[0], context, suppressZeroArgFunction: false);
+            return Evaluate(group.Items[0], context);
         }
         var evaluatedItems = group.Items.Select(item => Evaluate(item, context)).ToList();
         return new ListValue(evaluatedItems);
@@ -134,7 +151,13 @@ public class Executor(Toaster _toast)
             }
         }
 
-        var calleeVal = Evaluate(call.Callee, context, suppressZeroArgFunction: true);
+        var calleeVal = Evaluate(
+            call.Callee,
+            context,
+            suppressZeroArgFunction: true,
+            suppressDereference: false
+        );
+
         if (calleeVal is FunctionValue funcVal2)
         {
             if (funcVal2.Parameters.Count != callArgs.Count)
@@ -192,10 +215,23 @@ public class Executor(Toaster _toast)
             }
             else
             {
-                var evalVal = Evaluate(callArgs[i], context);
-                var actualType = evalVal.Type;
                 var expectedType =
                     i < cmd.ParameterTypes.Count ? cmd.ParameterTypes[i] : ToastType.Any;
+                var isReference = expectedType == ToastType.Reference;
+
+                var evalVal = Evaluate(
+                    callArgs[i],
+                    context,
+                    suppressZeroArgFunction: false,
+                    suppressDereference: isReference
+                );
+
+                if (!isReference && evalVal is ReferenceValue refVal)
+                {
+                    evalVal = refVal.Target.GetValue();
+                }
+
+                var actualType = evalVal.Type;
 
                 if (
                     _toast.TryConvert(evalVal, actualType, expectedType, context, out var converted)

@@ -2,57 +2,6 @@ namespace Toast.BuiltIns;
 
 public static class Variables
 {
-    private static (Context TargetCtx, string FieldName) ResolveLhs(Context context, Node lhsNode)
-    {
-        if (lhsNode is IdentifierNode rawIdNode)
-        {
-            return (context, rawIdNode.Name);
-        }
-        else if (
-            lhsNode is CallNode callNode
-            && callNode.Callee is IdentifierNode idNode
-            && idNode.Name == "."
-        )
-        {
-            var leftVal = context.Toaster.Evaluate(callNode.Arguments[0], context);
-            if (leftVal is ObjectValue objVal)
-            {
-                var rightNode = callNode.Arguments[1];
-                string fieldName;
-                if (rightNode is IdentifierNode rid)
-                {
-                    fieldName = rid.Name;
-                }
-                else
-                {
-                    var evaluatedRight = context.Toaster.Evaluate(rightNode, context);
-                    if (evaluatedRight is IdentifierValue rvid)
-                        fieldName = rvid.Name;
-                    else if (evaluatedRight is StringValue rvstr)
-                        fieldName = rvstr.Value;
-                    else
-                        throw new InvalidOperationException(
-                            "Member name must be an identifier or string."
-                        );
-                }
-
-                return (objVal.Context, fieldName);
-            }
-            throw new InvalidOperationException("Left side of '.' must be an object.");
-        }
-        else
-        {
-            var eval = context.Toaster.Evaluate(lhsNode, context);
-            if (eval is IdentifierValue idVal)
-            {
-                return (context, idVal.Name);
-            }
-            throw new InvalidOperationException(
-                "Left side of assignment must be an identifier or object property."
-            );
-        }
-    }
-
     public static readonly Command Var = Command.CreateFunction(
         "var",
         (Context context, AstNodeValue idNode) =>
@@ -60,7 +9,7 @@ public static class Variables
             if (idNode.Node is IdentifierNode id)
             {
                 context.GetOrCreateLocal(id.Name);
-                return new IdentifierValue(id.Name);
+                return new ReferenceValue(new VariableAssignTarget(context, id.Name));
             }
             throw new InvalidOperationException("var parameter must be an identifier.");
         }
@@ -68,10 +17,9 @@ public static class Variables
 
     public static readonly Command Assign = Command.CreateOperator(
         "=",
-        (Context context, AstNodeValue lhsNode, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
         {
-            var (targetCtx, fieldName) = ResolveLhs(context, lhsNode.Node);
-            targetCtx.SetValue(fieldName, rightVal);
+            leftVal.Target.SetValue(rightVal);
             return rightVal;
         },
         precedence: 1,
@@ -80,11 +28,9 @@ public static class Variables
 
     public static readonly Command AssignAdd = Command.CreateOperator(
         "+=",
-        (Context context, AstNodeValue lhsNode, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
         {
-            var (targetCtx, fieldName) = ResolveLhs(context, lhsNode.Node);
-            var currentVal = targetCtx.GetValue(fieldName);
-
+            var currentVal = leftVal.Target.GetValue();
             ToastObject newVal;
             if (currentVal is StringValue || rightVal is StringValue)
             {
@@ -98,7 +44,7 @@ public static class Variables
             {
                 throw new InvalidOperationException("Invalid types for += operator.");
             }
-            targetCtx.SetValue(fieldName, newVal);
+            leftVal.Target.SetValue(newVal);
             return newVal;
         },
         precedence: 1,
@@ -107,15 +53,13 @@ public static class Variables
 
     public static readonly Command AssignSub = Command.CreateOperator(
         "-=",
-        (Context context, AstNodeValue lhsNode, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
         {
-            var (targetCtx, fieldName) = ResolveLhs(context, lhsNode.Node);
-            var currentVal = targetCtx.GetValue(fieldName);
-
+            var currentVal = leftVal.Target.GetValue();
             if (currentVal is NumberValue ln && rightVal is NumberValue rn)
             {
                 var newVal = new NumberValue(ln.Value - rn.Value);
-                targetCtx.SetValue(fieldName, newVal);
+                leftVal.Target.SetValue(newVal);
                 return newVal;
             }
             throw new InvalidOperationException("Invalid types for -= operator.");
@@ -146,6 +90,11 @@ public static class Variables
                         throw new InvalidOperationException(
                             "Right side of '.' must be an identifier or string."
                         );
+                }
+
+                if (context.Toaster.Executor.SuppressDereference)
+                {
+                    return new ReferenceValue(new VariableAssignTarget(objVal.Context, fieldName));
                 }
 
                 var val = objVal.Context.GetValue(fieldName);

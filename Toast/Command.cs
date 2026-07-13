@@ -184,6 +184,8 @@ public class Command
             return ToastType.Null;
         if (type == typeof(AstNodeValue))
             return ToastType.Any;
+        if (type == typeof(ReferenceValue))
+            return ToastType.Reference;
         if (type == typeof(ToastObject))
             return ToastType.Any;
 

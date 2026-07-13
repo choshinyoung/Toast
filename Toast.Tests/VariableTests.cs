@@ -11,7 +11,7 @@ public class VariableTests : BaseTest
         var tokens = Lexer.Tokenize("var x");
         var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
         var xAddr = _toast.Evaluate(ast, context);
-        Assert.IsType<IdentifierValue>(xAddr);
+        Assert.IsType<ReferenceValue>(xAddr);
 
         // Assignment & Retrieval
         var ctxAss = new Context(_toast);

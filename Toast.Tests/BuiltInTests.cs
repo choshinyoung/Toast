@@ -111,4 +111,23 @@ public class BuiltInTests : BaseTest
         AssertResult("append (1 to 2) 3", new List<object> { 1, 2, 3 });
         AssertResult("remove (1 to 3) 2", new List<object> { 1, 3 });
     }
+
+    [Fact]
+    public void TestListMemberAssignment()
+    {
+        var context = new Context(_toast);
+        Evaluate("var list = [1, 2, 3]", context);
+
+        // 1. Basic assignment
+        Evaluate("list # 1 = 42", context);
+        AssertResult("list # 1", 42, context);
+
+        // 2. Add assignment (+=)
+        Evaluate("list # 1 += 8", context);
+        AssertResult("list # 1", 50, context);
+
+        // 3. Sub assignment (-=)
+        Evaluate("list # 1 -= 10", context);
+        AssertResult("list # 1", 40, context);
+    }
 }
