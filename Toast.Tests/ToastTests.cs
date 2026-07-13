@@ -16,9 +16,9 @@ public class ToastTests
         context ??= new Context(_toast);
         var result = Evaluate(source, context);
 
-        if (expected is string s && s == "MemoryAddress")
+        if (expected is string s && s == "IdentifierNode")
         {
-            Assert.IsType<MemoryAddress>(result);
+            Assert.IsType<IdentifierNode>(result);
         }
         else if (expected is System.Collections.IEnumerable enumerable && expected is not string)
         {
@@ -54,22 +54,12 @@ public class ToastTests
         var tokens = Lexer.Tokenize("var x");
         var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
         var xAddr = _toast.Evaluate(ast, context);
-        Assert.IsType<MemoryAddress>(xAddr);
+        Assert.IsType<IdentifierNode>(xAddr);
 
         // Assignment & Retrieval
         var ctxAss = new Context(_toast);
         AssertResult("var x = 42", 42, ctxAss);
         AssertResult("x", 42, ctxAss);
-    }
-
-    [Fact]
-    public void TestPointersAndDereferences()
-    {
-        var context = new Context(_toast);
-        AssertResult("var c = 10\n var a = (var c)", "MemoryAddress", context);
-        AssertResult("a = 20", 20, context);
-        AssertResult("*a", 20, context);
-        AssertResult("c", 20, context);
     }
 
     [Fact]
@@ -318,24 +308,13 @@ public class ToastTests
         var context = new Context(_toast);
         // Test while loop
         Evaluate("var x = 0", context);
-        Evaluate("while (x < 5) { var x = x + 1 }", context);
+        Evaluate("while (x < 5) { x = x + 1 }", context);
         Assert.Equal(5, Evaluate("x", context));
 
         // Test for loop
         Evaluate("var sum = 0", context);
-        Evaluate("for (1 to 4) ((i) => var sum = sum + i)", context);
+        Evaluate("for (1 to 4) ((i) => sum = sum + i)", context);
         Assert.Equal(10, Evaluate("sum", context));
-    }
-
-    [Fact]
-    public void TestPointerEscape()
-    {
-        var context = new Context(_toast);
-        Evaluate("var makePointer = () => { var local = 42\n (var local) }", context);
-        Evaluate("var ptr = makePointer()", context);
-        Assert.Equal(42, Evaluate("*ptr", context));
-        Evaluate("ptr = 100", context);
-        Assert.Equal(100, Evaluate("*ptr", context));
     }
 
     [Fact]
@@ -348,15 +327,6 @@ public class ToastTests
         // 2. Operator at the end of the line (continues naturally)
         AssertResult("2 *\n3", 6);
         AssertResult("2 *\n\n3", 6);
-
-        // 3. Top-level without parentheses and operator at the start of the line
-        // should evaluate as two separate statements (resolves the *ptr ambiguity).
-        var context = new Context(_toast);
-        Evaluate("var x = 10", context);
-        Evaluate("var ptr = (var x)", context);
-        // *ptr on a new line is a separate statement, not multiplied to 10
-        Evaluate("var dummy = 10\n*ptr", context);
-        Assert.Equal(10, Evaluate("*ptr", context));
     }
 
     [Fact]

@@ -14,7 +14,7 @@ public class Executor(Toaster _toast)
             return ToastType.Float;
         if (val is bool)
             return ToastType.Boolean;
-        if (val is MemoryAddress)
+        if (val is IdentifierNode)
             return ToastType.Identifier;
         if (val is FunctionValue or Command)
             return ToastType.Function;
@@ -62,7 +62,7 @@ public class Executor(Toaster _toast)
         bool suppressZeroArgFunction
     )
     {
-        if (context.LookupAddress(identifier.Name) != null)
+        if (context.HasVariable(identifier.Name))
         {
             var val = context.GetValue(identifier.Name);
             if (
@@ -169,7 +169,24 @@ public class Executor(Toaster _toast)
         }
 
         var finalArgs = new object?[callArgs.Count];
-        for (int i = 0; i < callArgs.Count; i++)
+        if (cmd.IsRightAssociative)
+        {
+            for (int i = callArgs.Count - 1; i >= 0; i--)
+            {
+                EvaluateArg(i);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < callArgs.Count; i++)
+            {
+                EvaluateArg(i);
+            }
+        }
+
+        return cmd.TargetDelegate(context, finalArgs);
+
+        void EvaluateArg(int i)
         {
             var isLazy = cmd.IsParameterLazy[i];
             if (isLazy)
@@ -196,8 +213,6 @@ public class Executor(Toaster _toast)
                 }
             }
         }
-
-        return cmd.TargetDelegate(context, finalArgs);
     }
 
     private static object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)

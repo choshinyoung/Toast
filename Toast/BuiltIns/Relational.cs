@@ -40,10 +40,9 @@ public static class Relational
 
     public static readonly Command Is = Command.CreateFunction(
         "is",
-        (Context context, object? left, object? right) =>
+        (Context context, object? left, IdentifierNode right) =>
         {
-            var typeStr = right is IdentifierNode typeId ? typeId.Name : right?.ToString();
-            return left?.GetType().Name.ToLower() == typeStr?.ToLower();
+            return left?.GetType().Name == right.Name;
         },
         precedence: 6,
         isInfix: true

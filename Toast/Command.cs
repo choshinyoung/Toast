@@ -156,7 +156,7 @@ public class Command
             return ToastType.Float;
         if (type == typeof(bool))
             return ToastType.Boolean;
-        if (type == typeof(MemoryAddress))
+        if (type == typeof(IdentifierNode))
             return ToastType.Identifier;
         if (type == typeof(FunctionValue) || type == typeof(Command))
             return ToastType.Function;

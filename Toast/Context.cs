@@ -1,14 +1,5 @@
 namespace Toast;
 
-public readonly record struct MemoryAddress(Context Context, string Name)
-{
-    public override string ToString() => $"Ref({Name}:{Context.GetHashCode():X8})";
-
-    public object? GetValue() => Context.GetValueDirect(Name);
-
-    public void SetValue(object? value) => Context.SetValueDirect(Name, value);
-}
-
 public class Context(Toaster toaster, Context? parent = null)
 {
     private readonly Context? _parent = parent;
@@ -18,18 +9,6 @@ public class Context(Toaster toaster, Context? parent = null)
 
     public Context(Context parent)
         : this(parent.Toaster, parent) { }
-
-    public MemoryAddress GetOrCreateAddress(string name)
-    {
-        var addr = LookupAddress(name);
-        if (addr != null)
-        {
-            return addr.Value;
-        }
-
-        _bindings[name] = null;
-        return new MemoryAddress(this, name);
-    }
 
     private Context? FindContext(string name)
     {
@@ -51,10 +30,17 @@ public class Context(Toaster toaster, Context? parent = null)
         return null;
     }
 
-    public MemoryAddress? LookupAddress(string name)
+    public bool HasVariable(string name)
     {
-        var ctx = FindContext(name);
-        return ctx != null ? new MemoryAddress(ctx, name) : null;
+        return FindContext(name) != null;
+    }
+
+    public void GetOrCreateLocal(string name)
+    {
+        if (!_bindings.ContainsKey(name))
+        {
+            _bindings[name] = null;
+        }
     }
 
     public object? GetValue(string name)
@@ -71,6 +57,14 @@ public class Context(Toaster toaster, Context? parent = null)
             : throw new InvalidOperationException(
                 $"Variable '{name}' is not defined in this context."
             );
+
+    public void SetValue(string name, object? value)
+    {
+        var ctx =
+            FindContext(name)
+            ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
+        ctx.SetValueDirect(name, value);
+    }
 
     public void SetValueDirect(string name, object? value) => _bindings[name] = value;
 }

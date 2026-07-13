@@ -18,8 +18,7 @@ public class FunctionValue(
         for (int i = 0; i < Parameters.Count; i++)
         {
             var param = Parameters[i];
-            var addr = runContext.GetOrCreateAddress(param.Name);
-            addr.SetValue(evalArgs[i]);
+            runContext.SetValueDirect(param.Name, evalArgs[i]);
         }
 
         object? lastVal = null;

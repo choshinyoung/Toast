@@ -6,35 +6,63 @@ public static class Variables
         "var",
         (Context context, IdentifierNode idNode) =>
         {
-            return context.GetOrCreateAddress(idNode.Name);
+            context.GetOrCreateLocal(idNode.Name);
+            return idNode;
         }
     );
 
     public static readonly Command Assign = Command.CreateOperator(
         "=",
-        (Context context, MemoryAddress addr, object? rightVal) =>
+        (Context context, Node lhsNode, object? rightVal) =>
         {
-            addr.SetValue(rightVal);
+            string name;
+            if (lhsNode is IdentifierNode rawIdNode)
+            {
+                name = rawIdNode.Name;
+            }
+            else
+            {
+                var eval = context.Toaster.Evaluate(lhsNode, context);
+                if (eval is IdentifierNode idNode)
+                {
+                    name = idNode.Name;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Left side of '=' must be an identifier.");
+                }
+            }
+
+            context.SetValue(name, rightVal);
             return rightVal;
         },
-        precedence: 1
-    );
-
-    public static readonly Command Dereference = Command.CreateOperator(
-        "*",
-        object? (Context context, MemoryAddress addr) =>
-        {
-            return addr.GetValue();
-        },
-        precedence: 9,
-        isPrefix: true
+        precedence: 1,
+        isRightAssociative: true
     );
 
     public static readonly Command AssignAdd = Command.CreateOperator(
         "+=",
-        (Context context, MemoryAddress addr, object? rightVal) =>
+        (Context context, Node lhsNode, object? rightVal) =>
         {
-            var currentVal = addr.GetValue();
+            string name;
+            if (lhsNode is IdentifierNode rawIdNode)
+            {
+                name = rawIdNode.Name;
+            }
+            else
+            {
+                var eval = context.Toaster.Evaluate(lhsNode, context);
+                if (eval is IdentifierNode idNode)
+                {
+                    name = idNode.Name;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Left side of '+=' must be an identifier.");
+                }
+            }
+
+            var currentVal = context.GetValue(name);
             object newVal;
             if (currentVal is string || rightVal is string)
             {
@@ -48,17 +76,36 @@ public static class Variables
             {
                 newVal = Convert.ToInt32(currentVal) + Convert.ToInt32(rightVal);
             }
-            addr.SetValue(newVal);
+            context.SetValue(name, newVal);
             return newVal;
         },
-        precedence: 1
+        precedence: 1,
+        isRightAssociative: true
     );
 
     public static readonly Command AssignSub = Command.CreateOperator(
         "-=",
-        (Context context, MemoryAddress addr, object? rightVal) =>
+        (Context context, Node lhsNode, object? rightVal) =>
         {
-            var currentVal = addr.GetValue();
+            string name;
+            if (lhsNode is IdentifierNode rawIdNode)
+            {
+                name = rawIdNode.Name;
+            }
+            else
+            {
+                var eval = context.Toaster.Evaluate(lhsNode, context);
+                if (eval is IdentifierNode idNode)
+                {
+                    name = idNode.Name;
+                }
+                else
+                {
+                    throw new InvalidOperationException("Left side of '-=' must be an identifier.");
+                }
+            }
+
+            var currentVal = context.GetValue(name);
             object newVal;
             if (currentVal is double || rightVal is double)
             {
@@ -68,10 +115,11 @@ public static class Variables
             {
                 newVal = Convert.ToInt32(currentVal) - Convert.ToInt32(rightVal);
             }
-            addr.SetValue(newVal);
+            context.SetValue(name, newVal);
             return newVal;
         },
-        precedence: 1
+        precedence: 1,
+        isRightAssociative: true
     );
 
     public static readonly Command MemberAccess = Command.CreateOperator(
@@ -87,7 +135,6 @@ public static class Variables
     {
         toast.RegisterCommand(Var);
         toast.RegisterCommand(Assign);
-        toast.RegisterCommand(Dereference);
         toast.RegisterCommand(AssignAdd);
         toast.RegisterCommand(AssignSub);
         toast.RegisterCommand(MemberAccess);
