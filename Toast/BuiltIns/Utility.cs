@@ -67,7 +67,7 @@ public static class Utility
                     return prefixCmd;
             }
 
-            var executor = new Executor(context.Toaster);
+            var executor = context.Toaster.Executor;
             return executor.Evaluate(node, context, suppressZeroArgFunction: true);
         },
         precedence: 9,

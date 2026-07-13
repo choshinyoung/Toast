@@ -14,7 +14,6 @@ public class FunctionValue(
 
     public object? Execute(List<object?> evalArgs)
     {
-        var executor = new Executor(Toast);
         var runContext = new Context(ClosureContext);
         for (int i = 0; i < Parameters.Count; i++)
         {
@@ -26,7 +25,7 @@ public class FunctionValue(
         object? lastVal = null;
         foreach (var stmt in Statements)
         {
-            lastVal = executor.Evaluate(stmt, runContext);
+            lastVal = Toast.Executor.Evaluate(stmt, runContext);
         }
         return lastVal;
     }
@@ -38,9 +37,11 @@ public class Toaster
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
     public readonly Context GlobalContext;
+    public readonly Executor Executor;
 
     public Toaster(bool useBuiltIn = false)
     {
+        Executor = new Executor(this);
         GlobalContext = new Context(this);
         if (useBuiltIn)
         {
@@ -147,14 +148,12 @@ public class Toaster
 
     public object? Execute(string rawInput)
     {
-        var executor = new Executor(this);
-        return executor.Execute(rawInput);
+        return Executor.Execute(rawInput);
     }
 
     public object? Evaluate(Node node, Context context)
     {
-        var executor = new Executor(this);
-        return executor.Evaluate(node, context);
+        return Executor.Evaluate(node, context);
     }
 
     public bool TryConvert(
