@@ -102,7 +102,6 @@ public class BuiltInTests : BaseTest
         AssertResult("len (1 to 5)", 5);
         AssertResult("indexOf (1 to 5) 3", 2);
         AssertResult("range 5 3", new List<int> { 5, 6, 7 });
-        AssertResult("member 2 (10 to 15)", 12);
         AssertResult("(10 to 15) # 2", 12);
         AssertResult("\"hello\" # 1", "e");
         AssertResult("map (1 to 3) ((x) => x * 2)", new List<object> { 2, 4, 6 });

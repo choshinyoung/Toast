@@ -12,7 +12,7 @@ toast.RegisterFunction("exit", (Context context) => Environment.Exit(0));
 while (true)
 {
     var buffer = new StringBuilder();
-    string prompt = "toast> ";
+    string prompt = "> ";
     bool eofReached = false;
 
     while (true)
@@ -30,7 +30,7 @@ while (true)
         if (IsIncomplete(buffer.ToString(), toast))
         {
             buffer.Append('\n');
-            prompt = "       ";
+            prompt = "  ";
         }
         else
         {
