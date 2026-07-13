@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\Toast\Toast.csproj" />
@@ -9,6 +9,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>toast</ToolCommandName>
+
+    <Authors>choshinyoung</Authors>
+    <PackageId>choshinyoung.Toast.Interactive</PackageId>
+    <Description>Interactive CLI for Toast</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
+    <Version>2.0.0-beta</Version>
+    <PackageReleaseNotes>Release v2.0.0-beta</PackageReleaseNotes>
   </PropertyGroup>
 
 </Project>
