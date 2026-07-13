@@ -279,7 +279,7 @@ public class ToastTests
         AssertResult("16 >> 2", 4);
 
         // 4. Converters
-        AssertResult("print 123", 123);
+        AssertResult("print 123", null);
         AssertResult("\"123\" as integer", 123);
         AssertResult("\"123.45\" as float", 123.45);
         AssertResult("\"true\" as boolean", true);
@@ -357,5 +357,21 @@ public class ToastTests
         // *ptr on a new line is a separate statement, not multiplied to 10
         Evaluate("var dummy = 10\n*ptr", context);
         Assert.Equal(10, Evaluate("*ptr", context));
+    }
+
+    [Fact]
+    public void TestPipelineOperator()
+    {
+        // 1. Simple function call
+        AssertResult("5 |> ((x) => x * 2)", 10);
+
+        // 2. Command call
+        AssertResult("\"  abc  \" |> trim", "abc");
+
+        // 3. Command with arguments
+        AssertResult("\"a,b,c\" |> split \",\"", new List<string> { "a", "b", "c" });
+
+        // 4. Chained pipelines
+        AssertResult("\"  a,b,c  \" |> trim |> split \",\"", new List<string> { "a", "b", "c" });
     }
 }

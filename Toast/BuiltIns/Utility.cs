@@ -73,6 +73,24 @@ public static class Utility
         isPrefix: true
     );
 
+    public static readonly Command Pipeline = Command.CreateOperator(
+        "|>",
+        (Context context, Node leftNode, Node rightNode) =>
+        {
+            if (rightNode is CallNode callNode)
+            {
+                var newCallNode = new CallNode(callNode.Callee, [leftNode, .. callNode.Arguments]);
+                return context.Toaster.Evaluate(newCallNode, context);
+            }
+            else
+            {
+                var newCallNode = new CallNode(rightNode, [leftNode]);
+                return context.Toaster.Evaluate(newCallNode, context);
+            }
+        },
+        precedence: 2
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(Print);
@@ -81,5 +99,6 @@ public static class Utility
         toast.RegisterCommand(Random);
         toast.RegisterCommand(RandomChoice);
         toast.RegisterCommand(Quote);
+        toast.RegisterCommand(Pipeline);
     }
 }
