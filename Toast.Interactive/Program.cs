@@ -1,10 +1,10 @@
 using System.Text;
 using Toast;
 
-Console.WriteLine("========================================");
+Console.WriteLine("===============================");
 Console.WriteLine("  Toast Interactive REPL v2.0");
-Console.WriteLine("========================================");
-Console.WriteLine("Type exit or quit to end the session.\n");
+Console.WriteLine("===============================");
+Console.WriteLine("Type exit to end the session.\n");
 
 var toast = new Toaster(useBuiltIn: true);
 toast.RegisterFunction("exit", (Context context) => Environment.Exit(0));
