@@ -5,7 +5,7 @@ namespace Toast;
 public class Command
 {
     public string Name { get; }
-    public Func<Context, object?[], object?> TargetDelegate { get; }
+    public Func<Context, ToastObject[], ToastObject> TargetDelegate { get; }
     public int Precedence { get; }
     public bool IsRightAssociative { get; }
     public bool IsPrefix { get; }
@@ -20,11 +20,12 @@ public class Command
         int precedence = 0,
         bool isRightAssociative = false,
         bool isPrefix = false,
-        bool isInfix = false
+        bool isInfix = false,
+        IReadOnlyList<ToastType>? parameterTypes = null,
+        IReadOnlyList<bool>? isParameterLazy = null
     )
     {
         Name = name;
-        TargetDelegate = CompileDelegate(targetDelegate);
         Precedence = precedence;
         IsRightAssociative = isRightAssociative;
         IsPrefix = isPrefix;
@@ -33,14 +34,24 @@ public class Command
         var method = targetDelegate.Method;
         var parameters = method.GetParameters();
 
-        if (parameters.Length > 0 && typeof(Context).IsAssignableFrom(parameters[0].ParameterType))
+        TargetDelegate = CompileDelegate(targetDelegate);
+
+        if (parameterTypes != null && isParameterLazy != null)
+        {
+            ParameterTypes = parameterTypes;
+            IsParameterLazy = isParameterLazy;
+        }
+        else if (
+            parameters.Length > 0
+            && typeof(Context).IsAssignableFrom(parameters[0].ParameterType)
+        )
         {
             var types = new List<ToastType>();
             var isLazy = new List<bool>();
             for (int i = 1; i < parameters.Length; i++)
             {
                 var paramType = parameters[i].ParameterType;
-                bool lazy = typeof(Node).IsAssignableFrom(paramType);
+                bool lazy = paramType == typeof(AstNodeValue);
                 isLazy.Add(lazy);
                 types.Add(MapToToastType(paramType));
             }
@@ -55,23 +66,23 @@ public class Command
         }
     }
 
-    private static Func<Context, object?[], object?> CompileDelegate(Delegate del)
+    private static Func<Context, ToastObject[], ToastObject> CompileDelegate(Delegate del)
     {
         var method = del.Method;
         var target = del.Target;
         var parameters = method.GetParameters();
 
         if (
-            del is Func<Context, object?[], object?> fastFunc
+            del is Func<Context, ToastObject[], ToastObject> fastFunc
             && parameters.Length == 2
-            && parameters[1].ParameterType == typeof(object?[])
+            && parameters[1].ParameterType == typeof(ToastObject[])
         )
         {
             return fastFunc;
         }
 
         var contextParam = Expression.Parameter(typeof(Context), "context");
-        var argsParam = Expression.Parameter(typeof(object?[]), "args");
+        var argsParam = Expression.Parameter(typeof(ToastObject[]), "args");
 
         var callArgs = new List<Expression> { contextParam };
 
@@ -95,16 +106,23 @@ public class Command
 
         if (method.ReturnType == typeof(void))
         {
-            var block = Expression.Block(call, Expression.Constant(null, typeof(object)));
+            var block = Expression.Block(
+                call,
+                Expression.Constant(NullValue.Instance, typeof(ToastObject))
+            );
             return Expression
-                .Lambda<Func<Context, object?[], object?>>(block, contextParam, argsParam)
+                .Lambda<Func<Context, ToastObject[], ToastObject>>(block, contextParam, argsParam)
                 .Compile();
         }
         else
         {
-            var castResult = Expression.Convert(call, typeof(object));
+            var castResult = Expression.Convert(call, typeof(ToastObject));
             return Expression
-                .Lambda<Func<Context, object?[], object?>>(castResult, contextParam, argsParam)
+                .Lambda<Func<Context, ToastObject[], ToastObject>>(
+                    castResult,
+                    contextParam,
+                    argsParam
+                )
                 .Compile();
         }
     }
@@ -148,18 +166,33 @@ public class Command
 
     private static ToastType MapToToastType(Type type)
     {
+        if (type == typeof(StringValue))
+            return ToastType.String;
+        if (type == typeof(NumberValue))
+            return ToastType.Number;
+        if (type == typeof(BoolValue))
+            return ToastType.Boolean;
+        if (type == typeof(ListValue))
+            return ToastType.List;
+        if (type == typeof(ObjectValue))
+            return ToastType.Object;
+        if (type == typeof(FunctionValue) || type == typeof(CommandValue))
+            return ToastType.Function;
+        if (type == typeof(IdentifierValue))
+            return ToastType.Identifier;
+        if (type == typeof(NullValue))
+            return ToastType.Null;
+        if (type == typeof(AstNodeValue))
+            return ToastType.Any;
+        if (type == typeof(ToastObject))
+            return ToastType.Any;
+
         if (type == typeof(string))
             return ToastType.String;
-        if (type == typeof(int))
-            return ToastType.Integer;
-        if (type == typeof(double) || type == typeof(float))
-            return ToastType.Float;
+        if (type == typeof(int) || type == typeof(double) || type == typeof(float))
+            return ToastType.Number;
         if (type == typeof(bool))
             return ToastType.Boolean;
-        if (type == typeof(IdentifierNode))
-            return ToastType.Identifier;
-        if (type == typeof(FunctionValue) || type == typeof(Command))
-            return ToastType.Function;
         if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
             return ToastType.List;
         return ToastType.Any;

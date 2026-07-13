@@ -53,7 +53,7 @@ while (true)
     try
     {
         var result = toast.Execute(input);
-        if (result == null)
+        if (result is NullValue)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
             Console.WriteLine("(null)");
@@ -61,7 +61,7 @@ while (true)
         else
         {
             Console.ForegroundColor = ConsoleColor.Cyan;
-            var toastType = Executor.GetToastType(result);
+            var toastType = result.Type;
             if (toast.Converters.TryGetValue((toastType, ToastType.String), out var converter))
             {
                 Console.WriteLine(converter.ConvertFunc(toast.GlobalContext, result));

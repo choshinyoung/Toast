@@ -4,9 +4,16 @@ public static class List
 {
     public static readonly Command RangeTo = Command.CreateFunction(
         "to",
-        (Context context, int left, int right) =>
+        (Context context, NumberValue left, NumberValue right) =>
         {
-            return Enumerable.Range(left, right - left + 1).ToList();
+            int l = (int)left.Value;
+            int r = (int)right.Value;
+            var list = new List<ToastObject>();
+            for (int i = l; i <= r; i++)
+            {
+                list.Add(new NumberValue(i));
+            }
+            return new ListValue(list);
         },
         precedence: 6,
         isInfix: true
@@ -14,14 +21,14 @@ public static class List
 
     public static readonly Command ListIn = Command.CreateFunction(
         "in",
-        (Context context, object? left, System.Collections.IEnumerable right) =>
+        (Context context, ToastObject left, ListValue right) =>
         {
-            foreach (var item in right)
+            foreach (var item in right.Elements)
             {
                 if (Equals(item, left))
-                    return true;
+                    return new BoolValue(true);
             }
-            return false;
+            return new BoolValue(false);
         },
         precedence: 6,
         isInfix: true
@@ -29,157 +36,175 @@ public static class List
 
     public static readonly Command IndexAccess = Command.CreateOperator(
         "#",
-        (Context context, System.Collections.IEnumerable list, int index) =>
+        (Context context, ToastObject list, NumberValue index) =>
         {
-            if (list is string str)
+            int idx = (int)index.Value;
+            if (list is StringValue str)
             {
-                return str[index].ToString();
+                return new StringValue(str.Value[idx].ToString());
             }
-            var items = list.Cast<object?>().ToList();
-            return items[index];
+            if (list is ListValue listVal)
+            {
+                return listVal.Elements[idx];
+            }
+            throw new InvalidOperationException("Can only index strings and lists.");
         },
         precedence: 10
     );
 
     public static readonly Command Member = Command.CreateFunction(
         "member",
-        (Context context, int index, System.Collections.IEnumerable list) =>
+        (Context context, NumberValue index, ListValue list) =>
         {
-            var items = list.Cast<object?>().ToList();
-            return items[index];
+            return list.Elements[(int)index.Value];
         }
     );
 
     public static readonly Command Len = Command.CreateFunction(
         "len",
-        (Context context, System.Collections.IEnumerable list) =>
+        (Context context, ToastObject list) =>
         {
-            if (list is string str)
-                return str.Length;
-            var items = list.Cast<object?>().ToList();
-            return items.Count;
+            if (list is StringValue str)
+                return new NumberValue(str.Value.Length);
+            if (list is ListValue listVal)
+                return new NumberValue(listVal.Elements.Count);
+            throw new InvalidOperationException("Length is only defined on strings and lists.");
         }
     );
 
     public static readonly Command IndexOf = Command.CreateFunction(
         "indexOf",
-        (Context context, System.Collections.IEnumerable list, object? item) =>
+        (Context context, ListValue list, ToastObject item) =>
         {
-            var items = list.Cast<object?>().ToList();
-            return items.IndexOf(item);
+            return new NumberValue(list.Elements.IndexOf(item));
         }
     );
 
     public static readonly Command Filter = Command.CreateFunction(
         "filter",
-        (Context context, System.Collections.IEnumerable list, FunctionValue predicate) =>
+        (Context context, ListValue list, FunctionValue predicate) =>
         {
-            var items = list.Cast<object?>().ToList();
-            var result = new List<object?>();
-            foreach (var item in items)
+            var result = new List<ToastObject>();
+            foreach (var item in list.Elements)
             {
                 var res = predicate.Execute([item]);
-                if (res is bool b && b)
+                if (res is BoolValue b && b.Value)
                 {
                     result.Add(item);
                 }
             }
-            return result;
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Map = Command.CreateFunction(
         "map",
-        (Context context, System.Collections.IEnumerable list, FunctionValue mapper) =>
+        (Context context, ListValue list, FunctionValue mapper) =>
         {
-            var items = list.Cast<object?>().ToList();
-            var result = new List<object?>();
-            foreach (var item in items)
+            var result = new List<ToastObject>();
+            foreach (var item in list.Elements)
             {
                 result.Add(mapper.Execute([item]));
             }
-            return result;
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Combine = Command.CreateFunction(
         "combine",
-        (
-            Context context,
-            System.Collections.IEnumerable list1,
-            System.Collections.IEnumerable list2
-        ) =>
+        (Context context, ListValue list1, ListValue list2) =>
         {
-            var items1 = list1.Cast<object?>();
-            var items2 = list2.Cast<object?>();
-            return items1.Concat(items2).ToList();
+            var result = list1.Elements.Concat(list2.Elements).ToList();
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Append = Command.CreateFunction(
         "append",
-        (Context context, System.Collections.IEnumerable list, object? item) =>
+        (Context context, ListValue list, ToastObject item) =>
         {
-            var items = list.Cast<object?>().ToList();
-            items.Add(item);
-            return items;
+            var result = new List<ToastObject>(list.Elements) { item };
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Remove = Command.CreateFunction(
         "remove",
-        (Context context, System.Collections.IEnumerable list, object? item) =>
+        (Context context, ListValue list, ToastObject item) =>
         {
-            var items = list.Cast<object?>().ToList();
-            items.Remove(item);
-            return items;
+            var result = new List<ToastObject>(list.Elements);
+            result.Remove(item);
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Sort = Command.CreateFunction(
         "sort",
-        (Context context, System.Collections.IEnumerable list) =>
+        (Context context, ListValue list) =>
         {
-            var items = list.Cast<object?>().ToList();
-            items.Sort();
-            return items;
+            var result = new List<ToastObject>(list.Elements);
+            result.Sort(
+                (a, b) =>
+                {
+                    if (a is NumberValue na && b is NumberValue nb)
+                        return na.Value.CompareTo(nb.Value);
+                    if (a is StringValue sa && b is StringValue sb)
+                        return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
+                    throw new InvalidOperationException(
+                        "Can only sort lists containing only numbers or only strings."
+                    );
+                }
+            );
+            return new ListValue(result);
         }
     );
 
     public static readonly Command SortAs = Command.CreateFunction(
         "sortAs",
-        (Context context, System.Collections.IEnumerable list, FunctionValue keySelector) =>
+        (Context context, ListValue list, FunctionValue keySelector) =>
         {
-            var items = list.Cast<object?>().ToList();
-            items.Sort(
+            var result = new List<ToastObject>(list.Elements);
+            result.Sort(
                 (a, b) =>
                 {
-                    var ka = keySelector.Execute([a]) as IComparable;
-                    var kb = keySelector.Execute([b]) as IComparable;
-                    if (ka == null || kb == null)
-                        return 0;
-                    return ka.CompareTo(kb);
+                    var ka = keySelector.Execute([a]);
+                    var kb = keySelector.Execute([b]);
+
+                    if (ka is NumberValue na && kb is NumberValue nb)
+                        return na.Value.CompareTo(nb.Value);
+                    if (ka is StringValue sa && kb is StringValue sb)
+                        return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
+                    throw new InvalidOperationException(
+                        "Sorted keys must be comparable numbers or strings."
+                    );
                 }
             );
-            return items;
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Shuffle = Command.CreateFunction(
         "shuffle",
-        (Context context, System.Collections.IEnumerable list) =>
+        (Context context, ListValue list) =>
         {
-            var items = list.Cast<object?>().ToList();
             var random = new Random();
-            return items.OrderBy(x => random.Next()).ToList();
+            var result = list.Elements.OrderBy(x => random.Next()).ToList();
+            return new ListValue(result);
         }
     );
 
     public static readonly Command Range = Command.CreateFunction(
         "range",
-        (Context context, int start, int count) =>
+        (Context context, NumberValue start, NumberValue count) =>
         {
-            return Enumerable.Range(start, count).ToList();
+            int s = (int)start.Value;
+            int c = (int)count.Value;
+            var list = new List<ToastObject>();
+            for (int i = 0; i < c; i++)
+            {
+                list.Add(new NumberValue(s + i));
+            }
+            return new ListValue(list);
         }
     );
 

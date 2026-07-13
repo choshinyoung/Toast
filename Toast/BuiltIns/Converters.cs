@@ -2,87 +2,107 @@ namespace Toast.BuiltIns;
 
 public static class Converters
 {
-    public static readonly TypeConverter IntegerToFloat = new TypeConverter(
-        ToastType.Integer,
-        ToastType.Float,
-        (_, val) => Convert.ToDouble(val)
-    );
-
-    public static readonly TypeConverter IntegerToString = new TypeConverter(
-        ToastType.Integer,
+    public static readonly TypeConverter NumberToString = new(
+        ToastType.Number,
         ToastType.String,
-        (_, val) => val?.ToString()
+        (_, val) => new StringValue(((NumberValue)val).Value.ToString())
     );
 
-    public static readonly TypeConverter FloatToString = new TypeConverter(
-        ToastType.Float,
-        ToastType.String,
-        (_, val) => val?.ToString()
-    );
-
-    public static readonly TypeConverter BooleanToString = new TypeConverter(
+    public static readonly TypeConverter BooleanToString = new(
         ToastType.Boolean,
         ToastType.String,
-        (_, val) => val?.ToString()
+        (_, val) => new StringValue(((BoolValue)val).Value ? "True" : "False")
     );
 
-    public static readonly TypeConverter ListToString = new TypeConverter(
+    public static readonly TypeConverter ListToString = new(
         ToastType.List,
         ToastType.String,
         (ctx, val) =>
         {
-            if (val is System.Collections.IEnumerable enumerable)
+            if (val is ListValue listVal)
             {
                 var list = new List<string>();
-                foreach (var x in enumerable)
+                foreach (var x in listVal.Elements)
                 {
-                    var type = Executor.GetToastType(x);
+                    var type = x.Type;
                     if (ctx.Toaster.TryConvert(x, type, ToastType.String, ctx, out var converted))
                     {
-                        list.Add(converted?.ToString() ?? "null");
+                        list.Add(converted.ToString());
                         continue;
                     }
-                    list.Add(x?.ToString() ?? "null");
+                    list.Add(x.ToString());
                 }
-                return $"[{string.Join(", ", list)}]";
+                return new StringValue($"[{string.Join(", ", list)}]");
             }
-            return "[]";
+            return new StringValue("[]");
         }
     );
 
-    public static readonly TypeConverter StringToInteger = new TypeConverter(
+    public static readonly TypeConverter ObjectToString = new(
+        ToastType.Object,
         ToastType.String,
-        ToastType.Integer,
-        (_, val) => int.Parse((string)val!)
+        (ctx, val) =>
+        {
+            if (val is ObjectValue objVal)
+            {
+                var bindings = objVal.Context.GetBindings();
+                var items = new List<string>();
+                foreach (var kvp in bindings)
+                {
+                    var type = kvp.Value.Type;
+                    if (
+                        ctx.Toaster.TryConvert(
+                            kvp.Value,
+                            type,
+                            ToastType.String,
+                            ctx,
+                            out var converted
+                        )
+                    )
+                    {
+                        items.Add($"{kvp.Key}: {converted}");
+                    }
+                    else
+                    {
+                        items.Add($"{kvp.Key}: {kvp.Value}");
+                    }
+                }
+                return new StringValue($"{{{string.Join(", ", items)}}}");
+            }
+            return new StringValue("{}");
+        }
     );
 
-    public static readonly TypeConverter StringToFloat = new TypeConverter(
+    public static readonly TypeConverter StringToNumber = new(
         ToastType.String,
-        ToastType.Float,
-        (_, val) => double.Parse((string)val!)
+        ToastType.Number,
+        (_, val) => new NumberValue(double.Parse(((StringValue)val).Value))
     );
 
-    public static readonly TypeConverter StringToBoolean = new TypeConverter(
+    public static readonly TypeConverter StringToBoolean = new(
         ToastType.String,
         ToastType.Boolean,
-        (_, val) => bool.Parse((string)val!)
+        (_, val) => new BoolValue(bool.Parse(((StringValue)val).Value))
     );
 
-    public static readonly TypeConverter StringToList = new TypeConverter(
+    public static readonly TypeConverter StringToList = new(
         ToastType.String,
         ToastType.List,
-        (_, val) => ((string)val!).Select(c => c.ToString()).ToList()
+        (_, val) =>
+            new ListValue(
+                ((StringValue)val)
+                    .Value.Select(c => (ToastObject)new StringValue(c.ToString()))
+                    .ToList()
+            )
     );
 
     public static void Register(Toaster toast)
     {
-        toast.RegisterConverter(IntegerToFloat);
-        toast.RegisterConverter(IntegerToString);
-        toast.RegisterConverter(FloatToString);
+        toast.RegisterConverter(NumberToString);
         toast.RegisterConverter(BooleanToString);
         toast.RegisterConverter(ListToString);
-        toast.RegisterConverter(StringToInteger);
-        toast.RegisterConverter(StringToFloat);
+        toast.RegisterConverter(ObjectToString);
+        toast.RegisterConverter(StringToNumber);
         toast.RegisterConverter(StringToBoolean);
         toast.RegisterConverter(StringToList);
     }

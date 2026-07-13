@@ -4,55 +4,94 @@ public static class Utility
 {
     public static readonly Command Print = Command.CreateFunction(
         "print",
-        (Context context, object? val) =>
+        (Context context, ToastObject val) =>
         {
             Console.WriteLine(val);
+            return NullValue.Instance;
         }
     );
 
     public static readonly Command Input = Command.CreateFunction(
         "input",
-        (Context context) => Console.ReadLine()
+        (Context context) => new StringValue(Console.ReadLine() ?? "")
     );
 
     public static readonly Command Execute = Command.CreateFunction(
         "execute",
-        (Context context, FunctionValue func, System.Collections.IEnumerable args) =>
+        (Context context, FunctionValue func, ListValue args) =>
         {
-            var argList = args.Cast<object?>().ToList();
-            return func.Execute(argList);
+            return func.Execute(args.Elements);
         }
     );
 
     public static readonly Command Random = Command.CreateFunction(
         "random",
-        (Context context, int min, int max) =>
+        (Context context, NumberValue min, NumberValue max) =>
         {
-            return new Random().Next(min, max);
+            return new NumberValue(new Random().Next((int)min.Value, (int)max.Value));
         }
     );
 
     public static readonly Command RandomChoice = Command.CreateFunction(
         "randomChoice",
-        (Context context, System.Collections.IEnumerable list) =>
+        (Context context, ListValue list) =>
         {
-            var items = list.Cast<object?>().ToList();
-            if (items.Count == 0)
-                return null;
-            return items[new Random().Next(0, items.Count)];
+            if (list.Elements.Count == 0)
+                return NullValue.Instance;
+            return list.Elements[new Random().Next(0, list.Elements.Count)];
+        }
+    );
+
+    public static readonly Command TypeCreator = Command.CreateFunction(
+        "type",
+        (Context context, FunctionValue funcVal) =>
+        {
+            var parameterTypes = Enumerable
+                .Repeat(ToastType.Any, funcVal.Parameters.Count)
+                .ToList();
+            var isParameterLazy = Enumerable.Repeat(false, funcVal.Parameters.Count).ToList();
+
+            var factoryCmd = new Command(
+                "type_factory",
+                (Context callerCtx, ToastObject[] args) =>
+                {
+                    if (args.Length != funcVal.Parameters.Count)
+                    {
+                        throw new InvalidOperationException(
+                            $"Arity mismatch: type constructor expects {funcVal.Parameters.Count} arguments, but got {args.Length}."
+                        );
+                    }
+
+                    var objCtx = new Context(funcVal.ClosureContext);
+                    for (int i = 0; i < funcVal.Parameters.Count; i++)
+                    {
+                        var paramName = funcVal.Parameters[i].Name;
+                        objCtx.SetValueDirect(paramName, args[i]);
+                    }
+                    foreach (var stmt in funcVal.Statements)
+                    {
+                        callerCtx.Toaster.Evaluate(stmt, objCtx);
+                    }
+                    return new ObjectValue(objCtx);
+                },
+                parameterTypes: parameterTypes,
+                isParameterLazy: isParameterLazy
+            );
+            return new CommandValue(factoryCmd);
         }
     );
 
     public static readonly Command Quote = Command.CreateOperator(
         "`",
-        (Context context, Node node) =>
+        (Context context, AstNodeValue nodeVal) =>
         {
+            var node = nodeVal.Node;
             if (node is IdentifierNode idNode)
             {
                 if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
-                    return infixCmd;
+                    return new CommandValue(infixCmd);
                 if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
-                    return prefixCmd;
+                    return new CommandValue(prefixCmd);
             }
             else if (
                 node is GroupNode gn
@@ -61,9 +100,9 @@ public static class Utility
             )
             {
                 if (context.Toaster.InfixCommands.TryGetValue(innerId.Name, out var infixCmd))
-                    return infixCmd;
+                    return new CommandValue(infixCmd);
                 if (context.Toaster.PrefixCommands.TryGetValue(innerId.Name, out var prefixCmd))
-                    return prefixCmd;
+                    return new CommandValue(prefixCmd);
             }
 
             var executor = context.Toaster.Executor;
@@ -75,16 +114,19 @@ public static class Utility
 
     public static readonly Command Pipeline = Command.CreateOperator(
         "|>",
-        (Context context, Node leftNode, Node rightNode) =>
+        (Context context, AstNodeValue leftNode, AstNodeValue rightNode) =>
         {
-            if (rightNode is CallNode callNode)
+            if (rightNode.Node is CallNode callNode)
             {
-                var newCallNode = new CallNode(callNode.Callee, [leftNode, .. callNode.Arguments]);
+                var newCallNode = new CallNode(
+                    callNode.Callee,
+                    [leftNode.Node, .. callNode.Arguments]
+                );
                 return context.Toaster.Evaluate(newCallNode, context);
             }
             else
             {
-                var newCallNode = new CallNode(rightNode, [leftNode]);
+                var newCallNode = new CallNode(rightNode.Node, [leftNode.Node]);
                 return context.Toaster.Evaluate(newCallNode, context);
             }
         },
@@ -98,6 +140,7 @@ public static class Utility
         toast.RegisterCommand(Execute);
         toast.RegisterCommand(Random);
         toast.RegisterCommand(RandomChoice);
+        toast.RegisterCommand(TypeCreator);
         toast.RegisterCommand(Quote);
         toast.RegisterCommand(Pipeline);
     }

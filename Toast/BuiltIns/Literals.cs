@@ -2,14 +2,17 @@ namespace Toast.BuiltIns;
 
 public static class Literals
 {
-    public static readonly Command True = Command.CreateFunction("true", (Context context) => true);
+    public static readonly Command True = Command.CreateFunction(
+        "true",
+        (Context context) => new BoolValue(true)
+    );
     public static readonly Command False = Command.CreateFunction(
         "false",
-        (Context context) => false
+        (Context context) => new BoolValue(false)
     );
     public static readonly Command Null = Command.CreateFunction(
         "null",
-        (Context context) => (object?)null
+        (Context context) => NullValue.Instance
     );
 
     public static void Register(Toaster toast)

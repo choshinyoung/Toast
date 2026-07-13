@@ -4,29 +4,35 @@ public static class Logical
 {
     public static readonly Command LogicalNot = Command.CreateOperator(
         "!",
-        (Context context, bool val) => !val,
+        (Context context, BoolValue val) => new BoolValue(!val.Value),
         precedence: 9,
         isPrefix: true
     );
 
     public static readonly Command LogicalAnd = Command.CreateOperator(
         "&&",
-        (Context context, bool left, Node right) =>
+        (Context context, BoolValue left, AstNodeValue right) =>
         {
-            if (!left)
-                return false;
-            return (bool)context.Toaster.Evaluate(right, context)!;
+            if (!left.Value)
+                return new BoolValue(false);
+            var res = context.Toaster.Evaluate(right.Node, context);
+            if (res is BoolValue rb)
+                return rb;
+            throw new InvalidOperationException("Right side of '&&' must evaluate to a boolean.");
         },
         precedence: 2
     );
 
     public static readonly Command LogicalOr = Command.CreateOperator(
         "||",
-        (Context context, bool left, Node right) =>
+        (Context context, BoolValue left, AstNodeValue right) =>
         {
-            if (left)
-                return true;
-            return (bool)context.Toaster.Evaluate(right, context)!;
+            if (left.Value)
+                return new BoolValue(true);
+            var res = context.Toaster.Evaluate(right.Node, context);
+            if (res is BoolValue rb)
+                return rb;
+            throw new InvalidOperationException("Right side of '||' must evaluate to a boolean.");
         },
         precedence: 2
     );

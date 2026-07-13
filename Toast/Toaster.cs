@@ -1,40 +1,11 @@
 namespace Toast;
 
-public class FunctionValue(
-    IReadOnlyList<ParameterNode> parameters,
-    IReadOnlyList<Node> statements,
-    Context closureContext,
-    Toaster toast
-)
-{
-    public IReadOnlyList<ParameterNode> Parameters { get; } = parameters;
-    public IReadOnlyList<Node> Statements { get; } = statements;
-    public Context ClosureContext { get; } = closureContext;
-    public Toaster Toast { get; } = toast;
-
-    public object? Execute(List<object?> evalArgs)
-    {
-        var runContext = new Context(ClosureContext);
-        for (int i = 0; i < Parameters.Count; i++)
-        {
-            var param = Parameters[i];
-            runContext.SetValueDirect(param.Name, evalArgs[i]);
-        }
-
-        object? lastVal = null;
-        foreach (var stmt in Statements)
-        {
-            lastVal = Toast.Executor.Evaluate(stmt, runContext);
-        }
-        return lastVal;
-    }
-}
-
 public class Toaster
 {
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
+    public readonly HashSet<ToastType> CustomTypes = [];
     public readonly Context GlobalContext;
     public readonly Executor Executor;
 
@@ -46,6 +17,11 @@ public class Toaster
         {
             BuiltIns.BuiltIn.Register(this);
         }
+    }
+
+    public void RegisterType(ToastType type)
+    {
+        CustomTypes.Add(type);
     }
 
     public void RegisterCommand(Command command)
@@ -60,7 +36,7 @@ public class Toaster
         }
         else
         {
-            GlobalContext.SetValueDirect(command.Name, command);
+            GlobalContext.SetValueDirect(command.Name, new CommandValue(command));
         }
     }
 
@@ -145,37 +121,49 @@ public class Toaster
         return token.Value != null && PrefixCommands.ContainsKey(token.Value);
     }
 
-    public object? Execute(string rawInput)
+    public ToastObject Execute(string rawInput)
     {
         return Executor.Execute(rawInput);
     }
 
-    public object? Evaluate(Node node, Context context)
+    public ToastObject Evaluate(Node node, Context context)
     {
         return Executor.Evaluate(node, context);
     }
 
     public bool TryConvert(
-        object? obj,
+        ToastObject obj,
         ToastType actual,
         ToastType expected,
         Context context,
-        out object? result
+        out ToastObject result
     )
     {
         if (expected == ToastType.Any || expected == actual)
         {
             result = obj;
-
             return true;
         }
-        else if (Converters.TryGetValue((actual, expected), out var conv))
+
+        var lookupKey = (actual, expected);
+        if (Converters.TryGetValue(lookupKey, out var conv))
         {
             result = conv.ConvertFunc(context, obj);
             return true;
         }
 
-        result = null;
+        // Fallback for custom objects: treat them as ToastType.Object
+        if (
+            actual != ToastType.Object
+            && obj is ObjectValue
+            && Converters.TryGetValue((ToastType.Object, expected), out var objConv)
+        )
+        {
+            result = objConv.ConvertFunc(context, obj);
+            return true;
+        }
+
+        result = NullValue.Instance;
         return false;
     }
 }

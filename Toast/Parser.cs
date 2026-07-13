@@ -183,9 +183,18 @@ public class Parser(
         return current.Kind switch
         {
             TokenKind.Identifier => new IdentifierNode(current.Value!),
-            TokenKind.Integer => new LiteralNode(ToastType.Integer, int.Parse(current.Value!)),
-            TokenKind.Float => new LiteralNode(ToastType.Float, double.Parse(current.Value!)),
-            TokenKind.String => new LiteralNode(ToastType.String, current.Value!.Trim('"')),
+            TokenKind.Integer => new LiteralNode(
+                ToastType.Number,
+                new NumberValue(double.Parse(current.Value!))
+            ),
+            TokenKind.Float => new LiteralNode(
+                ToastType.Number,
+                new NumberValue(double.Parse(current.Value!))
+            ),
+            TokenKind.String => new LiteralNode(
+                ToastType.String,
+                new StringValue(current.Value!.Trim('"'))
+            ),
             TokenKind.LParen => ParseGroup(),
             TokenKind.LBrace => ParseBlock(),
             TokenKind.LBracket => ParseList(),
@@ -243,10 +252,11 @@ public class Parser(
         ToastType typeEnum = typeToken.Value switch
         {
             "string" => ToastType.String,
-            "integer" => ToastType.Integer,
-            "float" => ToastType.Float,
+            "number" => ToastType.Number,
             "boolean" => ToastType.Boolean,
-            _ => throw new InvalidOperationException($"Unknown type: {typeToken.Value}"),
+            "list" => ToastType.List,
+            "object" => ToastType.Object,
+            _ => new ToastType(typeToken.Value!),
         };
 
         bool isList = false;

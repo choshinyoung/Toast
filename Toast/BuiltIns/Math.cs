@@ -4,77 +4,81 @@ public static class Math
 {
     public static readonly Command UnaryPlus = Command.CreateOperator(
         "+",
-        (Context context, double val) => val,
+        (Context context, NumberValue val) => val,
         precedence: 9,
         isPrefix: true
     );
 
     public static readonly Command Addition = Command.CreateOperator(
         "+",
-        object? (Context context, object? left, object? right) =>
+        ToastObject (Context context, ToastObject left, ToastObject right) =>
         {
-            if (left is string || right is string)
+            if (left is StringValue || right is StringValue)
             {
-                return left?.ToString() + right?.ToString();
+                return new StringValue(left.ToString() + right.ToString());
             }
-            if (left is double || right is double || left is float || right is float)
+            if (left is NumberValue ln && right is NumberValue rn)
             {
-                return Convert.ToDouble(left) + Convert.ToDouble(right);
+                return new NumberValue(ln.Value + rn.Value);
             }
-            return Convert.ToInt32(left) + Convert.ToInt32(right);
+            throw new InvalidOperationException("Cannot add non-number/non-string values.");
         },
         precedence: 7
     );
 
     public static readonly Command UnaryMinus = Command.CreateOperator(
         "-",
-        (Context context, double val) => -val,
+        (Context context, NumberValue val) => new NumberValue(-val.Value),
         precedence: 9,
         isPrefix: true
     );
 
     public static readonly Command Subtraction = Command.CreateOperator(
         "-",
-        (Context context, double left, double right) => left - right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new NumberValue(left.Value - right.Value),
         precedence: 7
     );
 
     public static readonly Command Multiplication = Command.CreateOperator(
         "*",
-        object? (Context context, object? left, object? right) =>
-        {
-            if (left is double || right is double || left is float || right is float)
-            {
-                return Convert.ToDouble(left) * Convert.ToDouble(right);
-            }
-            return Convert.ToInt32(left) * Convert.ToInt32(right);
-        },
+        (Context context, NumberValue left, NumberValue right) =>
+            new NumberValue(left.Value * right.Value),
         precedence: 8
     );
 
     public static readonly Command Division = Command.CreateOperator(
         "/",
-        (Context context, double left, double right) => left / right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new NumberValue(left.Value / right.Value),
         precedence: 8
     );
 
     public static readonly Command Modulus = Command.CreateOperator(
         "%",
-        (Context context, double left, double right) => left % right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new NumberValue(left.Value % right.Value),
         precedence: 8
     );
 
     public static readonly Command Exponentiation = Command.CreateOperator(
         "**",
-        (Context ctx, double x, double y) => System.Math.Pow(x, y),
+        (Context ctx, NumberValue x, NumberValue y) =>
+            new NumberValue(System.Math.Pow(x.Value, y.Value)),
         precedence: 8
     );
 
     public static readonly Command FloorDivision = Command.CreateFunction(
         "floorDiv",
-        (Context ctx, int x, int y) => x / y,
+        (Context ctx, NumberValue x, NumberValue y) =>
+            new NumberValue(System.Math.Floor(x.Value / y.Value)),
         precedence: 8,
         isInfix: true
+    );
+
+    public static readonly Command Sqrt = Command.CreateFunction(
+        "sqrt",
+        (Context context, NumberValue val) => new NumberValue(System.Math.Sqrt(val.Value))
     );
 
     public static void Register(Toaster toast)
@@ -88,5 +92,6 @@ public static class Math
         toast.RegisterCommand(Modulus);
         toast.RegisterCommand(Exponentiation);
         toast.RegisterCommand(FloorDivision);
+        toast.RegisterCommand(Sqrt);
     }
 }

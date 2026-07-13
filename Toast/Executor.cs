@@ -2,61 +2,54 @@ namespace Toast;
 
 public class Executor(Toaster _toast)
 {
-    public static ToastType GetToastType(object? val)
-    {
-        if (val == null)
-            return ToastType.Null;
-        if (val is string)
-            return ToastType.String;
-        if (val is int)
-            return ToastType.Integer;
-        if (val is double or float)
-            return ToastType.Float;
-        if (val is bool)
-            return ToastType.Boolean;
-        if (val is IdentifierNode)
-            return ToastType.Identifier;
-        if (val is FunctionValue or Command)
-            return ToastType.Function;
-        if (val is System.Collections.IEnumerable)
-            return ToastType.List;
-        return ToastType.Any;
-    }
-
-    public object? Execute(string rawInput)
+    public ToastObject Execute(string rawInput)
     {
         var tokens = Lexer.Tokenize(rawInput);
         var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
         return EvaluateProgram(ast, _toast.GlobalContext);
     }
 
-    public object? Evaluate(Node node, Context context, bool suppressZeroArgFunction = false)
+    public bool SuppressZeroArgFunction { get; set; } = false;
+
+    public ToastObject Evaluate(Node node, Context context, bool suppressZeroArgFunction = false)
     {
-        return node switch
+        var prevSuppress = SuppressZeroArgFunction;
+        if (suppressZeroArgFunction)
         {
-            LiteralNode literal => literal.Value,
-            IdentifierNode identifier => EvaluateIdentifier(
-                identifier,
-                context,
-                suppressZeroArgFunction
-            ),
-            ProgramNode program => EvaluateProgram(program, context),
-            GroupNode group => EvaluateGroup(group, context),
-            ListNode list => EvaluateList(list, context),
-            FunctionNode function => new FunctionValue(
-                function.Parameters,
-                function.Statements,
-                context,
-                _toast
-            ),
-            CallNode call => EvaluateCall(call, context),
-            _ => throw new NotSupportedException(
-                $"Node type '{node.GetType().Name}' is not supported."
-            ),
-        };
+            SuppressZeroArgFunction = true;
+        }
+        try
+        {
+            return node switch
+            {
+                LiteralNode literal => literal.Value,
+                IdentifierNode identifier => EvaluateIdentifier(
+                    identifier,
+                    context,
+                    suppressZeroArgFunction || SuppressZeroArgFunction
+                ),
+                ProgramNode program => EvaluateProgram(program, context),
+                GroupNode group => EvaluateGroup(group, context),
+                ListNode list => EvaluateList(list, context),
+                FunctionNode function => new FunctionValue(
+                    function.Parameters,
+                    function.Statements,
+                    context,
+                    _toast
+                ),
+                CallNode call => EvaluateCall(call, context),
+                _ => throw new NotSupportedException(
+                    $"Node type '{node.GetType().Name}' is not supported."
+                ),
+            };
+        }
+        finally
+        {
+            SuppressZeroArgFunction = prevSuppress;
+        }
     }
 
-    private object? EvaluateIdentifier(
+    private ToastObject EvaluateIdentifier(
         IdentifierNode identifier,
         Context context,
         bool suppressZeroArgFunction
@@ -73,9 +66,13 @@ public class Executor(Toaster _toast)
             {
                 return ExecuteFunction(funcVal, []);
             }
-            if (!suppressZeroArgFunction && val is Command cmd && cmd.ParameterCount == 0)
+            if (
+                !suppressZeroArgFunction
+                && val is CommandValue cmdVal
+                && cmdVal.Command.ParameterCount == 0
+            )
             {
-                return cmd.TargetDelegate(context, []);
+                return cmdVal.Command.TargetDelegate(context, []);
             }
             return val;
         }
@@ -85,9 +82,9 @@ public class Executor(Toaster _toast)
         );
     }
 
-    private object? EvaluateProgram(ProgramNode program, Context context)
+    private ToastObject EvaluateProgram(ProgramNode program, Context context)
     {
-        object? lastVal = null;
+        ToastObject lastVal = NullValue.Instance;
         foreach (var stmt in program.Statements)
         {
             lastVal = Evaluate(stmt, context);
@@ -95,22 +92,22 @@ public class Executor(Toaster _toast)
         return lastVal;
     }
 
-    private object? EvaluateGroup(GroupNode group, Context context)
+    private ToastObject EvaluateGroup(GroupNode group, Context context)
     {
         if (group.Items.Count == 1)
         {
             return Evaluate(group.Items[0], context, suppressZeroArgFunction: false);
         }
         var evaluatedItems = group.Items.Select(item => Evaluate(item, context)).ToList();
-        return evaluatedItems;
+        return new ListValue(evaluatedItems);
     }
 
-    private object? EvaluateList(ListNode list, Context context)
+    private ToastObject EvaluateList(ListNode list, Context context)
     {
-        return list.Items.Select(item => Evaluate(item, context)).ToList();
+        return new ListValue(list.Items.Select(item => Evaluate(item, context)).ToList());
     }
 
-    private object? EvaluateCall(CallNode call, Context context)
+    private ToastObject EvaluateCall(CallNode call, Context context)
     {
         var callArgs = call.Arguments.ToList();
         if (callArgs.Count == 1 && callArgs[0] is GroupNode gn)
@@ -138,28 +135,28 @@ public class Executor(Toaster _toast)
         }
 
         var calleeVal = Evaluate(call.Callee, context, suppressZeroArgFunction: true);
-        if (calleeVal is FunctionValue funcVal)
+        if (calleeVal is FunctionValue funcVal2)
         {
-            if (funcVal.Parameters.Count != callArgs.Count)
+            if (funcVal2.Parameters.Count != callArgs.Count)
             {
                 throw new InvalidOperationException(
-                    $"Arity mismatch: function expects {funcVal.Parameters.Count} arguments, but got {callArgs.Count}."
+                    $"Arity mismatch: function expects {funcVal2.Parameters.Count} arguments, but got {callArgs.Count}."
                 );
             }
 
             var evalArgs = callArgs.Select(arg => Evaluate(arg, context)).ToList();
-            return ExecuteFunction(funcVal, evalArgs);
+            return ExecuteFunction(funcVal2, evalArgs);
         }
 
-        if (calleeVal is Command cmdVal)
+        if (calleeVal is CommandValue cmdVal2)
         {
-            return ExecuteCommand(cmdVal, callArgs, context);
+            return ExecuteCommand(cmdVal2.Command, callArgs, context);
         }
 
         throw new InvalidOperationException($"Callee is not a callable function or command.");
     }
 
-    private object? ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
+    private ToastObject ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
     {
         if (cmd.ParameterCount != callArgs.Count)
         {
@@ -168,7 +165,7 @@ public class Executor(Toaster _toast)
             );
         }
 
-        var finalArgs = new object?[callArgs.Count];
+        var finalArgs = new ToastObject[callArgs.Count];
         if (cmd.IsRightAssociative)
         {
             for (int i = callArgs.Count - 1; i >= 0; i--)
@@ -188,16 +185,17 @@ public class Executor(Toaster _toast)
 
         void EvaluateArg(int i)
         {
-            var isLazy = cmd.IsParameterLazy[i];
+            var isLazy = i < cmd.IsParameterLazy.Count && cmd.IsParameterLazy[i];
             if (isLazy)
             {
-                finalArgs[i] = callArgs[i];
+                finalArgs[i] = new AstNodeValue(callArgs[i]);
             }
             else
             {
                 var evalVal = Evaluate(callArgs[i], context);
-                var actualType = GetToastType(evalVal);
-                var expectedType = cmd.ParameterTypes[i];
+                var actualType = evalVal.Type;
+                var expectedType =
+                    i < cmd.ParameterTypes.Count ? cmd.ParameterTypes[i] : ToastType.Any;
 
                 if (
                     _toast.TryConvert(evalVal, actualType, expectedType, context, out var converted)
@@ -215,7 +213,7 @@ public class Executor(Toaster _toast)
         }
     }
 
-    private static object? ExecuteFunction(FunctionValue funcVal, List<object?> evalArgs)
+    private static ToastObject ExecuteFunction(FunctionValue funcVal, List<ToastObject> evalArgs)
     {
         return funcVal.Execute(evalArgs);
     }

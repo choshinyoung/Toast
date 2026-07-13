@@ -4,45 +4,68 @@ public static class Relational
 {
     public static readonly Command Equal = Command.CreateOperator(
         "==",
-        (Context context, object? left, object? right) => Equals(left, right),
+        (Context context, ToastObject left, ToastObject right) =>
+            new BoolValue(Equals(left, right)),
         precedence: 4
     );
 
     public static readonly Command NotEqual = Command.CreateOperator(
         "!=",
-        (Context context, object? left, object? right) => !Equals(left, right),
+        (Context context, ToastObject left, ToastObject right) =>
+            new BoolValue(!Equals(left, right)),
         precedence: 4
     );
 
     public static readonly Command LessThan = Command.CreateOperator(
         "<",
-        (Context context, double left, double right) => left < right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new BoolValue(left.Value < right.Value),
         precedence: 5
     );
 
     public static readonly Command GreaterThan = Command.CreateOperator(
         ">",
-        (Context context, double left, double right) => left > right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new BoolValue(left.Value > right.Value),
         precedence: 5
     );
 
     public static readonly Command LessThanOrEqual = Command.CreateOperator(
         "<=",
-        (Context context, double left, double right) => left <= right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new BoolValue(left.Value <= right.Value),
         precedence: 5
     );
 
     public static readonly Command GreaterThanOrEqual = Command.CreateOperator(
         ">=",
-        (Context context, double left, double right) => left >= right,
+        (Context context, NumberValue left, NumberValue right) =>
+            new BoolValue(left.Value >= right.Value),
         precedence: 5
     );
 
     public static readonly Command Is = Command.CreateFunction(
         "is",
-        (Context context, object? left, IdentifierNode right) =>
+        (Context context, ToastObject left, AstNodeValue rightNode) =>
         {
-            return left?.GetType().Name == right.Name;
+            if (rightNode.Node is IdentifierNode right)
+            {
+                if (left is ObjectValue objVal && objVal.CustomType != null)
+                {
+                    return new BoolValue(
+                        objVal.CustomType.Name.Equals(
+                            right.Name,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    );
+                }
+                return new BoolValue(
+                    left.Type.Name.Equals(right.Name, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+            throw new InvalidOperationException(
+                "Right side of 'is' must be a type name (identifier)."
+            );
         },
         precedence: 6,
         isInfix: true
@@ -50,27 +73,28 @@ public static class Relational
 
     public static readonly Command As = Command.CreateFunction(
         "as",
-        (Context context, object? leftVal, Node targetNode) =>
+        (Context context, ToastObject leftVal, AstNodeValue targetNode) =>
         {
-            var sourceType = Executor.GetToastType(leftVal);
+            var sourceType = leftVal.Type;
 
             ToastType targetType;
-            if (targetNode is TypeNode typeNode)
+            if (targetNode.Node is TypeNode typeNode)
             {
                 targetType = typeNode.Type;
             }
-            else if (targetNode is IdentifierNode idNode)
+            else if (targetNode.Node is IdentifierNode idNode)
             {
                 targetType = idNode.Name.ToLower() switch
                 {
                     "string" => ToastType.String,
-                    "integer" => ToastType.Integer,
-                    "float" => ToastType.Float,
+                    "integer" => ToastType.Number,
+                    "float" => ToastType.Number,
+                    "double" => ToastType.Number,
+                    "number" => ToastType.Number,
                     "boolean" => ToastType.Boolean,
                     "list" => ToastType.List,
-                    _ => throw new InvalidOperationException(
-                        $"Invalid cast target type: {idNode.Name}"
-                    ),
+                    "object" => ToastType.Object,
+                    _ => new ToastType(idNode.Name),
                 };
             }
             else
@@ -81,9 +105,17 @@ public static class Relational
             if (sourceType == targetType)
                 return leftVal;
 
-            if (context.Toaster.Converters.TryGetValue((sourceType, targetType), out var converter))
+            if (
+                context.Toaster.TryConvert(
+                    leftVal,
+                    sourceType,
+                    targetType,
+                    context,
+                    out var converted
+                )
+            )
             {
-                return converter.ConvertFunc(context, leftVal);
+                return converted;
             }
 
             throw new InvalidOperationException(
