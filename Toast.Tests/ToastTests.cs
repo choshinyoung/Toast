@@ -326,4 +326,15 @@ public class ToastTests
         Evaluate("for (1 to 4) ((i) => var sum = sum + i)", context);
         Assert.Equal(10, Evaluate("sum", context));
     }
+
+    [Fact]
+    public void TestPointerEscape()
+    {
+        var context = new Context(_toast);
+        Evaluate("var makePointer = () => { var local = 42\n (var local) }", context);
+        Evaluate("var ptr = makePointer()", context);
+        Assert.Equal(42, Evaluate("*ptr", context));
+        Evaluate("ptr = 100", context);
+        Assert.Equal(100, Evaluate("*ptr", context));
+    }
 }

@@ -20,7 +20,7 @@ public class FunctionValue(
         {
             var param = Parameters[i];
             var addr = runContext.GetOrCreateAddress(param.Name);
-            runContext.SetValueAtAddress(addr, evalArgs[i]);
+            addr.SetValue(evalArgs[i]);
         }
 
         object? lastVal = null;
@@ -36,7 +36,6 @@ public class Toaster
 {
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
-    public readonly Dictionary<string, Command> IdentifierCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
     public readonly Context GlobalContext;
 
@@ -61,7 +60,7 @@ public class Toaster
         }
         else
         {
-            IdentifierCommands[command.Name] = command;
+            GlobalContext.SetValueDirect(command.Name, command);
         }
     }
 

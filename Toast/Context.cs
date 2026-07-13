@@ -1,21 +1,20 @@
 namespace Toast;
 
-public class MemoryAddress(string name, Guid id)
+public readonly record struct MemoryAddress(Context Context, string Name)
 {
-    public string Name { get; } = name;
-    public Guid Id { get; } = id;
+    public override string ToString() => $"Ref({Name}:{Context.GetHashCode():X8})";
 
-    public override string ToString() => $"Ref({Name}:{Id.ToString()[..8]})";
+    public object? GetValue() => Context.GetValueDirect(Name);
+
+    public void SetValue(object? value) => Context.SetValueDirect(Name, value);
 }
 
 public class Context(Toaster toaster, Context? parent = null)
 {
     private readonly Context? _parent = parent;
-    private readonly Dictionary<string, MemoryAddress> _bindings = [];
-    private readonly Dictionary<MemoryAddress, object?> _memory = [];
+    private readonly Dictionary<string, object?> _bindings = [];
 
     public Toaster Toaster { get; } = toaster;
-    public int Depth { get; } = parent == null ? 0 : parent.Depth + 1;
 
     public Context(Context parent)
         : this(parent.Toaster, parent) { }
@@ -25,66 +24,53 @@ public class Context(Toaster toaster, Context? parent = null)
         var addr = LookupAddress(name);
         if (addr != null)
         {
-            return addr;
+            return addr.Value;
         }
 
-        addr = new MemoryAddress(name, Guid.NewGuid());
-        _bindings[name] = addr;
-        _memory[addr] = null;
+        _bindings[name] = null;
+        return new MemoryAddress(this, name);
+    }
 
-        return addr;
+    private Context? FindContext(string name)
+    {
+        if (_bindings.ContainsKey(name))
+        {
+            return this;
+        }
+
+        if (_parent != null)
+        {
+            return _parent.FindContext(name);
+        }
+
+        if (this != Toaster.GlobalContext)
+        {
+            return Toaster.GlobalContext.FindContext(name);
+        }
+
+        return null;
     }
 
     public MemoryAddress? LookupAddress(string name)
     {
-        if (_bindings.TryGetValue(name, out var addr))
-        {
-            return addr;
-        }
-
-        return _parent?.LookupAddress(name);
+        var ctx = FindContext(name);
+        return ctx != null ? new MemoryAddress(ctx, name) : null;
     }
 
     public object? GetValue(string name)
     {
-        var addr =
-            LookupAddress(name)
+        var ctx =
+            FindContext(name)
             ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
-
-        return GetValueAtAddress(addr);
+        return ctx.GetValueDirect(name);
     }
 
-    public object? GetValueAtAddress(MemoryAddress address)
-    {
-        if (_memory.TryGetValue(address, out var val))
-        {
-            return val;
-        }
+    public object? GetValueDirect(string name) =>
+        _bindings.TryGetValue(name, out var val)
+            ? val
+            : throw new InvalidOperationException(
+                $"Variable '{name}' is not defined in this context."
+            );
 
-        if (_parent != null)
-        {
-            return _parent.GetValueAtAddress(address);
-        }
-
-        throw new InvalidOperationException(
-            $"Memory address '{address}' is invalid or inaccessible in this context."
-        );
-    }
-
-    public void SetValueAtAddress(MemoryAddress address, object? value)
-    {
-        if (_memory.ContainsKey(address))
-        {
-            _memory[address] = value;
-            return;
-        }
-
-        if (_parent != null)
-        {
-            _parent.SetValueAtAddress(address, value);
-            return;
-        }
-
-        _memory[address] = value;
-    }
+    public void SetValueDirect(string name, object? value) => _bindings[name] = value;
 }

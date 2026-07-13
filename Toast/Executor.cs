@@ -73,16 +73,11 @@ public class Executor(Toaster _toast)
             {
                 return ExecuteFunction(funcVal, []);
             }
-            return val;
-        }
-
-        if (_toast.IdentifierCommands.TryGetValue(identifier.Name, out var cmd))
-        {
-            if (!suppressZeroArgFunction && cmd.ParameterCount == 0)
+            if (!suppressZeroArgFunction && val is Command cmd && cmd.ParameterCount == 0)
             {
-                return cmd.TargetDelegate(context, Array.Empty<object?>());
+                return cmd.TargetDelegate(context, []);
             }
-            return cmd;
+            return val;
         }
 
         throw new InvalidOperationException(
@@ -126,7 +121,6 @@ public class Executor(Toaster _toast)
         if (call.Callee is IdentifierNode idNode)
         {
             bool isInfixContext = callArgs.Count == 2;
-
             Command? cmd = null;
             if (isInfixContext && _toast.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
             {
@@ -135,10 +129,6 @@ public class Executor(Toaster _toast)
             else if (_toast.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
             {
                 cmd = prefixCmd;
-            }
-            else if (_toast.IdentifierCommands.TryGetValue(idNode.Name, out var idCmd))
-            {
-                cmd = idCmd;
             }
 
             if (cmd != null)

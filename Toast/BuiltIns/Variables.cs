@@ -14,7 +14,7 @@ public static class Variables
         "=",
         (Context context, MemoryAddress addr, object? rightVal) =>
         {
-            context.SetValueAtAddress(addr, rightVal);
+            addr.SetValue(rightVal);
             return rightVal;
         },
         precedence: 1
@@ -24,7 +24,7 @@ public static class Variables
         "*",
         object? (Context context, MemoryAddress addr) =>
         {
-            return context.GetValueAtAddress(addr);
+            return addr.GetValue();
         },
         precedence: 9,
         isPrefix: true
@@ -34,7 +34,7 @@ public static class Variables
         "+=",
         (Context context, MemoryAddress addr, object? rightVal) =>
         {
-            var currentVal = context.GetValueAtAddress(addr);
+            var currentVal = addr.GetValue();
             object newVal;
             if (currentVal is string || rightVal is string)
             {
@@ -48,7 +48,7 @@ public static class Variables
             {
                 newVal = Convert.ToInt32(currentVal) + Convert.ToInt32(rightVal);
             }
-            context.SetValueAtAddress(addr, newVal);
+            addr.SetValue(newVal);
             return newVal;
         },
         precedence: 1
@@ -58,7 +58,7 @@ public static class Variables
         "-=",
         (Context context, MemoryAddress addr, object? rightVal) =>
         {
-            var currentVal = context.GetValueAtAddress(addr);
+            var currentVal = addr.GetValue();
             object newVal;
             if (currentVal is double || rightVal is double)
             {
@@ -68,7 +68,7 @@ public static class Variables
             {
                 newVal = Convert.ToInt32(currentVal) - Convert.ToInt32(rightVal);
             }
-            context.SetValueAtAddress(addr, newVal);
+            addr.SetValue(newVal);
             return newVal;
         },
         precedence: 1
