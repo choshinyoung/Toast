@@ -90,7 +90,7 @@ public sealed record CommandValue(Command Command) : ToastObject
 {
     public override ToastType Type => ToastType.Function;
 
-    public override string ToString() => $"command:{Command.Name}";
+    public override string ToString() => "function";
 }
 
 public sealed record IdentifierValue(string Name) : ToastObject
