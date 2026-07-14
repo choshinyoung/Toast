@@ -106,12 +106,37 @@ public static class Utility
             }
 
             var executor = context.Toaster.Executor;
-            return executor.Evaluate(
+            var result = executor.Evaluate(
                 node,
                 context,
                 suppressZeroArgFunction: true,
-                suppressDereference: false
+                suppressDereference: true
             );
+
+            ToastObject finalResult;
+            if (result is ReferenceValue refVal)
+            {
+                var innerVal = refVal.Target.GetValue();
+                if (innerVal is FunctionValue || innerVal is CommandValue)
+                {
+                    finalResult = innerVal;
+                }
+                else
+                {
+                    finalResult = refVal;
+                }
+            }
+            else
+            {
+                finalResult = result;
+            }
+
+            if (finalResult is not (CommandValue or FunctionValue or ReferenceValue))
+            {
+                throw new InvalidOperationException("Quote operand must evaluate to a command, function, or reference.");
+            }
+
+            return finalResult;
         },
         precedence: 9,
         isPrefix: true

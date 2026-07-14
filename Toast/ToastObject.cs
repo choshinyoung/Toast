@@ -111,5 +111,5 @@ public sealed record ReferenceValue(IAssignTarget Target) : ToastObject
 {
     public override ToastType Type => ToastType.Reference;
 
-    public override string ToString() => Target.GetValue().ToString();
+    public override string ToString() => $"(ref: {Target.Identifier})";
 }
