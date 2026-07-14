@@ -8,7 +8,9 @@ public static class Variables
         {
             if (context.GetBindings().ContainsKey(id.Name))
             {
-                throw new InvalidOperationException($"Variable '{id.Name}' is already defined in the current scope.");
+                throw new InvalidOperationException(
+                    $"Variable '{id.Name}' is already defined in the current scope."
+                );
             }
             context.GetOrCreateLocal(id.Name);
             return new ReferenceValue(new VariableAssignTarget(context, id.Name));

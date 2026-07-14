@@ -51,10 +51,7 @@ public static class Relational
             if (left is ObjectValue objVal && objVal.CustomType != null)
             {
                 return new BoolValue(
-                    objVal.CustomType.Name.Equals(
-                        right.Name,
-                        StringComparison.OrdinalIgnoreCase
-                    )
+                    objVal.CustomType.Name.Equals(right.Name, StringComparison.OrdinalIgnoreCase)
                 );
             }
             return new BoolValue(
