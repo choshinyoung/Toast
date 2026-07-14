@@ -60,7 +60,12 @@ public class Parser(
                     left is CallNode cn
                     && cn.Callee is IdentifierNode id
                     && IsPrefixOperator(new Token(TokenKind.Symbol, id.Name));
-                if (left is CallNode callNode && !isPrefixCall)
+                bool isInfixCall =
+                    left is CallNode cn2
+                    && cn2.Callee is IdentifierNode id2
+                    && IsInfixOperator(new Token(TokenKind.Symbol, id2.Name))
+                    && cn2.Arguments.Count >= 2;
+                if (left is CallNode callNode && !isPrefixCall && !isInfixCall)
                 {
                     var arguments = new List<Node>(callNode.Arguments)
                     {

@@ -72,4 +72,37 @@ public class ObjectTests : BaseTest
         AssertResult("p3Norm.x", 0.6, context);
         AssertResult("p3Norm.y", 0.8, context);
     }
+
+    [Fact]
+    public void TestMemberFunctionCalls()
+    {
+        var context = new Context(_toast);
+
+        // Test Case 1: Point.add
+        Evaluate(
+            @"class Point (x, y) => {
+                function add(_x, _y) => {
+                    Point(x + _x, y + _y)
+                }
+            }",
+            context
+        );
+        Evaluate("var p1 = Point(3, 4)", context);
+        Evaluate("var p2 = p1.add 3 4", context);
+        AssertResult("p2.x", 6, context);
+        AssertResult("p2.y", 8, context);
+
+        // Test Case 2: ranshi.moomin
+        Evaluate(
+            @"class ranshi(name) => {
+                function moomin() => {
+                    ""응 난 랜덤"" + name + "" 이야""
+                }
+            }",
+            context
+        );
+        Evaluate("var moomin = ranshi(\"무민\")", context);
+        AssertResult("moomin.moomin()", "응 난 랜덤무민 이야", context);
+        AssertResult("(moomin.moomin)()", "응 난 랜덤무민 이야", context);
+    }
 }

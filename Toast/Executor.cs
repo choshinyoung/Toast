@@ -104,7 +104,7 @@ public class Executor(Toaster _toast)
         ToastObject lastVal = NullValue.Instance;
         foreach (var stmt in program.Statements)
         {
-            lastVal = Evaluate(stmt, context);
+            lastVal = Evaluate(stmt, context, SuppressZeroArgFunction, SuppressDereference);
         }
         return lastVal;
     }
@@ -113,15 +113,22 @@ public class Executor(Toaster _toast)
     {
         if (group.Items.Count == 1)
         {
-            return Evaluate(group.Items[0], context);
+            return Evaluate(group.Items[0], context, SuppressZeroArgFunction, SuppressDereference);
         }
-        var evaluatedItems = group.Items.Select(item => Evaluate(item, context)).ToList();
-        return new ListValue(evaluatedItems);
+        return new ListValue([
+            .. group.Items.Select(item =>
+                Evaluate(item, context, SuppressZeroArgFunction, SuppressDereference)
+            ),
+        ]);
     }
 
     private ToastObject EvaluateList(ListNode list, Context context)
     {
-        return new ListValue(list.Items.Select(item => Evaluate(item, context)).ToList());
+        return new ListValue([
+            .. list.Items.Select(item =>
+                Evaluate(item, context, SuppressZeroArgFunction, SuppressDereference)
+            ),
+        ]);
     }
 
     private ToastObject EvaluateCall(CallNode call, Context context)
