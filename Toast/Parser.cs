@@ -259,14 +259,7 @@ public class Parser(
             _ => new ToastType(typeToken.Value!),
         };
 
-        bool isList = false;
-        if (Match(TokenKind.LBracket))
-        {
-            Expect(TokenKind.RBracket, "Expected ']' after '[' in list type.");
-            isList = true;
-        }
-
-        return new TypeNode(typeEnum, isList);
+        return new TypeNode(typeEnum);
     }
 
     private Node ParsePrefix()

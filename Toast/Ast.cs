@@ -13,7 +13,7 @@ public sealed record FunctionNode(IReadOnlyList<ParameterNode> Parameters, List<
 
 public sealed record ParameterNode(string Name, TypeNode? Type) : Node;
 
-public sealed record TypeNode(ToastType Type, bool IsList) : Node;
+public sealed record TypeNode(ToastType Type) : Node;
 
 public sealed record CallNode(Node Callee, IReadOnlyList<Node> Arguments) : Node;
 

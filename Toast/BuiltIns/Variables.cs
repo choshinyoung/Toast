@@ -4,18 +4,14 @@ public static class Variables
 {
     public static readonly Command Var = Command.CreateFunction(
         "var",
-        (Context context, AstNodeValue idNode) =>
+        (Context context, IdentifierValue id) =>
         {
-            if (idNode.Node is IdentifierNode id)
+            if (context.GetBindings().ContainsKey(id.Name))
             {
-                if (context.GetBindings().ContainsKey(id.Name))
-                {
-                    throw new InvalidOperationException($"Variable '{id.Name}' is already defined in the current scope.");
-                }
-                context.GetOrCreateLocal(id.Name);
-                return new ReferenceValue(new VariableAssignTarget(context, id.Name));
+                throw new InvalidOperationException($"Variable '{id.Name}' is already defined in the current scope.");
             }
-            throw new InvalidOperationException("var parameter must be an identifier.");
+            context.GetOrCreateLocal(id.Name);
+            return new ReferenceValue(new VariableAssignTarget(context, id.Name));
         }
     );
 

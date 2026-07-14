@@ -219,12 +219,20 @@ public class Executor(Toaster _toast)
                     i < cmd.ParameterTypes.Count ? cmd.ParameterTypes[i] : ToastType.Any;
                 var isReference = expectedType == ToastType.Reference;
 
-                var evalVal = Evaluate(
-                    callArgs[i],
-                    context,
-                    suppressZeroArgFunction: false,
-                    suppressDereference: isReference
-                );
+                ToastObject evalVal;
+                if (expectedType == ToastType.Identifier && callArgs[i] is IdentifierNode idNode)
+                {
+                    evalVal = new IdentifierValue(idNode.Name);
+                }
+                else
+                {
+                    evalVal = Evaluate(
+                        callArgs[i],
+                        context,
+                        suppressZeroArgFunction: false,
+                        suppressDereference: isReference
+                    );
+                }
 
                 if (!isReference && evalVal is ReferenceValue refVal)
                 {

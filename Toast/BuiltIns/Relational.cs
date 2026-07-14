@@ -46,25 +46,19 @@ public static class Relational
 
     public static readonly Command Is = Command.CreateFunction(
         "is",
-        (Context context, ToastObject left, AstNodeValue rightNode) =>
+        (Context context, ToastObject left, IdentifierValue right) =>
         {
-            if (rightNode.Node is IdentifierNode right)
+            if (left is ObjectValue objVal && objVal.CustomType != null)
             {
-                if (left is ObjectValue objVal && objVal.CustomType != null)
-                {
-                    return new BoolValue(
-                        objVal.CustomType.Name.Equals(
-                            right.Name,
-                            StringComparison.OrdinalIgnoreCase
-                        )
-                    );
-                }
                 return new BoolValue(
-                    left.Type.Name.Equals(right.Name, StringComparison.OrdinalIgnoreCase)
+                    objVal.CustomType.Name.Equals(
+                        right.Name,
+                        StringComparison.OrdinalIgnoreCase
+                    )
                 );
             }
-            throw new InvalidOperationException(
-                "Right side of 'is' must be a type name (identifier)."
+            return new BoolValue(
+                left.Type.Name.Equals(right.Name, StringComparison.OrdinalIgnoreCase)
             );
         },
         precedence: 6,
@@ -73,34 +67,22 @@ public static class Relational
 
     public static readonly Command As = Command.CreateFunction(
         "as",
-        (Context context, ToastObject leftVal, AstNodeValue targetNode) =>
+        (Context context, ToastObject leftVal, IdentifierValue target) =>
         {
             var sourceType = leftVal.Type;
 
-            ToastType targetType;
-            if (targetNode.Node is TypeNode typeNode)
+            ToastType targetType = target.Name.ToLower() switch
             {
-                targetType = typeNode.Type;
-            }
-            else if (targetNode.Node is IdentifierNode idNode)
-            {
-                targetType = idNode.Name.ToLower() switch
-                {
-                    "string" => ToastType.String,
-                    "integer" => ToastType.Number,
-                    "float" => ToastType.Number,
-                    "double" => ToastType.Number,
-                    "number" => ToastType.Number,
-                    "boolean" => ToastType.Boolean,
-                    "list" => ToastType.List,
-                    "object" => ToastType.Object,
-                    _ => new ToastType(idNode.Name),
-                };
-            }
-            else
-            {
-                throw new InvalidOperationException("Right side of 'as' must be a type.");
-            }
+                "string" => ToastType.String,
+                "integer" => ToastType.Number,
+                "float" => ToastType.Number,
+                "double" => ToastType.Number,
+                "number" => ToastType.Number,
+                "boolean" => ToastType.Boolean,
+                "list" => ToastType.List,
+                "object" => ToastType.Object,
+                _ => new ToastType(target.Name),
+            };
 
             if (sourceType == targetType)
                 return leftVal;
