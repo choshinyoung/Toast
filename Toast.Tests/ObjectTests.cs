@@ -105,4 +105,21 @@ public class ObjectTests : BaseTest
         AssertResult("moomin.moomin()", "응 난 랜덤무민 이야", context);
         AssertResult("(moomin.moomin)()", "응 난 랜덤무민 이야", context);
     }
+
+    [Fact]
+    public void TestPointChaining()
+    {
+        var context = new Context(_toast);
+        Evaluate(
+            @"class Point (x, y) => {
+                function add(_x, _y) => {
+                    Point(x + _x, y + _y)
+                }
+            }",
+            context
+        );
+        Evaluate("var p = (Point(1, 2)).add(3, 4)", context);
+        AssertResult("p.x", 4, context);
+        AssertResult("p.y", 6, context);
+    }
 }
