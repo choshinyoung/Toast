@@ -48,4 +48,28 @@ public class ObjectTests : BaseTest
         var rawFunc = Evaluate("`(p3.magnitude)", context);
         Assert.IsType<FunctionValue>(rawFunc);
     }
+
+    [Fact]
+    public void TestClassAndFunctionSyntaxSugar()
+    {
+        var context = new Context(_toast);
+
+        Evaluate(
+            @"class Point2 (x, y) => {
+  function magnitude () => sqrt(x * x + y * y)
+  function normalize () => {
+    var mag = magnitude
+    Point2 (x / mag) (y / mag)
+  }
+}",
+            context
+        );
+
+        Evaluate("var p3 = Point2 3 4", context);
+        AssertResult("p3.magnitude", 5.0, context);
+
+        Evaluate("var p3Norm = p3.normalize", context);
+        AssertResult("p3Norm.x", 0.6, context);
+        AssertResult("p3Norm.y", 0.8, context);
+    }
 }
