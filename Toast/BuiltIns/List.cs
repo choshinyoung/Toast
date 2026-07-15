@@ -117,6 +117,19 @@ public static class List
         }
     );
 
+    public static readonly Command Reduce = Command.CreateFunction(
+        "reduce",
+        (Context context, ListValue list, ToastObject initial, FunctionValue reducer) =>
+        {
+            var acc = initial;
+            foreach (var item in list.Elements)
+            {
+                acc = reducer.Execute([acc, item]);
+            }
+            return acc;
+        }
+    );
+
     public static readonly Command Combine = Command.CreateFunction(
         "combine",
         (Context context, ListValue list1, ListValue list2) =>
@@ -200,21 +213,6 @@ public static class List
         }
     );
 
-    public static readonly Command Range = Command.CreateFunction(
-        "range",
-        (Context context, NumberValue start, NumberValue count) =>
-        {
-            int s = (int)start.Value;
-            int c = (int)count.Value;
-            var list = new List<ToastObject>();
-            for (int i = 0; i < c; i++)
-            {
-                list.Add(new NumberValue(s + i));
-            }
-            return new ListValue(list);
-        }
-    );
-
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(RangeTo);
@@ -224,12 +222,12 @@ public static class List
         toast.RegisterCommand(IndexOf);
         toast.RegisterCommand(Filter);
         toast.RegisterCommand(Map);
+        toast.RegisterCommand(Reduce);
         toast.RegisterCommand(Combine);
         toast.RegisterCommand(Append);
         toast.RegisterCommand(Remove);
         toast.RegisterCommand(Sort);
         toast.RegisterCommand(SortAs);
         toast.RegisterCommand(Shuffle);
-        toast.RegisterCommand(Range);
     }
 }

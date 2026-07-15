@@ -129,4 +129,51 @@ public class BuiltInTests : BaseTest
         Evaluate("list # 1 -= 10", context);
         AssertResult("list # 1", 40, context);
     }
+
+    [Fact]
+    public void TestReduce()
+    {
+        // Sum: reduce (1 to 5) 0 ((acc, x) => acc + x) = 15
+        AssertResult("reduce (1 to 5) 0 ((acc, x) => acc + x)", 15);
+
+        // Product: reduce [2, 3, 4] 1 ((acc, x) => acc * x) = 24
+        AssertResult("reduce [2, 3, 4] 1 ((acc, x) => acc * x)", 24);
+
+        // String concat: reduce ["a", "b", "c"] "" ((acc, x) => acc + x) = "abc"
+        AssertResult("reduce [\"a\", \"b\", \"c\"] \"\" ((acc, x) => acc + x)", "abc");
+
+        // Empty list returns initial value
+        AssertResult("reduce [] 42 ((acc, x) => acc + x)", 42);
+    }
+
+    [Fact]
+    public void TestPipelineWithMapFilterReduce()
+    {
+        // map with pipeline
+        AssertResult("(1 to 3) |> map ((x) => x * 2)", new List<object> { 2, 4, 6 });
+
+        // filter with pipeline
+        AssertResult("(1 to 5) |> filter ((x) => x > 3)", new List<object> { 4, 5 });
+
+        // reduce with pipeline
+        AssertResult("(1 to 5) |> reduce 0 ((acc, x) => acc + x)", 15);
+
+        // chained: map then filter
+        AssertResult(
+            "(1 to 5) |> map ((x) => x * 2) |> filter ((x) => x > 6)",
+            new List<object> { 8, 10 }
+        );
+
+        // chained: filter then reduce
+        AssertResult(
+            "(1 to 10) |> filter ((x) => x % 2 == 0) |> reduce 0 ((acc, x) => acc + x)",
+            30
+        );
+
+        // chained: map then filter then reduce
+        AssertResult(
+            "(1 to 5) |> map ((x) => x * 10) |> filter ((x) => x > 20) |> reduce 0 ((acc, x) => acc + x)",
+            120
+        );
+    }
 }
