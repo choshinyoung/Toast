@@ -115,6 +115,81 @@ public static class Variables
         precedence: 10
     );
 
+    private static Command CreateConstructorFactory(string name, string kind, FunctionValue funcVal)
+    {
+        var parameterTypes = Enumerable.Repeat(ToastType.Any, funcVal.Parameters.Count).ToList();
+        var isParameterLazy = Enumerable.Repeat(false, funcVal.Parameters.Count).ToList();
+
+        return new Command(
+            name,
+            (Context callerCtx, ToastObject[] args) =>
+            {
+                if (args.Length != funcVal.Parameters.Count)
+                {
+                    throw new InvalidOperationException(
+                        $"Arity mismatch: {kind} constructor expects {funcVal.Parameters.Count} arguments, but got {args.Length}."
+                    );
+                }
+
+                var objCtx = new Context(funcVal.ClosureContext);
+                for (int i = 0; i < funcVal.Parameters.Count; i++)
+                {
+                    var paramName = funcVal.Parameters[i].Name;
+                    objCtx.SetValueDirect(paramName, args[i]);
+                }
+                foreach (var stmt in funcVal.Statements)
+                {
+                    callerCtx.Toaster.Evaluate(stmt, objCtx);
+                }
+                return new ObjectValue(objCtx);
+            },
+            parameterTypes: parameterTypes,
+            isParameterLazy: isParameterLazy
+        );
+    }
+
+    public static readonly Command TypeCreator = Command.CreateFunction(
+        "type",
+        (Context context, FunctionValue funcVal) =>
+        {
+            var factoryCmd = CreateConstructorFactory("type_factory", "type", funcVal);
+            return new CommandValue(factoryCmd);
+        }
+    );
+
+    public static readonly Command ClassCreator = Command.CreateFunction(
+        "class",
+        (Context context, IdentifierValue id, FunctionValue funcVal) =>
+        {
+            if (context.GetBindings().ContainsKey(id.Name))
+            {
+                throw new InvalidOperationException(
+                    $"Class '{id.Name}' is already defined in the current scope."
+                );
+            }
+
+            var factoryCmd = CreateConstructorFactory(id.Name, "class", funcVal);
+            var classConstructor = new CommandValue(factoryCmd);
+            context.SetValueDirect(id.Name, classConstructor);
+            return classConstructor;
+        }
+    );
+
+    public static readonly Command FunctionCreator = Command.CreateFunction(
+        "function",
+        (Context context, IdentifierValue id, FunctionValue funcVal) =>
+        {
+            if (context.GetBindings().ContainsKey(id.Name))
+            {
+                throw new InvalidOperationException(
+                    $"Variable '{id.Name}' is already defined in the current scope."
+                );
+            }
+            context.SetValueDirect(id.Name, funcVal);
+            return funcVal;
+        }
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(Var);
@@ -122,5 +197,8 @@ public static class Variables
         toast.RegisterCommand(AssignAdd);
         toast.RegisterCommand(AssignSub);
         toast.RegisterCommand(MemberAccess);
+        toast.RegisterCommand(TypeCreator);
+        toast.RegisterCommand(ClassCreator);
+        toast.RegisterCommand(FunctionCreator);
     }
 }
