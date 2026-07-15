@@ -6,10 +6,12 @@ public static class Literals
         "true",
         (Context context) => new BoolValue(true)
     );
+
     public static readonly Command False = Command.CreateFunction(
         "false",
         (Context context) => new BoolValue(false)
     );
+
     public static readonly Command Null = Command.CreateFunction(
         "null",
         (Context context) => NullValue.Instance

@@ -211,7 +211,16 @@ public class Parser(
 
     private FunctionNode ParseFunctionLiteral()
     {
-        var parameters = ParseParameters();
+        List<ParameterNode> parameters;
+        if (IsBareFunctionLiteral())
+        {
+            var name = Consume().Value!;
+            parameters = [new ParameterNode(name, null)];
+        }
+        else
+        {
+            parameters = ParseParameters();
+        }
         Expect(TokenKind.Symbol, "=>", "Expected '=>' after parameters to define function body.");
 
         if (Match(TokenKind.LBrace))
@@ -269,7 +278,7 @@ public class Parser(
 
     private Node ParsePrefix()
     {
-        if (IsFunctionLiteral())
+        if (IsFunctionLiteral() || IsBareFunctionLiteral())
         {
             return ParseFunctionLiteral();
         }
@@ -331,6 +340,18 @@ public class Parser(
         {
             _position = savedPos;
         }
+    }
+
+    private bool IsBareFunctionLiteral()
+    {
+        if (IsAtEnd() || Peek().Kind != TokenKind.Identifier)
+        {
+            return false;
+        }
+
+        return _position + 1 < _tokens.Count
+            && _tokens[_position + 1].Kind == TokenKind.Symbol
+            && _tokens[_position + 1].Value == "=>";
     }
 
     private bool IsPrefixOperator(Token token)
