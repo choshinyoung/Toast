@@ -74,43 +74,44 @@ public static class Variables
         ".",
         (Context context, ToastObject left, AstNodeValue rightNode) =>
         {
-            if (left is ObjectValue objVal)
+            if (left is not ObjectValue objVal)
             {
-                string fieldName;
-                if (rightNode.Node is IdentifierNode idNode)
-                {
-                    fieldName = idNode.Name;
-                }
-                else
-                {
-                    var evalRight = context.Toaster.Evaluate(rightNode.Node, context);
-                    if (evalRight is IdentifierValue idVal)
-                        fieldName = idVal.Name;
-                    else if (evalRight is StringValue strVal)
-                        fieldName = strVal.Value;
-                    else
-                        throw new InvalidOperationException(
-                            "Right side of '.' must be an identifier or string."
-                        );
-                }
-
-                if (context.Toaster.Executor.SuppressDereference)
-                {
-                    return new ReferenceValue(new VariableAssignTarget(objVal.Context, fieldName));
-                }
-
-                var val = objVal.Context.GetValue(fieldName);
-                if (
-                    !context.Toaster.Executor.SuppressZeroArgFunction
-                    && val is FunctionValue funcVal
-                    && funcVal.Parameters.Count == 0
-                )
-                {
-                    return funcVal.Execute([]);
-                }
-                return val;
+                throw new InvalidOperationException("Left side of '.' must be an object.");
             }
-            throw new InvalidOperationException("Left side of '.' must be an object.");
+
+            string fieldName;
+            if (rightNode.Node is IdentifierNode idNode)
+            {
+                fieldName = idNode.Name;
+            }
+            else
+            {
+                var evalRight = context.Toaster.Evaluate(rightNode.Node, context);
+                fieldName = evalRight switch
+                {
+                    IdentifierValue idVal => idVal.Name,
+                    StringValue strVal => strVal.Value,
+                    _ => throw new InvalidOperationException(
+                        "Right side of '.' must be an identifier or string."
+                    ),
+                };
+            }
+
+            if (context.Toaster.Executor.SuppressDereference)
+            {
+                return new ReferenceValue(new VariableAssignTarget(objVal.Context, fieldName));
+            }
+
+            var val = objVal.Context.GetValue(fieldName);
+            if (
+                !context.Toaster.Executor.SuppressZeroArgFunction
+                && val is FunctionValue funcVal
+                && funcVal.Parameters.Count == 0
+            )
+            {
+                return funcVal.Execute([]);
+            }
+            return val;
         },
         precedence: 10
     );
