@@ -24,6 +24,23 @@ public class Toaster
         CustomTypes.Add(type);
     }
 
+    public void RegisterType(
+        string name,
+        Func<Context, ToastObject[], ToastObject> constructorFunc,
+        HashSet<string>? declaredMembers = null
+    )
+    {
+        var toastType = new ToastType(name);
+        CustomTypes.Add(toastType);
+        var constructorCmd = new Command(
+            name,
+            constructorFunc,
+            parameterTypes: Enumerable.Repeat(ToastType.Any, 1).ToList()
+        );
+        var typeVal = new TypeValue(toastType, constructorCmd, declaredMembers);
+        GlobalContext.SetValueDirect(name, typeVal);
+    }
+
     public void RegisterCommand(Command command)
     {
         if (command.IsPrefix)

@@ -91,6 +91,14 @@ public class Executor(Toaster _toast)
             {
                 return cmdVal.Command.TargetDelegate(context, []);
             }
+            if (
+                !suppressZeroArgFunction
+                && val is TypeValue typeVal
+                && typeVal.Constructor.ParameterCount == 0
+            )
+            {
+                return typeVal.Constructor.TargetDelegate(context, []);
+            }
             return val;
         }
 
@@ -181,6 +189,11 @@ public class Executor(Toaster _toast)
         if (calleeVal is CommandValue cmdVal2)
         {
             return ExecuteCommand(cmdVal2.Command, callArgs, context);
+        }
+
+        if (calleeVal is TypeValue typeVal)
+        {
+            return ExecuteCommand(typeVal.Constructor, callArgs, context);
         }
 
         throw new InvalidOperationException($"Callee is not a callable function or command.");

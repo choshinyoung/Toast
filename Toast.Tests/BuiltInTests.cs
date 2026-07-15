@@ -15,8 +15,8 @@ public class BuiltInTests : BaseTest
     [Fact]
     public void TestExplicitCasting()
     {
-        AssertResult("1 as float", 1.0);
-        AssertResult("true as string", "True");
+        AssertResult("number 1", 1.0);
+        AssertResult("string true", "True");
     }
 
     [Fact]
@@ -34,14 +34,11 @@ public class BuiltInTests : BaseTest
         Assert.Equal(new StringValue("[1, 2, 3]"), str);
 
         // Test nested list
-        var nestedList = new ListValue(
-            new List<ToastObject>
-            {
-                new NumberValue(1),
-                new ListValue(new List<ToastObject> { new NumberValue(2), new NumberValue(3) }),
-                new NumberValue(4),
-            }
-        );
+        var nestedList = new ListValue([
+            new NumberValue(1),
+            new ListValue([new NumberValue(2), new NumberValue(3)]),
+            new NumberValue(4),
+        ]);
         var nestedStr = converter.ConvertFunc(_toast.GlobalContext, nestedList);
         Assert.Equal(new StringValue("[1, [2, 3], 4]"), nestedStr);
     }
@@ -80,10 +77,10 @@ public class BuiltInTests : BaseTest
 
         // 4. Converters
         AssertResult("print 123", NullValue.Instance);
-        AssertResult("\"123\" as integer", 123);
-        AssertResult("\"123.45\" as float", 123.45);
-        AssertResult("\"true\" as boolean", true);
-        AssertResult("\"abc\" as list", new List<string> { "a", "b", "c" });
+        AssertResult("number \"123\"", 123);
+        AssertResult("number \"123.45\"", 123.45);
+        AssertResult("boolean \"true\"", true);
+        AssertResult("list \"abc\"", new List<string> { "a", "b", "c" });
 
         // 5. String Helper Functions
         AssertResult("split \"a,b,c\" \",\"", new List<string> { "a", "b", "c" });
@@ -186,5 +183,43 @@ public class BuiltInTests : BaseTest
                 |> reduce 0 ((acc, x) => acc + x))",
             300
         );
+    }
+
+    [Fact]
+    public void TestTypeValueAndStructuralIs()
+    {
+        // 1. Built-in types
+        AssertResult("123 is number", true);
+        AssertResult("\"abc\" is string", true);
+        AssertResult("true is boolean", true);
+        AssertResult("[1, 2] is list", true);
+        AssertResult("123 is string", false);
+        AssertResult("\"abc\" is number", false);
+
+        // Null checks
+        AssertResult("null is null", true);
+        AssertResult("123 is null", false);
+        AssertResult("var x = null\n x is null", true);
+
+        // 2. Custom classes structural verification
+        var context = new Context(_toast);
+        Evaluate("class Point(x, y) => { function add(other) => 0 }", context);
+        Evaluate("class Vector(x, y) => { function add(other) => 0 }", context);
+        Evaluate("class Scalar(x) => {}", context);
+
+        Evaluate("var p = Point(1, 2)", context);
+
+        // Exact structural match
+        AssertResult("p is Point", true, context);
+
+        // Matches Vector because it also has x, y, add
+        AssertResult("p is Vector", true, context);
+
+        // Fails Scalar because Point has x, y, add but Scalar only declares x (wait, Scalar expects x, so p has x. Does p is Scalar match? Yes! Point has x and y, so it satisfies Scalar's requirement of having x. Let's verify: does Scalar check if the object has x? Yes, and p has x. So p satisfies Scalar!)
+        AssertResult("p is Scalar", true, context);
+
+        // Fails Point for s because Scalar s only has x, missing y and add!
+        Evaluate("var s = Scalar(5)", context);
+        AssertResult("s is Point", false, context);
     }
 }

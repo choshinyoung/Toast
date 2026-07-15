@@ -6,6 +6,43 @@ public static class BuiltIn
     {
         RegisterConverters(toast);
         RegisterAllCommands(toast);
+        RegisterBuiltInTypes(toast);
+    }
+
+    private static ToastObject ConvertToType(Context context, ToastObject val, ToastType targetType)
+    {
+        var sourceType = val.Type;
+        if (sourceType == targetType)
+            return val;
+
+        if (context.Toaster.TryConvert(val, sourceType, targetType, context, out var converted))
+        {
+            return converted;
+        }
+
+        throw new InvalidOperationException(
+            $"No converter registered from {sourceType} to {targetType}."
+        );
+    }
+
+    public static void RegisterBuiltInTypes(Toaster toast)
+    {
+        RegisterType(toast, ToastType.Number, "number");
+        RegisterType(toast, ToastType.String, "string");
+        RegisterType(toast, ToastType.Boolean, "boolean");
+        RegisterType(toast, ToastType.List, "list");
+        RegisterType(toast, ToastType.Object, "object");
+    }
+
+    private static void RegisterType(Toaster toast, ToastType targetType, string name)
+    {
+        var cmd = new Command(
+            name,
+            (Context context, ToastObject val) => ConvertToType(context, val, targetType),
+            parameterTypes: [ToastType.Any]
+        );
+        var typeValue = new TypeValue(targetType, cmd);
+        toast.GlobalContext.SetValueDirect(name, typeValue);
     }
 
     public static void RegisterConverters(Toaster toast)

@@ -14,7 +14,8 @@ public static class Variables
             }
             context.GetOrCreateLocal(id.Name);
             return new ReferenceValue(new VariableAssignTarget(context, id.Name));
-        }
+        },
+        declaresMember: true
     );
 
     public static readonly Command Assign = Command.CreateOperator(
@@ -149,12 +150,45 @@ public static class Variables
         );
     }
 
+    public static HashSet<string> GetDeclaredMembers(Context context, FunctionValue funcVal)
+    {
+        var members = new HashSet<string>();
+        foreach (var param in funcVal.Parameters)
+        {
+            members.Add(param.Name);
+        }
+        foreach (var stmt in funcVal.Statements)
+        {
+            if (stmt is CallNode callNode && callNode.Callee is IdentifierNode idNode)
+            {
+                Command? cmd = null;
+                if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
+                    cmd = prefixCmd;
+                else if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
+                    cmd = infixCmd;
+
+                if (cmd != null && cmd.DeclaresMember)
+                {
+                    if (
+                        callNode.Arguments.Count > 0
+                        && callNode.Arguments[0] is IdentifierNode argId
+                    )
+                    {
+                        members.Add(argId.Name);
+                    }
+                }
+            }
+        }
+        return members;
+    }
+
     public static readonly Command TypeCreator = Command.CreateFunction(
         "type",
         (Context context, FunctionValue funcVal) =>
         {
             var factoryCmd = CreateConstructorFactory("type_factory", "type", funcVal);
-            return new CommandValue(factoryCmd);
+            var declaredMembers = GetDeclaredMembers(context, funcVal);
+            return new TypeValue(new ToastType("type_factory"), factoryCmd, declaredMembers);
         }
     );
 
@@ -170,10 +204,12 @@ public static class Variables
             }
 
             var factoryCmd = CreateConstructorFactory(id.Name, "class", funcVal);
-            var classConstructor = new CommandValue(factoryCmd);
-            context.SetValueDirect(id.Name, classConstructor);
-            return classConstructor;
-        }
+            var declaredMembers = GetDeclaredMembers(context, funcVal);
+            var typeVal = new TypeValue(new ToastType(id.Name), factoryCmd, declaredMembers);
+            context.SetValueDirect(id.Name, typeVal);
+            return typeVal;
+        },
+        declaresMember: true
     );
 
     public static readonly Command FunctionCreator = Command.CreateFunction(
@@ -188,7 +224,8 @@ public static class Variables
             }
             context.SetValueDirect(id.Name, funcVal);
             return funcVal;
-        }
+        },
+        declaresMember: true
     );
 
     public static void Register(Toaster toast)

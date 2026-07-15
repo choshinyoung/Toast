@@ -10,6 +10,7 @@ public class Command
     public bool IsRightAssociative { get; }
     public bool IsPrefix { get; }
     public bool IsInfix { get; }
+    public bool DeclaresMember { get; }
     public IReadOnlyList<ToastType> ParameterTypes { get; }
     public IReadOnlyList<bool> IsParameterLazy { get; }
     public int ParameterCount => ParameterTypes.Count;
@@ -22,7 +23,8 @@ public class Command
         bool isPrefix = false,
         bool isInfix = false,
         IReadOnlyList<ToastType>? parameterTypes = null,
-        IReadOnlyList<bool>? isParameterLazy = null
+        IReadOnlyList<bool>? isParameterLazy = null,
+        bool declaresMember = false
     )
     {
         Name = name;
@@ -30,6 +32,7 @@ public class Command
         IsRightAssociative = isRightAssociative;
         IsPrefix = isPrefix;
         IsInfix = isInfix;
+        DeclaresMember = declaresMember;
 
         var method = targetDelegate.Method;
         var parameters = method.GetParameters();
@@ -132,7 +135,8 @@ public class Command
         Delegate targetDelegate,
         int precedence,
         bool isRightAssociative = false,
-        bool isPrefix = false
+        bool isPrefix = false,
+        bool declaresMember = false
     )
     {
         return new Command(
@@ -141,7 +145,8 @@ public class Command
             precedence: precedence,
             isRightAssociative: isRightAssociative,
             isPrefix: isPrefix,
-            isInfix: !isPrefix
+            isInfix: !isPrefix,
+            declaresMember: declaresMember
         );
     }
 
@@ -151,7 +156,8 @@ public class Command
         int precedence = 0,
         bool isRightAssociative = false,
         bool isPrefix = false,
-        bool isInfix = false
+        bool isInfix = false,
+        bool declaresMember = false
     )
     {
         return new Command(
@@ -160,12 +166,20 @@ public class Command
             precedence: precedence,
             isRightAssociative: isRightAssociative,
             isPrefix: isPrefix,
-            isInfix: isInfix
+            isInfix: isInfix,
+            declaresMember: declaresMember
         );
     }
 
     private static ToastType MapToToastType(Type type)
     {
+        if (!typeof(ToastObject).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException(
+                $"Command parameter type '{type.Name}' must inherit from ToastObject."
+            );
+        }
+
         if (type == typeof(StringValue))
             return ToastType.String;
         if (type == typeof(NumberValue))
@@ -186,17 +200,7 @@ public class Command
             return ToastType.Any;
         if (type == typeof(ReferenceValue))
             return ToastType.Reference;
-        if (type == typeof(ToastObject))
-            return ToastType.Any;
 
-        if (type == typeof(string))
-            return ToastType.String;
-        if (type == typeof(int) || type == typeof(double) || type == typeof(float))
-            return ToastType.Number;
-        if (type == typeof(bool))
-            return ToastType.Boolean;
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
-            return ToastType.List;
         return ToastType.Any;
     }
 }

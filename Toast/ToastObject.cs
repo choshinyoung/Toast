@@ -93,6 +93,28 @@ public sealed record CommandValue(Command Command) : ToastObject
     public override string ToString() => "function";
 }
 
+public sealed record TypeValue : ToastObject
+{
+    public ToastType TargetType { get; }
+    public Command Constructor { get; }
+    public HashSet<string> DeclaredMembers { get; }
+
+    public TypeValue(
+        ToastType targetType,
+        Command constructor,
+        HashSet<string>? declaredMembers = null
+    )
+    {
+        TargetType = targetType;
+        Constructor = constructor;
+        DeclaredMembers = declaredMembers ?? [];
+    }
+
+    public override ToastType Type => ToastType.Type;
+
+    public override string ToString() => TargetType.Name;
+}
+
 public sealed record IdentifierValue(string Name) : ToastObject
 {
     public override ToastType Type => ToastType.Identifier;
