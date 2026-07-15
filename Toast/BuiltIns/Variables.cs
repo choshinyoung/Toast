@@ -112,6 +112,14 @@ public static class Variables
             {
                 return funcVal.Execute([]);
             }
+            if (
+                !context.Toaster.Executor.SuppressZeroArgFunction
+                && val is CommandValue cmdVal
+                && cmdVal.Command.ParameterCount == 0
+            )
+            {
+                return cmdVal.Command.TargetDelegate(context, []);
+            }
             return val;
         },
         precedence: 10
@@ -166,6 +174,11 @@ public static class Variables
                     cmd = prefixCmd;
                 else if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
                     cmd = infixCmd;
+                else if (
+                    context.HasVariable(idNode.Name)
+                    && context.GetValue(idNode.Name) is CommandValue cmdVal
+                )
+                    cmd = cmdVal.Command;
 
                 if (cmd != null && cmd.DeclaresMember)
                 {

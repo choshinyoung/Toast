@@ -221,5 +221,56 @@ public class BuiltInTests : BaseTest
         // Fails Point for s because Scalar s only has x, missing y and add!
         Evaluate("var s = Scalar(5)", context);
         AssertResult("s is Point", false, context);
+
+        // Verification of block-based vs parameter-based type matching
+        AssertResult("p is type(x, y) => {}", true, context);
+        AssertResult("p is type {\n var x\n var y\n }", true, context);
+    }
+
+    [Fact]
+    public void TestDateTimeBuiltIn()
+    {
+        var context = new Context(_toast);
+
+        // 1. Creation and fields (uses string-to-datetime converter via 1-arg TypeValue call)
+        Evaluate("var d = datetime \"2026-07-16 13:45:30\"", context);
+        AssertResult("d.year", 2026, context);
+        AssertResult("d.month", 7, context);
+        AssertResult("d.day", 16, context);
+        AssertResult("d.hour", 13, context);
+        AssertResult("d.minute", 45, context);
+        AssertResult("d.second", 30, context);
+
+        // 2. Custom Methods & Converter-based string conversion
+        AssertResult("string d", "2026-07-16 13:45:30", context);
+        AssertResult("d.format \"yyyy.MM.dd\"", "2026.07.16", context);
+
+        var expectedSeconds = new DateTimeOffset(
+            new DateTime(2026, 7, 16, 13, 45, 30)
+        ).ToUnixTimeSeconds();
+        AssertResult("d.totalSeconds", expectedSeconds, context);
+
+        // Convert number (Unix timestamp seconds) to datetime
+        Evaluate($"var d3 = datetime {expectedSeconds}", context);
+        AssertResult("d3.year", 2026, context);
+        AssertResult("d3.month", 7, context);
+        AssertResult("d3.day", 16, context);
+        AssertResult("d3.hour", 13, context);
+        AssertResult("d3.minute", 45, context);
+        AssertResult("d3.second", 30, context);
+        AssertResult("string d3", "2026-07-16 13:45:30", context);
+
+        // 3. Method Chaining & 0-argument constructor
+        Evaluate("var d2 = d.addDays 5", context);
+        AssertResult("d2.day", 21, context);
+        AssertResult("string d2", "2026-07-21 13:45:30", context);
+
+        Evaluate("var now = datetime null", context);
+        AssertResult("now.year", DateTime.Now.Year, context);
+
+        // 4. Structural Type Checks (is operator)
+        AssertResult("d is datetime", true, context);
+        AssertResult("d2 is datetime", true, context);
+        AssertResult("123 is datetime", false, context);
     }
 }

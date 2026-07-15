@@ -9,7 +9,7 @@ public static class BuiltIn
         RegisterBuiltInTypes(toast);
     }
 
-    private static ToastObject ConvertToType(Context context, ToastObject val, ToastType targetType)
+    public static ToastObject ConvertToType(Context context, ToastObject val, ToastType targetType)
     {
         var sourceType = val.Type;
         if (sourceType == targetType)
@@ -62,6 +62,7 @@ public static class BuiltIn
         RegisterList(toast);
         RegisterString(toast);
         RegisterUtility(toast);
+        DateTimeBuiltIn.Register(toast);
     }
 
     public static void RegisterLiterals(Toaster toast)

@@ -38,7 +38,7 @@ public abstract class BaseTest
         }
     }
 
-    protected ToastObject UnifyExpected(object? expected)
+    protected static ToastObject UnifyExpected(object? expected)
     {
         if (expected == null)
             return NullValue.Instance;
@@ -46,6 +46,8 @@ public abstract class BaseTest
             return new StringValue(s);
         if (expected is int i)
             return new NumberValue(i);
+        if (expected is long l)
+            return new NumberValue(l);
         if (expected is double d)
             return new NumberValue(d);
         if (expected is float f)
