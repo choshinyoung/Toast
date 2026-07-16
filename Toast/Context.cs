@@ -12,16 +12,51 @@ public class Context(Toaster toaster, Context? parent = null)
         set => _toaster = value ?? throw new ArgumentNullException(nameof(value));
     }
     public Context? Parent => _parent;
+    public ObjectValue? Owner { get; set; }
 
     public Context(Context parent)
         : this(parent.Toaster, parent) { }
 
-    public IReadOnlyDictionary<string, (ToastValue Value, TypeValue Constraint)> GetBindings() =>
-        _bindings;
+    public IReadOnlyDictionary<string, (ToastValue Value, TypeValue Constraint)> GetBindings()
+    {
+        if (Owner != null && Toaster.ExtensionMembers.TryGetValue(Owner.Type, out var extMembers))
+        {
+            var merged = new Dictionary<string, (ToastValue Value, TypeValue Constraint)>(_bindings);
+            foreach (var kvp in extMembers)
+            {
+                if (!merged.ContainsKey(kvp.Key))
+                {
+                    if (kvp.Value is CommandValue cmdVal)
+                    {
+                        var origCmd = cmdVal.Command;
+                        var boundCmd = new Command(
+                            origCmd.Name,
+                            (Context ctx, ToastValue[] args) =>
+                            {
+                                var boundArgs = new ToastValue[args.Length + 1];
+                                boundArgs[0] = Owner;
+                                Array.Copy(args, 0, boundArgs, 1, args.Length);
+                                return origCmd.TargetDelegate(ctx, boundArgs);
+                            },
+                            parameterTypes: origCmd.ParameterTypes.Skip(1).ToList(),
+                            isParameterLazy: origCmd.IsParameterLazy.Skip(1).ToList()
+                        );
+                        merged[kvp.Key] = (new CommandValue(boundCmd), TypeValue.Any);
+                    }
+                    else
+                    {
+                        merged[kvp.Key] = (kvp.Value, TypeValue.Any);
+                    }
+                }
+            }
+            return merged;
+        }
+        return _bindings;
+    }
 
     private Context? FindContext(string name)
     {
-        if (_bindings.ContainsKey(name))
+        if (GetBindings().ContainsKey(name))
         {
             return this;
         }
@@ -60,18 +95,27 @@ public class Context(Toaster toaster, Context? parent = null)
         return ctx.GetValueDirect(name);
     }
 
-    public ToastValue GetValueDirect(string name) =>
-        _bindings.TryGetValue(name, out var binding)
-            ? binding.Value
-            : throw new InvalidOperationException(
-                $"Variable '{name}' is not defined in this context."
-            );
+    public ToastValue GetValueDirect(string name)
+    {
+        if (_bindings.TryGetValue(name, out var binding))
+        {
+            return binding.Value;
+        }
+        var bindings = GetBindings();
+        if (bindings.TryGetValue(name, out var extBinding))
+        {
+            _bindings[name] = extBinding;
+            return extBinding.Value;
+        }
+        throw new InvalidOperationException($"Variable '{name}' is not defined in this context.");
+    }
 
     public TypeValue GetConstraint(string name)
     {
         var ctx =
             FindContext(name)
             ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
+        ctx.GetValueDirect(name); // 캐싱 강제
         return ctx._bindings[name].Constraint;
     }
 

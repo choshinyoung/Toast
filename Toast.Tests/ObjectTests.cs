@@ -307,5 +307,61 @@ public class ObjectTests : BaseTest
         AssertResult("l.removeAt(1)", 2, context);
         AssertResult("l.length", 3, context);
         AssertResult("l.get(1)", 3, context);
+
+        // with 연산 시점의 확장 멤버 전파 검증
+        Evaluate("var s_with = \"asdf\" with {{}}", context);
+        AssertResult("s_with.length", 4, context);
+        AssertResult("s_with.contains(\"sd\")", true, context);
+
+        // 3. 샌드박싱 (선택적 빌트인 등록) 검증
+        // useBuiltIn: false 로 생성한 샌드박스 Toaster 에서는 확장 멤버 함수들이 존재하지 않아야 함.
+        var sandboxToast = new Toaster(useBuiltIn: false);
+        Toast.BuiltIns.Variables.Register(sandboxToast); // . 연산자 사용을 위해 Variables만 등록
+        var sandboxCtx = new Context(sandboxToast);
+
+        sandboxToast.Evaluate(
+            Parser.Parse(
+                Lexer.Tokenize("var s = \"hello\""),
+                sandboxToast.GetInfixInfo,
+                sandboxToast.IsPrefix
+            ),
+            sandboxCtx
+        );
+        // length도 이제 BuiltIn 이므로 등록되지 않아 예외를 발생시켜야 함
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            sandboxToast.Evaluate(
+                Parser.Parse(
+                    Lexer.Tokenize("s.length"),
+                    sandboxToast.GetInfixInfo,
+                    sandboxToast.IsPrefix
+                ),
+                sandboxCtx
+            );
+        });
+
+        // 하지만 substring 이나 contains 같은 빌트인 함수 멤버들은 등록되지 않았으므로 예외를 발생시켜야 함!
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            sandboxToast.Evaluate(
+                Parser.Parse(
+                    Lexer.Tokenize("s.substring(1, 3)"),
+                    sandboxToast.GetInfixInfo,
+                    sandboxToast.IsPrefix
+                ),
+                sandboxCtx
+            );
+        });
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            sandboxToast.Evaluate(
+                Parser.Parse(
+                    Lexer.Tokenize("s.contains(\"ell\")"),
+                    sandboxToast.GetInfixInfo,
+                    sandboxToast.IsPrefix
+                ),
+                sandboxCtx
+            );
+        });
     }
 }

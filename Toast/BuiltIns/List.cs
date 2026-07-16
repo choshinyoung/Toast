@@ -213,6 +213,43 @@ public static class List
         }
     );
 
+    public static readonly Command Add = Command.CreateFunction(
+        "add",
+        (Context context, ListValue list, ToastValue item) =>
+        {
+            list.Elements.Add(item);
+            return NullValue.Instance;
+        }
+    );
+
+    public static readonly Command Get = Command.CreateFunction(
+        "get",
+        (Context context, ListValue list, NumberValue index) =>
+        {
+            int i = (int)index.Value;
+            return list.Elements[i];
+        }
+    );
+
+    public static readonly Command RemoveAt = Command.CreateFunction(
+        "removeAt",
+        (Context context, ListValue list, NumberValue index) =>
+        {
+            int i = (int)index.Value;
+            var removed = list.Elements[i];
+            list.Elements.RemoveAt(i);
+            return removed;
+        }
+    );
+
+    public static readonly Command Length = Command.CreateFunction(
+        "length",
+        (Context context, ListValue list) =>
+        {
+            return new NumberValue(list.Elements.Count);
+        }
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(RangeTo);
@@ -229,5 +266,10 @@ public static class List
         toast.RegisterCommand(Sort);
         toast.RegisterCommand(SortAs);
         toast.RegisterCommand(Shuffle);
+
+        toast.RegisterTypeMember(ToastType.List, "add", new CommandValue(Add));
+        toast.RegisterTypeMember(ToastType.List, "get", new CommandValue(Get));
+        toast.RegisterTypeMember(ToastType.List, "removeAt", new CommandValue(RemoveAt));
+        toast.RegisterTypeMember(ToastType.List, "length", new CommandValue(Length));
     }
 }

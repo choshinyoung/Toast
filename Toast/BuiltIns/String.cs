@@ -94,6 +94,14 @@ public static class String
         }
     );
 
+    public static readonly Command Length = Command.CreateFunction(
+        "length",
+        (Context context, StringValue str) =>
+        {
+            return new NumberValue(str.Value.Length);
+        }
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(Split);
@@ -107,5 +115,9 @@ public static class String
         toast.RegisterCommand(Replace);
         toast.RegisterCommand(ToUpper);
         toast.RegisterCommand(ToLower);
+
+        toast.RegisterTypeMember(ToastType.String, "substring", new CommandValue(Substring));
+        toast.RegisterTypeMember(ToastType.String, "contains", new CommandValue(Contains));
+        toast.RegisterTypeMember(ToastType.String, "length", new CommandValue(Length));
     }
 }

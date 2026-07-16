@@ -25,35 +25,7 @@ public record StringValue : ObjectValue
         : base(new Context(Toaster.Empty))
     {
         Value = value;
-        Context.SetValueDirect("length", new NumberValue(value.Length));
-
-        Context.SetValueDirect(
-            "substring",
-            new CommandValue(
-                Command.CreateFunction(
-                    "substring",
-                    (Context ctx, NumberValue start, NumberValue len) =>
-                    {
-                        int s = (int)start.Value;
-                        int l = (int)len.Value;
-                        return new StringValue(value.Substring(s, l));
-                    }
-                )
-            )
-        );
-
-        Context.SetValueDirect(
-            "contains",
-            new CommandValue(
-                Command.CreateFunction(
-                    "contains",
-                    (Context ctx, StringValue search) =>
-                    {
-                        return new BoolValue(value.Contains(search.Value));
-                    }
-                )
-            )
-        );
+        Context.Owner = this;
     }
 
     public override string ToString() => Value;
@@ -91,39 +63,7 @@ public record ListValue : ObjectValue
         : base(new Context(Toaster.Empty))
     {
         Elements = elements;
-        Context.SetValueDirect("length", new NumberValue(elements.Count));
-
-        Context.SetValueDirect(
-            "add",
-            new CommandValue(
-                Command.CreateFunction(
-                    "add",
-                    (Context ctx, ToastValue item) =>
-                    {
-                        elements.Add(item);
-                        Context.SetValueDirect("length", new NumberValue(elements.Count));
-                        return NullValue.Instance;
-                    }
-                )
-            )
-        );
-
-        Context.SetValueDirect(
-            "removeAt",
-            new CommandValue(
-                Command.CreateFunction(
-                    "removeAt",
-                    (Context ctx, NumberValue index) =>
-                    {
-                        int i = (int)index.Value;
-                        var removed = elements[i];
-                        elements.RemoveAt(i);
-                        Context.SetValueDirect("length", new NumberValue(elements.Count));
-                        return removed;
-                    }
-                )
-            )
-        );
+        Context.Owner = this;
     }
 
     public override string ToString() => "[" + string.Join(", ", Elements) + "]";

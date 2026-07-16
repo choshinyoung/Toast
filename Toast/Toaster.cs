@@ -8,6 +8,7 @@ public class Toaster
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];
     public readonly HashSet<ToastType> CustomTypes = [];
+    public readonly Dictionary<ToastType, Dictionary<string, ToastValue>> ExtensionMembers = [];
     public readonly Context GlobalContext;
     public readonly Executor Executor;
 
@@ -96,6 +97,16 @@ public class Toaster
     public void RegisterConverter(TypeConverter converter)
     {
         Converters[(converter.Source, converter.Target)] = converter;
+    }
+
+    public void RegisterTypeMember(ToastType type, string memberName, ToastValue value)
+    {
+        if (!ExtensionMembers.TryGetValue(type, out var members))
+        {
+            members = [];
+            ExtensionMembers[type] = members;
+        }
+        members[memberName] = value;
     }
 
     public HashSet<string> GetInfixIdentifiers()

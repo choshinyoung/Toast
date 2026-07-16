@@ -31,7 +31,7 @@ public class Executor(Toaster _toast)
         SuppressDereference = suppressDereference;
         try
         {
-            return node switch
+            var result = node switch
             {
                 LiteralNode literal => literal.Value,
                 IdentifierNode identifier => EvaluateIdentifier(
@@ -54,6 +54,13 @@ public class Executor(Toaster _toast)
                     $"Node type '{node.GetType().Name}' is not supported."
                 ),
             };
+
+            if (result is ObjectValue objVal && objVal.Context.Toaster != _toast)
+            {
+                objVal.Context.Toaster = _toast;
+            }
+
+            return result;
         }
         finally
         {
