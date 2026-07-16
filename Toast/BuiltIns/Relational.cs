@@ -63,9 +63,7 @@ public static class Relational
 
             if (declaredMembers.Count == 0)
             {
-                return new BoolValue(
-                    left.Type.Name.Equals(targetType.Name, StringComparison.OrdinalIgnoreCase)
-                );
+                return new BoolValue(left.Type.Name == targetType.Name);
             }
 
             if (left is ObjectValue targetObj)

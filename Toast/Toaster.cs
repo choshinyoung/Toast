@@ -148,6 +148,77 @@ public class Toaster
         return Executor.Evaluate(node, context);
     }
 
+    private static readonly HashSet<string> BuiltInTypeNames =
+    [
+        "number",
+        "string",
+        "boolean",
+        "list",
+        "object",
+        "any",
+        "null",
+        "function",
+    ];
+
+    public static bool IsCompatible(ToastType actual, ToastType expected, Context context)
+    {
+        if (expected == ToastType.Any || expected == actual)
+        {
+            return true;
+        }
+
+        if (expected == ToastType.Object)
+        {
+            if (actual != ToastType.Null && actual != ToastType.Any)
+            {
+                if (context.HasVariable(actual.Name) && context.GetValue(actual.Name) is TypeValue)
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (BuiltInTypeNames.Contains(expected.Name) || BuiltInTypeNames.Contains(actual.Name))
+        {
+            return false;
+        }
+
+        if (
+            context.HasVariable(expected.Name)
+            && context.GetValue(expected.Name) is TypeValue expectedTv
+            && context.HasVariable(actual.Name)
+            && context.GetValue(actual.Name) is TypeValue actualTv
+        )
+        {
+            foreach (var member in expectedTv.DeclaredMembers)
+            {
+                if (!actualTv.DeclaredMembers.Contains(member))
+                {
+                    return false;
+                }
+            }
+
+            foreach (var member in expectedTv.DeclaredMembers)
+            {
+                var expectedMemberType = expectedTv.MemberTypes.TryGetValue(member, out var et)
+                    ? et
+                    : ToastType.Any;
+                var actualMemberType = actualTv.MemberTypes.TryGetValue(member, out var at)
+                    ? at
+                    : ToastType.Any;
+
+                if (!IsCompatible(actualMemberType, expectedMemberType, context))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     public bool TryConvert(
         ToastValue obj,
         ToastType actual,
@@ -156,7 +227,7 @@ public class Toaster
         out ToastValue result
     )
     {
-        if (expected == ToastType.Any || expected == actual)
+        if (IsCompatible(actual, expected, context))
         {
             result = obj;
             return true;

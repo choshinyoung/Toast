@@ -182,4 +182,97 @@ public class ObjectTests : BaseTest
         AssertResult("original.x", 1, context);
         AssertResult("original.y", 2, context);
     }
+
+    [Fact]
+    public void TestRuntimeTypeEnforcement()
+    {
+        var context = new Context(_toast);
+
+        // 1. 변수 선언 시 타입 매칭 및 대입 위반 차단
+        Evaluate("var x: number = 10", context);
+        AssertResult("x", 10, context);
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            Evaluate("x = \"hello\"", context);
+        });
+
+        // 2. 클래스 인스턴스 타입 제약 및 멤버 대입 위반 차단
+        Evaluate(
+            @"class Point (x: number, y: number) => {
+            }",
+            context
+        );
+        Evaluate("var p: Point = Point(3, 4)", context);
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            // Point가 아닌 number 대입 시도
+            Evaluate("p = 42", context);
+        });
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            // 객체 멤버에 number가 아닌 string 대입 시도
+            Evaluate("p.x = \"hello\"", context);
+        });
+
+        // 2-2. 서로 다른 클래스 객체(ObjectValue) 간 구조적 타입 호환 검증
+        Evaluate(
+            @"class Vector (x: number, y: number) => {
+            }",
+            context
+        );
+        Evaluate("var v: Vector = Vector(3, 4)", context);
+
+        // Point 타입 변수 p에 구조가 동일한 Vector 타입 객체 v 대입 시도 (구조적 타이핑 성공)
+        Evaluate("p = v", context);
+        AssertResult("p.x", 3, context);
+        AssertResult("p.y", 4, context);
+
+        // 구조적 서브타이핑 (Point3D -> Point 대입은 성공)
+        Evaluate(
+            @"class Point3D (x: number, y: number, z: number) => {
+            }",
+            context
+        );
+        Evaluate("var p3d: Point3D = Point3D(1, 2, 3)", context);
+
+        // Point 타입 변수 p 에 Point3D 타입 객체 p3d 대입 (성공)
+        Evaluate("p = p3d", context);
+        AssertResult("p.x", 1, context);
+        AssertResult("p.y", 2, context);
+
+        // 반대로 Point3D 변수 p3d 에 Point 타입 객체 v 대입 시도는 실패해야 함 (z 멤버 부족)
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            Evaluate("p3d = v", context);
+        });
+
+        // 3. 함수 매개변수 타입 강제 및 자동 형변환 검증
+        Evaluate("var f = (x: string) => x", context);
+        // string에 number를 넘겨주면, 자동 형변환이 동작하여 string "123"이 리턴됨
+        AssertResult("f(123)", "123", context);
+
+        // 자동 형변환이 불가능한 클래스 인스턴스를 number 매개변수에 전달 시 에러 발생
+        Evaluate("var g = (x: number) => x * x", context);
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            Evaluate("g(p)", context);
+        });
+
+        // 4. 예약어 '@type_factory' 사용 방지 검증 (문법 오류 발생해야 함)
+        Assert.ThrowsAny<System.Exception>(() =>
+        {
+            Evaluate("var @type_factory = 10", context);
+        });
+        Assert.ThrowsAny<System.Exception>(() =>
+        {
+            Evaluate("class @type_factory() => {}", context);
+        });
+
+        // 'type_factory' (골뱅이 없는 것)는 이제 일반 식별자이므로 정의가 가능해야 함
+        Evaluate("var type_factory = 100", context);
+        AssertResult("type_factory", 100, context);
+    }
 }

@@ -49,10 +49,11 @@ public static class Converters
                 var items = new List<string>();
                 foreach (var kvp in bindings)
                 {
-                    var type = kvp.Value.Type;
+                    var innerVal = kvp.Value.Value;
+                    var type = innerVal.Type;
                     if (
                         ctx.Toaster.TryConvert(
-                            kvp.Value,
+                            innerVal,
                             type,
                             ToastType.String,
                             ctx,

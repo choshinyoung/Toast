@@ -95,6 +95,7 @@ public class Executor(Toaster _toast)
             if (
                 !suppressZeroArgFunction
                 && val is TypeValue typeVal
+                && typeVal.Constructor != null
                 && typeVal.Constructor.ParameterCount == 0
             )
             {
@@ -219,6 +220,12 @@ public class Executor(Toaster _toast)
 
         if (calleeVal is TypeValue typeVal)
         {
+            if (typeVal.Constructor == null)
+            {
+                throw new InvalidOperationException(
+                    $"Type '{typeVal.TargetType.Name}' does not have a constructor."
+                );
+            }
             return ExecuteCommand(typeVal.Constructor, callArgs, context);
         }
 

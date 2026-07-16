@@ -2,18 +2,71 @@ namespace Toast.BuiltIns;
 
 public static class Variables
 {
+    private static TypeValue ResolveType(Context context, ToastValue typeVal)
+    {
+        if (typeVal is TypeValue tv)
+        {
+            return tv;
+        }
+
+        var typeName = typeVal.ToString();
+        if (context.HasVariable(typeName))
+        {
+            var val = context.GetValue(typeName);
+            if (val is TypeValue resolvedTv)
+            {
+                return resolvedTv;
+            }
+        }
+
+        var targetType = typeName switch
+        {
+            "string" => ToastType.String,
+            "number" => ToastType.Number,
+            "boolean" => ToastType.Boolean,
+            "list" => ToastType.List,
+            "object" => ToastType.Object,
+            _ => new ToastType(typeName),
+        };
+
+        return new TypeValue(targetType, null);
+    }
+
+    public static readonly Command TypeAnnotation = Command.CreateOperator(
+        ":",
+        (Context context, IdentifierValue id, ToastValue typeVal) =>
+        {
+            return new TypedIdentifierValue(id.Name, ResolveType(context, typeVal));
+        },
+        precedence: 10,
+        isRightAssociative: false
+    );
+
     public static readonly Command Var = Command.CreateFunction(
         "var",
-        (Context context, IdentifierValue id) =>
+        (Context context, IdentifierValue target) =>
         {
-            if (context.GetBindings().ContainsKey(id.Name))
+            string varName;
+            TypeValue typeConstraint = TypeValue.Any;
+
+            if (target is TypedIdentifierValue typedId)
+            {
+                varName = typedId.Name;
+                typeConstraint = typedId.TargetTypeVal;
+            }
+            else
+            {
+                varName = target.Name;
+            }
+
+            if (context.GetBindings().ContainsKey(varName))
             {
                 throw new InvalidOperationException(
-                    $"Variable '{id.Name}' is already defined in the current scope."
+                    $"Variable '{varName}' is already defined in the current scope."
                 );
             }
-            context.GetOrCreateLocal(id.Name);
-            return new ReferenceValue(new VariableAssignTarget(context, id.Name));
+            context.GetOrCreateLocal(varName, typeConstraint);
+            return new ReferenceValue(new VariableAssignTarget(context, varName));
         },
         declaresMember: true
     );
@@ -144,14 +197,47 @@ public static class Variables
                 var objCtx = new Context(funcVal.ClosureContext);
                 for (int i = 0; i < funcVal.Parameters.Count; i++)
                 {
-                    var paramName = funcVal.Parameters[i].Name;
-                    objCtx.SetValueDirect(paramName, args[i]);
+                    var param = funcVal.Parameters[i];
+                    var paramName = param.Name;
+                    var argVal = args[i];
+                    TypeValue? paramConstraint = null;
+
+                    if (param.Type != null)
+                    {
+                        var expectedType = param.Type.Type;
+                        if (argVal.Type != expectedType && expectedType != ToastType.Any)
+                        {
+                            if (
+                                !callerCtx.Toaster.TryConvert(
+                                    argVal,
+                                    argVal.Type,
+                                    expectedType,
+                                    objCtx,
+                                    out var converted
+                                )
+                            )
+                            {
+                                throw new InvalidOperationException(
+                                    $"Type mismatch: Constructor parameter '{param.Name}' expects {expectedType}, but got {argVal.Type}."
+                                );
+                            }
+                            argVal = converted;
+                        }
+                        paramConstraint = ResolveType(
+                            objCtx,
+                            new IdentifierValue(expectedType.Name)
+                        );
+                    }
+
+                    objCtx.GetOrCreateLocal(paramName, paramConstraint);
+                    objCtx.SetValueDirect(paramName, argVal);
                 }
                 foreach (var stmt in funcVal.Statements)
                 {
                     callerCtx.Toaster.Evaluate(stmt, objCtx);
                 }
-                return new ObjectValue(objCtx);
+                var customType = name == "@type_factory" ? null : new ToastType(name);
+                return new ObjectValue(objCtx, customType);
             },
             parameterTypes: parameterTypes,
             isParameterLazy: isParameterLazy
@@ -221,9 +307,19 @@ public static class Variables
         "type",
         (Context context, FunctionValue funcVal) =>
         {
-            var factoryCmd = CreateConstructorFactory("type_factory", "type", funcVal);
+            var factoryCmd = CreateConstructorFactory("@type_factory", "type", funcVal);
             var declaredMembers = GetDeclaredMembers(context, funcVal);
-            return new TypeValue(new ToastType("type_factory"), factoryCmd, declaredMembers);
+            var memberTypes = new Dictionary<string, ToastType>();
+            foreach (var param in funcVal.Parameters)
+            {
+                memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
+            }
+            return new TypeValue(
+                new ToastType("@type_factory"),
+                factoryCmd,
+                declaredMembers,
+                memberTypes
+            );
         }
     );
 
@@ -240,7 +336,17 @@ public static class Variables
 
             var factoryCmd = CreateConstructorFactory(id.Name, "class", funcVal);
             var declaredMembers = GetDeclaredMembers(context, funcVal);
-            var typeVal = new TypeValue(new ToastType(id.Name), factoryCmd, declaredMembers);
+            var memberTypes = new Dictionary<string, ToastType>();
+            foreach (var param in funcVal.Parameters)
+            {
+                memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
+            }
+            var typeVal = new TypeValue(
+                new ToastType(id.Name),
+                factoryCmd,
+                declaredMembers,
+                memberTypes
+            );
             context.SetValueDirect(id.Name, typeVal);
             return typeVal;
         },
@@ -270,11 +376,13 @@ public static class Variables
             var newCtx = new Context(left.Context.Toaster, left.Context.Parent);
             foreach (var kvp in left.Context.GetBindings())
             {
-                newCtx.SetValueDirect(kvp.Key, kvp.Value);
+                newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
+                newCtx.SetValueDirect(kvp.Key, kvp.Value.Value);
             }
             foreach (var kvp in right.Context.GetBindings())
             {
-                newCtx.SetValueDirect(kvp.Key, kvp.Value);
+                newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
+                newCtx.SetValueDirect(kvp.Key, kvp.Value.Value);
             }
             return new ObjectValue(newCtx, left.CustomType);
         },
@@ -293,5 +401,6 @@ public static class Variables
         toast.RegisterCommand(ClassCreator);
         toast.RegisterCommand(FunctionCreator);
         toast.RegisterCommand(With);
+        toast.RegisterCommand(TypeAnnotation);
     }
 }
