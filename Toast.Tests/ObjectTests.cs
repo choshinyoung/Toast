@@ -296,17 +296,17 @@ public class ObjectTests : BaseTest
         // 2. ListValue 멤버 접근 검증
         Evaluate("var l = [1, 2, 3]", context);
         AssertResult("l.length", 3, context);
-        AssertResult("l.get(1)", 2, context);
+        AssertResult("l # 1", 2, context);
 
         // add 멤버 함수 동작 확인
         Evaluate("l.add(4)", context);
         AssertResult("l.length", 4, context);
-        AssertResult("l.get(3)", 4, context);
+        AssertResult("l # 3", 4, context);
 
         // removeAt 멤버 함수 동작 확인
         AssertResult("l.removeAt(1)", 2, context);
         AssertResult("l.length", 3, context);
-        AssertResult("l.get(1)", 3, context);
+        AssertResult("l # 1", 3, context);
 
         // with 연산 시점의 확장 멤버 전파 검증
         Evaluate("var s_with = \"asdf\" with {{}}", context);

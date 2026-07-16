@@ -102,8 +102,32 @@ public static class String
         }
     );
 
+    private static readonly Command StringIndex = Command.CreateFunction(
+        "#",
+        (Context context, StringValue str, NumberValue index) =>
+        {
+            if (context.Toaster.Executor.SuppressDereference)
+            {
+                throw new InvalidOperationException(
+                    "Strings are immutable and cannot be modified via index assignment."
+                );
+            }
+
+            int idx = (int)index.Value;
+            if (idx < 0 || idx >= str.Value.Length)
+            {
+                throw new IndexOutOfRangeException(
+                    $"Index {idx} is out of range for string of length {str.Value.Length}."
+                );
+            }
+
+            return new StringValue(str.Value[idx].ToString());
+        }
+    );
+
     public static void Register(Toaster toast)
     {
+        toast.RegisterTypeMember(ToastType.String, "#", new CommandValue(StringIndex));
         toast.RegisterTypeMember(ToastType.String, "substring", new CommandValue(Substring));
         toast.RegisterTypeMember(ToastType.String, "contains", new CommandValue(Contains));
         toast.RegisterTypeMember(ToastType.String, "length", new CommandValue(Length));

@@ -36,35 +36,45 @@ public static class List
 
     public static readonly Command IndexAccess = Command.CreateOperator(
         "#",
-        (Context context, ToastValue list, NumberValue index) =>
+        (Context context, ToastValue left, NumberValue index) =>
         {
-            int idx = (int)index.Value;
-            if (list is StringValue str)
+            if (left is ObjectValue objVal)
             {
-                if (context.Toaster.Executor.SuppressDereference)
+                if (
+                    objVal.Context.GetBindings().TryGetValue("#", out var memberBinding)
+                    && memberBinding.Value is CommandValue indexCmd
+                )
                 {
-                    throw new InvalidOperationException(
-                        "Strings are immutable and cannot be modified via index assignment."
-                    );
+                    return indexCmd.Command.TargetDelegate(context, [index]);
                 }
-                return new StringValue(str.Value[idx].ToString());
+                throw new InvalidOperationException(
+                    $"Type '{left.Type}' does not support '#' indexing."
+                );
             }
-            if (list is ListValue listVal)
-            {
-                if (idx < 0 || idx >= listVal.Elements.Count)
-                    throw new IndexOutOfRangeException(
-                        $"Index {idx} is out of range for list of length {listVal.Elements.Count}."
-                    );
-
-                if (context.Toaster.Executor.SuppressDereference)
-                {
-                    return new ReferenceValue(new ListIndexAssignTarget(listVal, idx));
-                }
-                return listVal.Elements[idx];
-            }
-            throw new InvalidOperationException("Can only index strings and lists.");
+            throw new InvalidOperationException("Can only index ObjectValue types with '#'.");
         },
         precedence: 10
+    );
+
+    private static readonly Command ListIndex = Command.CreateFunction(
+        "#",
+        (Context context, ListValue list, NumberValue index) =>
+        {
+            int idx = (int)index.Value;
+            if (idx < 0 || idx >= list.Elements.Count)
+            {
+                throw new IndexOutOfRangeException(
+                    $"Index {idx} is out of range for list of length {list.Elements.Count}."
+                );
+            }
+
+            if (context.Toaster.Executor.SuppressDereference)
+            {
+                return new ReferenceValue(new ListIndexAssignTarget(list, idx));
+            }
+
+            return list.Elements[idx];
+        }
     );
 
     public static readonly Command IndexOf = Command.CreateFunction(
@@ -219,6 +229,7 @@ public static class List
         toast.RegisterCommand(Map);
         toast.RegisterCommand(Reduce);
 
+        toast.RegisterTypeMember(ToastType.List, "#", new CommandValue(ListIndex));
         toast.RegisterTypeMember(ToastType.List, "add", new CommandValue(Add));
         toast.RegisterTypeMember(ToastType.List, "removeAt", new CommandValue(RemoveAt));
         toast.RegisterTypeMember(ToastType.List, "length", new CommandValue(Length));
