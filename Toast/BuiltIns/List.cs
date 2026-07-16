@@ -2,7 +2,7 @@ namespace Toast.BuiltIns;
 
 public static class List
 {
-    public static readonly Command RangeTo = Command.CreateFunction(
+    public static readonly Command To = Command.CreateFunction(
         "to",
         (Context context, NumberValue left, NumberValue right) =>
         {
@@ -19,7 +19,7 @@ public static class List
         isInfix: true
     );
 
-    public static readonly Command ListIn = Command.CreateFunction(
+    public static readonly Command In = Command.CreateFunction(
         "in",
         (Context context, ToastValue left, ListValue right) =>
         {
@@ -65,18 +65,6 @@ public static class List
             throw new InvalidOperationException("Can only index strings and lists.");
         },
         precedence: 10
-    );
-
-    public static readonly Command Len = Command.CreateFunction(
-        "len",
-        (Context context, ToastValue list) =>
-        {
-            if (list is StringValue str)
-                return new NumberValue(str.Value.Length);
-            if (list is ListValue listVal)
-                return new NumberValue(listVal.Elements.Count);
-            throw new InvalidOperationException("Length is only defined on strings and lists.");
-        }
     );
 
     public static readonly Command IndexOf = Command.CreateFunction(
@@ -130,30 +118,11 @@ public static class List
         }
     );
 
-    public static readonly Command Combine = Command.CreateFunction(
+    public static readonly Command Join = Command.CreateFunction(
         "combine",
         (Context context, ListValue list1, ListValue list2) =>
         {
             var result = list1.Elements.Concat(list2.Elements).ToList();
-            return new ListValue(result);
-        }
-    );
-
-    public static readonly Command Append = Command.CreateFunction(
-        "append",
-        (Context context, ListValue list, ToastValue item) =>
-        {
-            var result = new List<ToastValue>(list.Elements) { item };
-            return new ListValue(result);
-        }
-    );
-
-    public static readonly Command Remove = Command.CreateFunction(
-        "remove",
-        (Context context, ListValue list, ToastValue item) =>
-        {
-            var result = new List<ToastValue>(list.Elements);
-            result.Remove(item);
             return new ListValue(result);
         }
     );
@@ -222,15 +191,6 @@ public static class List
         }
     );
 
-    public static readonly Command Get = Command.CreateFunction(
-        "get",
-        (Context context, ListValue list, NumberValue index) =>
-        {
-            int i = (int)index.Value;
-            return list.Elements[i];
-        }
-    );
-
     public static readonly Command RemoveAt = Command.CreateFunction(
         "removeAt",
         (Context context, ListValue list, NumberValue index) =>
@@ -252,24 +212,20 @@ public static class List
 
     public static void Register(Toaster toast)
     {
-        toast.RegisterCommand(RangeTo);
-        toast.RegisterCommand(ListIn);
+        toast.RegisterCommand(To);
+        toast.RegisterCommand(In);
         toast.RegisterCommand(IndexAccess);
-        toast.RegisterCommand(Len);
-        toast.RegisterCommand(IndexOf);
         toast.RegisterCommand(Filter);
         toast.RegisterCommand(Map);
         toast.RegisterCommand(Reduce);
-        toast.RegisterCommand(Combine);
-        toast.RegisterCommand(Append);
-        toast.RegisterCommand(Remove);
-        toast.RegisterCommand(Sort);
-        toast.RegisterCommand(SortAs);
-        toast.RegisterCommand(Shuffle);
 
         toast.RegisterTypeMember(ToastType.List, "add", new CommandValue(Add));
-        toast.RegisterTypeMember(ToastType.List, "get", new CommandValue(Get));
         toast.RegisterTypeMember(ToastType.List, "removeAt", new CommandValue(RemoveAt));
         toast.RegisterTypeMember(ToastType.List, "length", new CommandValue(Length));
+        toast.RegisterTypeMember(ToastType.List, "indexOf", new CommandValue(IndexOf));
+        toast.RegisterTypeMember(ToastType.List, "join", new CommandValue(Join));
+        toast.RegisterTypeMember(ToastType.List, "sort", new CommandValue(Sort));
+        toast.RegisterTypeMember(ToastType.List, "sortAs", new CommandValue(SortAs));
+        toast.RegisterTypeMember(ToastType.List, "shuffle", new CommandValue(Shuffle));
     }
 }

@@ -7,7 +7,7 @@ public static class String
         (Context context, StringValue str, StringValue separator) =>
         {
             var parts = str.Value.Split([separator.Value], StringSplitOptions.None);
-            return new ListValue(parts.Select(x => (ToastValue)new StringValue(x)).ToList());
+            return new ListValue([.. parts.Select(x => (ToastValue)new StringValue(x))]);
         }
     );
 
@@ -104,20 +104,17 @@ public static class String
 
     public static void Register(Toaster toast)
     {
-        toast.RegisterCommand(Split);
-        toast.RegisterCommand(Reverse);
-        toast.RegisterCommand(StartsWith);
-        toast.RegisterCommand(EndsWith);
-        toast.RegisterCommand(Contains);
-        toast.RegisterCommand(Trim);
-        toast.RegisterCommand(Substring);
-        toast.RegisterCommand(Join);
-        toast.RegisterCommand(Replace);
-        toast.RegisterCommand(ToUpper);
-        toast.RegisterCommand(ToLower);
-
         toast.RegisterTypeMember(ToastType.String, "substring", new CommandValue(Substring));
         toast.RegisterTypeMember(ToastType.String, "contains", new CommandValue(Contains));
         toast.RegisterTypeMember(ToastType.String, "length", new CommandValue(Length));
+        toast.RegisterTypeMember(ToastType.String, "split", new CommandValue(Split));
+        toast.RegisterTypeMember(ToastType.String, "reverse", new CommandValue(Reverse));
+        toast.RegisterTypeMember(ToastType.String, "startsWith", new CommandValue(StartsWith));
+        toast.RegisterTypeMember(ToastType.String, "endsWith", new CommandValue(EndsWith));
+        toast.RegisterTypeMember(ToastType.String, "trim", new CommandValue(Trim));
+        toast.RegisterTypeMember(ToastType.String, "join", new CommandValue(Join));
+        toast.RegisterTypeMember(ToastType.String, "replace", new CommandValue(Replace));
+        toast.RegisterTypeMember(ToastType.String, "toUpper", new CommandValue(ToUpper));
+        toast.RegisterTypeMember(ToastType.String, "toLower", new CommandValue(ToLower));
     }
 }

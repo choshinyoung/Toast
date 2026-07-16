@@ -21,7 +21,9 @@ public class Context(Toaster toaster, Context? parent = null)
     {
         if (Owner != null && Toaster.ExtensionMembers.TryGetValue(Owner.Type, out var extMembers))
         {
-            var merged = new Dictionary<string, (ToastValue Value, TypeValue Constraint)>(_bindings);
+            var merged = new Dictionary<string, (ToastValue Value, TypeValue Constraint)>(
+                _bindings
+            );
             foreach (var kvp in extMembers)
             {
                 if (!merged.ContainsKey(kvp.Key))

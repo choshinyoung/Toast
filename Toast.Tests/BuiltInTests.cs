@@ -83,28 +83,29 @@ public class BuiltInTests : BaseTest
         AssertResult("list \"abc\"", new List<string> { "a", "b", "c" });
 
         // 5. String Helper Functions
-        AssertResult("split \"a,b,c\" \",\"", new List<string> { "a", "b", "c" });
-        AssertResult("reverse \"abc\"", "cba");
-        AssertResult("startsWith \"abc\" \"ab\"", true);
-        AssertResult("endsWith \"abc\" \"bc\"", true);
-        AssertResult("contains \"abc\" \"b\"", true);
-        AssertResult("trim \"  abc  \"", "abc");
-        AssertResult("substring \"abcdef\" 2 3", "cde");
-        AssertResult("join \"-\" (1 to 3)", "1-2-3");
-        AssertResult("replace \"abc\" \"b\" \"z\"", "azc");
-        AssertResult("toUpper \"abc\"", "ABC");
-        AssertResult("toLower \"ABC\"", "abc");
+        // 전역 커맨드로 등록된 String 함수들은 없음 → 인스턴스 멤버(.member) 또는 전역 등록된 것만 사용
+        AssertResult("\"a,b,c\".split(\",\")", new List<string> { "a", "b", "c" });
+        AssertResult("\"abc\".reverse()", "cba");
+        AssertResult("\"abc\".startsWith(\"ab\")", true);
+        AssertResult("\"abc\".endsWith(\"bc\")", true);
+        AssertResult("\"abc\".contains(\"b\")", true);
+        AssertResult("\"  abc  \".trim()", "abc");
+        AssertResult("\"abcdef\".substring(2, 3)", "cde");
+        AssertResult("\"-\".join([\"1\", \"2\", \"3\"])", "1-2-3");
+        AssertResult("\"abc\".replace(\"b\", \"z\")", "azc");
+        AssertResult("\"abc\".toUpper()", "ABC");
+        AssertResult("\"ABC\".toLower()", "abc");
 
         // 6. List Helper Functions
-        AssertResult("len (1 to 5)", 5);
-        AssertResult("indexOf (1 to 5) 3", 2);
+        AssertResult("(1 to 5).length", 5);
+        AssertResult("(1 to 5).indexOf(3)", 2);
         AssertResult("(10 to 15) # 2", 12);
         AssertResult("\"hello\" # 1", "e");
         AssertResult("map (1 to 3) ((x) => x * 2)", new List<object> { 2, 4, 6 });
         AssertResult("filter (1 to 5) ((x) => x > 3)", new List<object> { 4, 5 });
-        AssertResult("combine (1 to 2) (3 to 4)", new List<int> { 1, 2, 3, 4 });
-        AssertResult("append (1 to 2) 3", new List<object> { 1, 2, 3 });
-        AssertResult("remove (1 to 3) 2", new List<object> { 1, 3 });
+        AssertResult("(1 to 2).join(3 to 4)", new List<int> { 1, 2, 3, 4 });
+        AssertResult("(1 to 3).sort()", new List<int> { 1, 2, 3 });
+        AssertResult("[3, 1, 2].sort()", new List<int> { 1, 2, 3 });
     }
 
     [Fact]
@@ -171,6 +172,14 @@ public class BuiltInTests : BaseTest
             "(1 to 5) |> map ((x) => x * 10) |> filter ((x) => x > 20) |> reduce 0 ((acc, x) => acc + x)",
             120
         );
+
+        // String 함수들은 전역 커맨드 미등록이므로 파이프라인에서 람다로 감싸서 사용 (임시)
+        AssertResult("\"abc\" |> (x) => x.toUpper()", "ABC");
+        AssertResult("\"  hello  \" |> (x) => x.trim()", "hello");
+        AssertResult("\"a,b,c\" |> (x) => x.split(\",\")", new List<string> { "a", "b", "c" });
+
+        // List sort/shuffle 파이프라인 (TypeMember이므로 람다로 감싸서 사용) (임시)
+        AssertResult("[3, 1, 2] |> (x) => x.sort()", new List<int> { 1, 2, 3 });
     }
 
     [Fact]
