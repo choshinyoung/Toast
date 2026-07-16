@@ -390,6 +390,25 @@ public static class Variables
         isInfix: true
     );
 
+    public static readonly Command TypeOf = Command.CreateFunction(
+        "typeof",
+        (Context context, ToastValue val) =>
+        {
+            var typeName = val.Type.Name;
+            if (context.HasVariable(typeName))
+            {
+                var registeredVal = context.GetValue(typeName);
+                if (registeredVal is TypeValue tv)
+                {
+                    return tv;
+                }
+            }
+            return new TypeValue(val.Type, null);
+        },
+        precedence: 9,
+        isPrefix: true
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(Var);
@@ -402,5 +421,6 @@ public static class Variables
         toast.RegisterCommand(FunctionCreator);
         toast.RegisterCommand(With);
         toast.RegisterCommand(TypeAnnotation);
+        toast.RegisterCommand(TypeOf);
     }
 }

@@ -49,4 +49,30 @@ public class VariableTests : BaseTest
         Assert.Throws<InvalidOperationException>(() => Evaluate("`10", context));
         Assert.Throws<InvalidOperationException>(() => Evaluate("`(1 + 2)", context));
     }
+
+    [Fact]
+    public void TestTypeOfCommand()
+    {
+        var context = new Context(_toast);
+
+        // 1. 빌트인 리터럴 타입 테스트
+        Evaluate("var t_num = typeof 10", context);
+        AssertResult("t_num == number", true, context);
+
+        Evaluate("var t_str = typeof \"hello\"", context);
+        AssertResult("t_str == string", true, context);
+
+        Evaluate("var t_bool = typeof true", context);
+        AssertResult("t_bool == boolean", true, context);
+
+        // 2. 클래스 인스턴스 및 커스텀 타입 테스트
+        Evaluate(
+            @"class Point (x: number, y: number) => {
+            }",
+            context
+        );
+        Evaluate("var p = Point(3, 4)", context);
+        Evaluate("var t_p = typeof p", context);
+        AssertResult("t_p == Point", true, context);
+    }
 }
