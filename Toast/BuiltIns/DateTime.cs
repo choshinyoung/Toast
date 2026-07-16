@@ -46,7 +46,7 @@ public static class DateTimeBuiltIn
 
         var constructorCmd = new Command(
             "datetime",
-            (Context context, ToastObject val) => BuiltIn.ConvertToType(context, val, DateTimeType),
+            (Context context, ToastValue val) => BuiltIn.ConvertToType(context, val, DateTimeType),
             parameterTypes: [ToastType.Any]
         );
 

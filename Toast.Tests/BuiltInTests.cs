@@ -28,7 +28,7 @@ public class BuiltInTests : BaseTest
 
         // Test normal list
         var list = new ListValue(
-            new List<ToastObject> { new NumberValue(1), new NumberValue(2), new NumberValue(3) }
+            new List<ToastValue> { new NumberValue(1), new NumberValue(2), new NumberValue(3) }
         );
         var str = converter.ConvertFunc(_toast.GlobalContext, list);
         Assert.Equal(new StringValue("[1, 2, 3]"), str);

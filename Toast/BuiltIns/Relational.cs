@@ -4,15 +4,13 @@ public static class Relational
 {
     public static readonly Command Equal = Command.CreateOperator(
         "==",
-        (Context context, ToastObject left, ToastObject right) =>
-            new BoolValue(Equals(left, right)),
+        (Context context, ToastValue left, ToastValue right) => new BoolValue(Equals(left, right)),
         precedence: 4
     );
 
     public static readonly Command NotEqual = Command.CreateOperator(
         "!=",
-        (Context context, ToastObject left, ToastObject right) =>
-            new BoolValue(!Equals(left, right)),
+        (Context context, ToastValue left, ToastValue right) => new BoolValue(!Equals(left, right)),
         precedence: 4
     );
 
@@ -46,7 +44,7 @@ public static class Relational
 
     public static readonly Command Is = Command.CreateFunction(
         "is",
-        (Context context, ToastObject left, ToastObject right) =>
+        (Context context, ToastValue left, ToastValue right) =>
         {
             if (right is NullValue)
             {

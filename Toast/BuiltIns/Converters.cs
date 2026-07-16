@@ -91,7 +91,7 @@ public static class Converters
         (_, val) =>
             new ListValue(
                 ((StringValue)val)
-                    .Value.Select(c => (ToastObject)new StringValue(c.ToString()))
+                    .Value.Select(c => (ToastValue)new StringValue(c.ToString()))
                     .ToList()
             )
     );

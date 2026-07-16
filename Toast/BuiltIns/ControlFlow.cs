@@ -68,7 +68,7 @@ public static class ControlFlow
         "while",
         (Context context, AstNodeValue cond, AstNodeValue body) =>
         {
-            ToastObject lastVal = NullValue.Instance;
+            ToastValue lastVal = NullValue.Instance;
             while (true)
             {
                 var condVal = context.Toaster.Evaluate(cond.Node, context);
@@ -97,7 +97,7 @@ public static class ControlFlow
         "for",
         (Context context, ListValue items, AstNodeValue body) =>
         {
-            ToastObject lastVal = NullValue.Instance;
+            ToastValue lastVal = NullValue.Instance;
             var bodyVal = context.Toaster.Evaluate(body.Node, context);
             if (bodyVal is FunctionValue funcVal)
             {

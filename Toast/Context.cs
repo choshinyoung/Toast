@@ -3,14 +3,14 @@ namespace Toast;
 public class Context(Toaster toaster, Context? parent = null)
 {
     private readonly Context? _parent = parent;
-    private readonly Dictionary<string, ToastObject> _bindings = [];
+    private readonly Dictionary<string, ToastValue> _bindings = [];
 
     public Toaster Toaster { get; } = toaster;
 
     public Context(Context parent)
         : this(parent.Toaster, parent) { }
 
-    public IReadOnlyDictionary<string, ToastObject> GetBindings() => _bindings;
+    public IReadOnlyDictionary<string, ToastValue> GetBindings() => _bindings;
 
     private Context? FindContext(string name)
     {
@@ -45,7 +45,7 @@ public class Context(Toaster toaster, Context? parent = null)
         }
     }
 
-    public ToastObject GetValue(string name)
+    public ToastValue GetValue(string name)
     {
         var ctx =
             FindContext(name)
@@ -53,14 +53,14 @@ public class Context(Toaster toaster, Context? parent = null)
         return ctx.GetValueDirect(name);
     }
 
-    public ToastObject GetValueDirect(string name) =>
+    public ToastValue GetValueDirect(string name) =>
         _bindings.TryGetValue(name, out var val)
             ? val
             : throw new InvalidOperationException(
                 $"Variable '{name}' is not defined in this context."
             );
 
-    public void SetValue(string name, ToastObject value)
+    public void SetValue(string name, ToastValue value)
     {
         var ctx =
             FindContext(name)
@@ -68,5 +68,5 @@ public class Context(Toaster toaster, Context? parent = null)
         ctx.SetValueDirect(name, value);
     }
 
-    public void SetValueDirect(string name, ToastObject value) => _bindings[name] = value;
+    public void SetValueDirect(string name, ToastValue value) => _bindings[name] = value;
 }

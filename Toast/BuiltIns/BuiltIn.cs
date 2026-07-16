@@ -9,7 +9,7 @@ public static class BuiltIn
         RegisterBuiltInTypes(toast);
     }
 
-    public static ToastObject ConvertToType(Context context, ToastObject val, ToastType targetType)
+    public static ToastValue ConvertToType(Context context, ToastValue val, ToastType targetType)
     {
         var sourceType = val.Type;
         if (sourceType == targetType)
@@ -38,7 +38,7 @@ public static class BuiltIn
     {
         var cmd = new Command(
             name,
-            (Context context, ToastObject val) => ConvertToType(context, val, targetType),
+            (Context context, ToastValue val) => ConvertToType(context, val, targetType),
             parameterTypes: [ToastType.Any]
         );
         var typeValue = new TypeValue(targetType, cmd);

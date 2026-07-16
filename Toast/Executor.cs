@@ -2,7 +2,7 @@ namespace Toast;
 
 public class Executor(Toaster _toast)
 {
-    public ToastObject Execute(string rawInput)
+    public ToastValue Execute(string rawInput)
     {
         var tokens = Lexer.Tokenize(rawInput);
         var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
@@ -12,12 +12,12 @@ public class Executor(Toaster _toast)
     public bool SuppressZeroArgFunction { get; set; } = false;
     public bool SuppressDereference { get; set; } = false;
 
-    public ToastObject Evaluate(Node node, Context context)
+    public ToastValue Evaluate(Node node, Context context)
     {
         return Evaluate(node, context, suppressZeroArgFunction: false, suppressDereference: false);
     }
 
-    internal ToastObject Evaluate(
+    internal ToastValue Evaluate(
         Node node,
         Context context,
         bool suppressZeroArgFunction,
@@ -61,7 +61,7 @@ public class Executor(Toaster _toast)
         }
     }
 
-    private ToastObject EvaluateIdentifier(
+    private ToastValue EvaluateIdentifier(
         IdentifierNode identifier,
         Context context,
         bool suppressZeroArgFunction
@@ -107,9 +107,9 @@ public class Executor(Toaster _toast)
         );
     }
 
-    private ToastObject EvaluateProgram(ProgramNode program, Context context)
+    private ToastValue EvaluateProgram(ProgramNode program, Context context)
     {
-        ToastObject lastVal = NullValue.Instance;
+        ToastValue lastVal = NullValue.Instance;
         foreach (var stmt in program.Statements)
         {
             lastVal = Evaluate(stmt, context, SuppressZeroArgFunction, SuppressDereference);
@@ -117,7 +117,7 @@ public class Executor(Toaster _toast)
         return lastVal;
     }
 
-    private ToastObject EvaluateGroup(GroupNode group, Context context)
+    private ToastValue EvaluateGroup(GroupNode group, Context context)
     {
         if (group.Items.Count == 1)
         {
@@ -130,7 +130,7 @@ public class Executor(Toaster _toast)
         ]);
     }
 
-    private ToastObject EvaluateList(ListNode list, Context context)
+    private ToastValue EvaluateList(ListNode list, Context context)
     {
         return new ListValue([
             .. list.Items.Select(item =>
@@ -139,7 +139,7 @@ public class Executor(Toaster _toast)
         ]);
     }
 
-    private ToastObject EvaluateCall(CallNode call, Context context)
+    private ToastValue EvaluateCall(CallNode call, Context context)
     {
         var callArgs = call.Arguments.ToList();
         if (callArgs.Count == 1 && callArgs[0] is GroupNode gn)
@@ -199,7 +199,7 @@ public class Executor(Toaster _toast)
         throw new InvalidOperationException($"Callee is not a callable function or command.");
     }
 
-    private ToastObject ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
+    private ToastValue ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
     {
         if (cmd.ParameterCount != callArgs.Count)
         {
@@ -208,7 +208,7 @@ public class Executor(Toaster _toast)
             );
         }
 
-        var finalArgs = new ToastObject[callArgs.Count];
+        var finalArgs = new ToastValue[callArgs.Count];
         if (cmd.IsRightAssociative)
         {
             for (int i = callArgs.Count - 1; i >= 0; i--)
@@ -239,7 +239,7 @@ public class Executor(Toaster _toast)
                     i < cmd.ParameterTypes.Count ? cmd.ParameterTypes[i] : ToastType.Any;
                 var isReference = expectedType == ToastType.Reference;
 
-                ToastObject evalVal;
+                ToastValue evalVal;
                 if (expectedType == ToastType.Identifier && callArgs[i] is IdentifierNode idNode)
                 {
                     evalVal = new IdentifierValue(idNode.Name);
@@ -277,7 +277,7 @@ public class Executor(Toaster _toast)
         }
     }
 
-    private static ToastObject ExecuteFunction(FunctionValue funcVal, List<ToastObject> evalArgs)
+    private static ToastValue ExecuteFunction(FunctionValue funcVal, List<ToastValue> evalArgs)
     {
         return funcVal.Execute(evalArgs);
     }

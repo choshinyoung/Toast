@@ -20,7 +20,7 @@ public static class Variables
 
     public static readonly Command Assign = Command.CreateOperator(
         "=",
-        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
         {
             leftVal.Target.SetValue(rightVal);
             return rightVal;
@@ -31,10 +31,10 @@ public static class Variables
 
     public static readonly Command AssignAdd = Command.CreateOperator(
         "+=",
-        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
         {
             var currentVal = leftVal.Target.GetValue();
-            ToastObject newVal;
+            ToastValue newVal;
             if (currentVal is StringValue || rightVal is StringValue)
             {
                 newVal = new StringValue(currentVal.ToString() + rightVal.ToString());
@@ -56,7 +56,7 @@ public static class Variables
 
     public static readonly Command AssignSub = Command.CreateOperator(
         "-=",
-        (Context context, ReferenceValue leftVal, ToastObject rightVal) =>
+        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
         {
             var currentVal = leftVal.Target.GetValue();
             if (currentVal is NumberValue ln && rightVal is NumberValue rn)
@@ -73,7 +73,7 @@ public static class Variables
 
     public static readonly Command MemberAccess = Command.CreateOperator(
         ".",
-        (Context context, ToastObject left, AstNodeValue rightNode) =>
+        (Context context, ToastValue left, AstNodeValue rightNode) =>
         {
             if (left is not ObjectValue objVal)
             {
@@ -132,7 +132,7 @@ public static class Variables
 
         return new Command(
             name,
-            (Context callerCtx, ToastObject[] args) =>
+            (Context callerCtx, ToastValue[] args) =>
             {
                 if (args.Length != funcVal.Parameters.Count)
                 {

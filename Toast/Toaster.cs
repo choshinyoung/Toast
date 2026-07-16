@@ -26,7 +26,7 @@ public class Toaster
 
     public void RegisterType(
         string name,
-        Func<Context, ToastObject[], ToastObject> constructorFunc,
+        Func<Context, ToastValue[], ToastValue> constructorFunc,
         HashSet<string>? declaredMembers = null
     )
     {
@@ -138,22 +138,22 @@ public class Toaster
         return token.Value != null && PrefixCommands.ContainsKey(token.Value);
     }
 
-    public ToastObject Execute(string rawInput)
+    public ToastValue Execute(string rawInput)
     {
         return Executor.Execute(rawInput);
     }
 
-    public ToastObject Evaluate(Node node, Context context)
+    public ToastValue Evaluate(Node node, Context context)
     {
         return Executor.Evaluate(node, context);
     }
 
     public bool TryConvert(
-        ToastObject obj,
+        ToastValue obj,
         ToastType actual,
         ToastType expected,
         Context context,
-        out ToastObject result
+        out ToastValue result
     )
     {
         if (expected == ToastType.Any || expected == actual)

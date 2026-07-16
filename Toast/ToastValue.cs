@@ -1,11 +1,11 @@
 namespace Toast;
 
-public abstract record ToastObject
+public abstract record ToastValue
 {
     public abstract ToastType Type { get; }
 }
 
-public sealed record NullValue : ToastObject
+public sealed record NullValue : ToastValue
 {
     public static readonly NullValue Instance = new();
 
@@ -16,35 +16,35 @@ public sealed record NullValue : ToastObject
     public override string ToString() => "null";
 }
 
-public sealed record StringValue(string Value) : ToastObject
+public sealed record StringValue(string Value) : ToastValue
 {
     public override ToastType Type => ToastType.String;
 
     public override string ToString() => Value;
 }
 
-public sealed record NumberValue(double Value) : ToastObject
+public sealed record NumberValue(double Value) : ToastValue
 {
     public override ToastType Type => ToastType.Number;
 
     public override string ToString() => Value.ToString();
 }
 
-public sealed record BoolValue(bool Value) : ToastObject
+public sealed record BoolValue(bool Value) : ToastValue
 {
     public override ToastType Type => ToastType.Boolean;
 
     public override string ToString() => Value ? "true" : "false";
 }
 
-public sealed record ListValue(List<ToastObject> Elements) : ToastObject
+public sealed record ListValue(List<ToastValue> Elements) : ToastValue
 {
     public override ToastType Type => ToastType.List;
 
     public override string ToString() => "[" + string.Join(", ", Elements) + "]";
 }
 
-public sealed record ObjectValue(Context Context, ToastType? CustomType = null) : ToastObject
+public sealed record ObjectValue(Context Context, ToastType? CustomType = null) : ToastValue
 {
     public override ToastType Type => CustomType ?? ToastType.Object;
 
@@ -61,13 +61,13 @@ public sealed record FunctionValue(
     IReadOnlyList<Node> Statements,
     Context ClosureContext,
     Toaster Toaster
-) : ToastObject
+) : ToastValue
 {
     public override ToastType Type => ToastType.Function;
 
     public override string ToString() => "function";
 
-    public ToastObject Execute(List<ToastObject> evalArgs)
+    public ToastValue Execute(List<ToastValue> evalArgs)
     {
         var runContext = new Context(ClosureContext);
         for (int i = 0; i < Parameters.Count; i++)
@@ -77,7 +77,7 @@ public sealed record FunctionValue(
             runContext.SetValueDirect(param.Name, argVal);
         }
 
-        ToastObject lastVal = NullValue.Instance;
+        ToastValue lastVal = NullValue.Instance;
         foreach (var stmt in Statements)
         {
             lastVal = Toaster.Executor.Evaluate(stmt, runContext);
@@ -86,14 +86,14 @@ public sealed record FunctionValue(
     }
 }
 
-public sealed record CommandValue(Command Command) : ToastObject
+public sealed record CommandValue(Command Command) : ToastValue
 {
     public override ToastType Type => ToastType.Function;
 
     public override string ToString() => "function";
 }
 
-public sealed record TypeValue : ToastObject
+public sealed record TypeValue : ToastValue
 {
     public ToastType TargetType { get; }
     public Command Constructor { get; }
@@ -115,21 +115,21 @@ public sealed record TypeValue : ToastObject
     public override string ToString() => TargetType.Name;
 }
 
-public sealed record IdentifierValue(string Name) : ToastObject
+public sealed record IdentifierValue(string Name) : ToastValue
 {
     public override ToastType Type => ToastType.Identifier;
 
     public override string ToString() => Name;
 }
 
-public sealed record AstNodeValue(Node Node) : ToastObject
+public sealed record AstNodeValue(Node Node) : ToastValue
 {
     public override ToastType Type => ToastType.Any;
 
     public override string ToString() => Node.ToString();
 }
 
-public sealed record ReferenceValue(IAssignTarget Target) : ToastObject
+public sealed record ReferenceValue(IAssignTarget Target) : ToastValue
 {
     public override ToastType Type => ToastType.Reference;
 

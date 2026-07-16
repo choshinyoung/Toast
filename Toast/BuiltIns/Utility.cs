@@ -4,7 +4,7 @@ public static class Utility
 {
     public static readonly Command Print = Command.CreateFunction(
         "print",
-        (Context context, ToastObject val) =>
+        (Context context, ToastValue val) =>
         {
             Console.WriteLine(val);
             return NullValue.Instance;
@@ -74,7 +74,7 @@ public static class Utility
                 suppressDereference: true
             );
 
-            ToastObject finalResult;
+            ToastValue finalResult;
             if (result is ReferenceValue refVal)
             {
                 var innerVal = refVal.Target.GetValue();

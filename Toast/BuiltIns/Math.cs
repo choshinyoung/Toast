@@ -11,7 +11,7 @@ public static class Math
 
     public static readonly Command Addition = Command.CreateOperator(
         "+",
-        ToastObject (Context context, ToastObject left, ToastObject right) =>
+        ToastValue (Context context, ToastValue left, ToastValue right) =>
         {
             if (left is StringValue || right is StringValue)
             {

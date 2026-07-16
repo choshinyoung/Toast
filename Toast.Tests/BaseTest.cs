@@ -4,7 +4,7 @@ public abstract class BaseTest
 {
     protected readonly Toaster _toast = new(useBuiltIn: true);
 
-    protected ToastObject Evaluate(string source, Context context)
+    protected ToastValue Evaluate(string source, Context context)
     {
         var tokens = Lexer.Tokenize(source);
         var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
@@ -38,7 +38,7 @@ public abstract class BaseTest
         }
     }
 
-    protected static ToastObject UnifyExpected(object? expected)
+    protected static ToastValue UnifyExpected(object? expected)
     {
         if (expected == null)
             return NullValue.Instance;
@@ -54,7 +54,7 @@ public abstract class BaseTest
             return new NumberValue(f);
         if (expected is bool b)
             return new BoolValue(b);
-        if (expected is ToastObject to)
+        if (expected is ToastValue to)
             return to;
         throw new NotSupportedException($"Unification not supported for type {expected.GetType()}");
     }

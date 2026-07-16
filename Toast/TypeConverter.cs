@@ -3,10 +3,10 @@ namespace Toast;
 public class TypeConverter(
     ToastType source,
     ToastType target,
-    Func<Context, ToastObject, ToastObject> convertFunc
+    Func<Context, ToastValue, ToastValue> convertFunc
 )
 {
     public ToastType Source { get; } = source;
     public ToastType Target { get; } = target;
-    public Func<Context, ToastObject, ToastObject> ConvertFunc { get; } = convertFunc;
+    public Func<Context, ToastValue, ToastValue> ConvertFunc { get; } = convertFunc;
 }

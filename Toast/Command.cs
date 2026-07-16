@@ -5,7 +5,7 @@ namespace Toast;
 public class Command
 {
     public string Name { get; }
-    public Func<Context, ToastObject[], ToastObject> TargetDelegate { get; }
+    public Func<Context, ToastValue[], ToastValue> TargetDelegate { get; }
     public int Precedence { get; }
     public bool IsRightAssociative { get; }
     public bool IsPrefix { get; }
@@ -69,23 +69,23 @@ public class Command
         }
     }
 
-    private static Func<Context, ToastObject[], ToastObject> CompileDelegate(Delegate del)
+    private static Func<Context, ToastValue[], ToastValue> CompileDelegate(Delegate del)
     {
         var method = del.Method;
         var target = del.Target;
         var parameters = method.GetParameters();
 
         if (
-            del is Func<Context, ToastObject[], ToastObject> fastFunc
+            del is Func<Context, ToastValue[], ToastValue> fastFunc
             && parameters.Length == 2
-            && parameters[1].ParameterType == typeof(ToastObject[])
+            && parameters[1].ParameterType == typeof(ToastValue[])
         )
         {
             return fastFunc;
         }
 
         var contextParam = Expression.Parameter(typeof(Context), "context");
-        var argsParam = Expression.Parameter(typeof(ToastObject[]), "args");
+        var argsParam = Expression.Parameter(typeof(ToastValue[]), "args");
 
         var callArgs = new List<Expression> { contextParam };
 
@@ -111,17 +111,17 @@ public class Command
         {
             var block = Expression.Block(
                 call,
-                Expression.Constant(NullValue.Instance, typeof(ToastObject))
+                Expression.Constant(NullValue.Instance, typeof(ToastValue))
             );
             return Expression
-                .Lambda<Func<Context, ToastObject[], ToastObject>>(block, contextParam, argsParam)
+                .Lambda<Func<Context, ToastValue[], ToastValue>>(block, contextParam, argsParam)
                 .Compile();
         }
         else
         {
-            var castResult = Expression.Convert(call, typeof(ToastObject));
+            var castResult = Expression.Convert(call, typeof(ToastValue));
             return Expression
-                .Lambda<Func<Context, ToastObject[], ToastObject>>(
+                .Lambda<Func<Context, ToastValue[], ToastValue>>(
                     castResult,
                     contextParam,
                     argsParam
@@ -173,10 +173,10 @@ public class Command
 
     private static ToastType MapToToastType(Type type)
     {
-        if (!typeof(ToastObject).IsAssignableFrom(type))
+        if (!typeof(ToastValue).IsAssignableFrom(type))
         {
             throw new InvalidOperationException(
-                $"Command parameter type '{type.Name}' must inherit from ToastObject."
+                $"Command parameter type '{type.Name}' must inherit from ToastValue."
             );
         }
 

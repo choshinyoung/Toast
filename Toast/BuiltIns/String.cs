@@ -7,7 +7,7 @@ public static class String
         (Context context, StringValue str, StringValue separator) =>
         {
             var parts = str.Value.Split([separator.Value], StringSplitOptions.None);
-            return new ListValue(parts.Select(x => (ToastObject)new StringValue(x)).ToList());
+            return new ListValue(parts.Select(x => (ToastValue)new StringValue(x)).ToList());
         }
     );
 

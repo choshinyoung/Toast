@@ -8,7 +8,7 @@ public static class List
         {
             int l = (int)left.Value;
             int r = (int)right.Value;
-            var list = new List<ToastObject>();
+            var list = new List<ToastValue>();
             for (int i = l; i <= r; i++)
             {
                 list.Add(new NumberValue(i));
@@ -21,7 +21,7 @@ public static class List
 
     public static readonly Command ListIn = Command.CreateFunction(
         "in",
-        (Context context, ToastObject left, ListValue right) =>
+        (Context context, ToastValue left, ListValue right) =>
         {
             foreach (var item in right.Elements)
             {
@@ -36,7 +36,7 @@ public static class List
 
     public static readonly Command IndexAccess = Command.CreateOperator(
         "#",
-        (Context context, ToastObject list, NumberValue index) =>
+        (Context context, ToastValue list, NumberValue index) =>
         {
             int idx = (int)index.Value;
             if (list is StringValue str)
@@ -69,7 +69,7 @@ public static class List
 
     public static readonly Command Len = Command.CreateFunction(
         "len",
-        (Context context, ToastObject list) =>
+        (Context context, ToastValue list) =>
         {
             if (list is StringValue str)
                 return new NumberValue(str.Value.Length);
@@ -81,7 +81,7 @@ public static class List
 
     public static readonly Command IndexOf = Command.CreateFunction(
         "indexOf",
-        (Context context, ListValue list, ToastObject item) =>
+        (Context context, ListValue list, ToastValue item) =>
         {
             return new NumberValue(list.Elements.IndexOf(item));
         }
@@ -91,7 +91,7 @@ public static class List
         "filter",
         (Context context, ListValue list, FunctionValue predicate) =>
         {
-            var result = new List<ToastObject>();
+            var result = new List<ToastValue>();
             foreach (var item in list.Elements)
             {
                 var res = predicate.Execute([item]);
@@ -108,7 +108,7 @@ public static class List
         "map",
         (Context context, ListValue list, FunctionValue mapper) =>
         {
-            var result = new List<ToastObject>();
+            var result = new List<ToastValue>();
             foreach (var item in list.Elements)
             {
                 result.Add(mapper.Execute([item]));
@@ -119,7 +119,7 @@ public static class List
 
     public static readonly Command Reduce = Command.CreateFunction(
         "reduce",
-        (Context context, ListValue list, ToastObject initial, FunctionValue reducer) =>
+        (Context context, ListValue list, ToastValue initial, FunctionValue reducer) =>
         {
             var acc = initial;
             foreach (var item in list.Elements)
@@ -141,18 +141,18 @@ public static class List
 
     public static readonly Command Append = Command.CreateFunction(
         "append",
-        (Context context, ListValue list, ToastObject item) =>
+        (Context context, ListValue list, ToastValue item) =>
         {
-            var result = new List<ToastObject>(list.Elements) { item };
+            var result = new List<ToastValue>(list.Elements) { item };
             return new ListValue(result);
         }
     );
 
     public static readonly Command Remove = Command.CreateFunction(
         "remove",
-        (Context context, ListValue list, ToastObject item) =>
+        (Context context, ListValue list, ToastValue item) =>
         {
-            var result = new List<ToastObject>(list.Elements);
+            var result = new List<ToastValue>(list.Elements);
             result.Remove(item);
             return new ListValue(result);
         }
@@ -162,7 +162,7 @@ public static class List
         "sort",
         (Context context, ListValue list) =>
         {
-            var result = new List<ToastObject>(list.Elements);
+            var result = new List<ToastValue>(list.Elements);
             result.Sort(
                 (a, b) =>
                 {
@@ -183,7 +183,7 @@ public static class List
         "sortAs",
         (Context context, ListValue list, FunctionValue keySelector) =>
         {
-            var result = new List<ToastObject>(list.Elements);
+            var result = new List<ToastValue>(list.Elements);
             result.Sort(
                 (a, b) =>
                 {
