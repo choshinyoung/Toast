@@ -18,6 +18,8 @@ public enum TokenKind
     RParen,
     LBrace,
     RBrace,
+    LDoubleBrace,
+    RDoubleBrace,
     LBracket,
     RBracket,
     Comma,
@@ -37,6 +39,8 @@ public static class Lexer
         .Match(Span.Regex(@"[A-Za-z_][A-Za-z0-9_]*"), TokenKind.Identifier)
         .Match(Character.EqualTo('('), TokenKind.LParen)
         .Match(Character.EqualTo(')'), TokenKind.RParen)
+        .Match(Span.EqualTo("{{"), TokenKind.LDoubleBrace)
+        .Match(Span.EqualTo("}}"), TokenKind.RDoubleBrace)
         .Match(Character.EqualTo('{'), TokenKind.LBrace)
         .Match(Character.EqualTo('}'), TokenKind.RBrace)
         .Match(Character.EqualTo('['), TokenKind.LBracket)

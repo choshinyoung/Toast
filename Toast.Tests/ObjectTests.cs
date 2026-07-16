@@ -50,6 +50,32 @@ public class ObjectTests : BaseTest
     }
 
     [Fact]
+    public void TestObjectLiteralSugar()
+    {
+        var context = new Context(_toast);
+
+        // 1. 단일 라인 이중 중괄호 객체 초기화
+        Evaluate("var obj = {{ x = 10, y = 20 }}", context);
+        AssertResult("obj.x", 10, context);
+        AssertResult("obj.y", 20, context);
+
+        // 2. 대입을 통한 속성 변경
+        Evaluate("obj.x = 42", context);
+        AssertResult("obj.x", 42, context);
+
+        // 3. 다중 라인 이중 중괄호 객체 초기화 및 var 선언 지원
+        Evaluate(
+            @"var obj2 = {{
+                var a = 1
+                var b = 2
+            }}",
+            context
+        );
+        AssertResult("obj2.a", 1, context);
+        AssertResult("obj2.b", 2, context);
+    }
+
+    [Fact]
     public void TestClassAndFunctionSyntaxSugar()
     {
         var context = new Context(_toast);

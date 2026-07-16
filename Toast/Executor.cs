@@ -42,6 +42,7 @@ public class Executor(Toaster _toast)
                 ProgramNode program => EvaluateProgram(program, context),
                 GroupNode group => EvaluateGroup(group, context),
                 ListNode list => EvaluateList(list, context),
+                ObjectLiteralNode objLiteral => EvaluateObjectLiteral(objLiteral, context),
                 FunctionNode function => new FunctionValue(
                     function.Parameters,
                     function.Statements,
@@ -137,6 +138,31 @@ public class Executor(Toaster _toast)
                 Evaluate(item, context, SuppressZeroArgFunction, SuppressDereference)
             ),
         ]);
+    }
+
+    private ObjectValue EvaluateObjectLiteral(ObjectLiteralNode objLiteral, Context context)
+    {
+        var objCtx = new Context(context);
+        foreach (var stmt in objLiteral.Statements)
+        {
+            if (
+                stmt is CallNode callNode
+                && callNode.Callee is IdentifierNode idNode
+                && idNode.Name == "="
+            )
+            {
+                if (callNode.Arguments.Count > 0 && callNode.Arguments[0] is IdentifierNode leftId)
+                {
+                    objCtx.GetOrCreateLocal(leftId.Name);
+                }
+            }
+        }
+
+        foreach (var stmt in objLiteral.Statements)
+        {
+            Evaluate(stmt, objCtx, SuppressZeroArgFunction, SuppressDereference);
+        }
+        return new ObjectValue(objCtx);
     }
 
     private ToastValue EvaluateCall(CallNode call, Context context)

@@ -20,3 +20,5 @@ public sealed record CallNode(Node Callee, IReadOnlyList<Node> Arguments) : Node
 public sealed record IdentifierNode(string Name) : Node;
 
 public sealed record LiteralNode(ToastType Type, ToastValue Value) : Node;
+
+public sealed record ObjectLiteralNode(IReadOnlyList<Node> Statements) : Node;

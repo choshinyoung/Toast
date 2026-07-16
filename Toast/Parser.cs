@@ -202,11 +202,34 @@ public class Parser(
             ),
             TokenKind.LParen => ParseGroup(),
             TokenKind.LBrace => ParseBlock(),
+            TokenKind.LDoubleBrace => ParseObjectLiteral(),
             TokenKind.LBracket => ParseList(),
             _ => throw new InvalidOperationException(
                 $"Unexpected token '{current.Kind}' ('{current.Value}')."
             ),
         };
+    }
+
+    private ObjectLiteralNode ParseObjectLiteral()
+    {
+        var statements = new List<Node>();
+
+        MatchWhileNewline();
+
+        if (!Check(TokenKind.RDoubleBrace))
+        {
+            do
+            {
+                statements.Add(ParseExpression());
+                MatchWhileNewline();
+                Match(TokenKind.Comma);
+                MatchWhileNewline();
+            } while (!IsAtEnd() && !Check(TokenKind.RDoubleBrace));
+        }
+
+        Expect(TokenKind.RDoubleBrace, "Expected '}}' to close object literal.");
+
+        return new ObjectLiteralNode(statements);
     }
 
     private FunctionNode ParseFunctionLiteral()
@@ -381,6 +404,7 @@ public class Parser(
     private bool CanBeArgument(Token token) =>
         token.Kind != TokenKind.RParen
         && token.Kind != TokenKind.RBrace
+        && token.Kind != TokenKind.RDoubleBrace
         && token.Kind != TokenKind.RBracket
         && token.Kind != TokenKind.Comma
         && token.Kind != TokenKind.NewLine
