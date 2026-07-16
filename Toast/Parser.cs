@@ -65,18 +65,47 @@ public class Parser(
                     && cn2.Callee is IdentifierNode id2
                     && IsInfixOperator(new Token(TokenKind.Symbol, id2.Name))
                     && cn2.Arguments.Count >= 2;
-                if (left is CallNode callNode && !isPrefixCall && !isInfixCall)
+
+                if (Peek().Kind == TokenKind.LParen && !IsFunctionLiteral())
                 {
-                    var arguments = new List<Node>(callNode.Arguments)
+                    Consume();
+                    var argList = new List<Node>();
+                    while (!Check(TokenKind.RParen) && !IsAtEnd())
                     {
-                        ParseExpression(PrefixPrecedence),
-                    };
-                    left = callNode with { Arguments = arguments };
+                        argList.Add(ParseExpression());
+                        if (!Match(TokenKind.Comma))
+                        {
+                            break;
+                        }
+                    }
+                    Expect(TokenKind.RParen, "Expected ')' after argument list.");
+
+                    if (left is CallNode callNode && !isPrefixCall && !isInfixCall)
+                    {
+                        var arguments = new List<Node>(callNode.Arguments);
+                        arguments.AddRange(argList);
+                        left = callNode with { Arguments = arguments };
+                    }
+                    else
+                    {
+                        left = new CallNode(left, argList);
+                    }
                 }
                 else
                 {
-                    var arguments = new[] { ParseExpression(PrefixPrecedence) };
-                    left = new CallNode(left, arguments);
+                    if (left is CallNode callNode && !isPrefixCall && !isInfixCall)
+                    {
+                        var arguments = new List<Node>(callNode.Arguments)
+                        {
+                            ParseExpression(PrefixPrecedence),
+                        };
+                        left = callNode with { Arguments = arguments };
+                    }
+                    else
+                    {
+                        var arguments = new[] { ParseExpression(PrefixPrecedence) };
+                        left = new CallNode(left, arguments);
+                    }
                 }
 
                 if (_position == beforePos)

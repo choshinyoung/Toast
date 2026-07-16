@@ -91,6 +91,7 @@ public class BuiltInTests : BaseTest
         AssertResult("\"abc\".contains(\"b\")", true);
         AssertResult("\"  abc  \".trim()", "abc");
         AssertResult("\"abcdef\".substring(2, 3)", "cde");
+        AssertResult("\"Hello\".substring(1, 3).reverse()", "lle");
         AssertResult("\"-\".join([\"1\", \"2\", \"3\"])", "1-2-3");
         AssertResult("\"abc\".replace(\"b\", \"z\")", "azc");
         AssertResult("\"abc\".toUpper()", "ABC");
