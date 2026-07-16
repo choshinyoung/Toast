@@ -9,6 +9,12 @@ public class ObjectTests : BaseTest
 
         // 1. Test Object literal creation using type definition
         Evaluate("var ObjMaker = type { var x = 10\n var y = 20 }", context);
+
+        var rawType = Evaluate("`ObjMaker", context);
+        var refVal = Assert.IsType<ReferenceValue>(rawType);
+        var typeVal = Assert.IsType<TypeValue>(refVal.Target.GetValue());
+        Assert.Equal("(type: { x, y })", typeVal.ToString());
+
         var obj1 = Evaluate("ObjMaker", context);
         var objVal1 = Assert.IsType<ObjectValue>(obj1);
         Assert.Equal(new NumberValue(10), objVal1.Context.GetValue("x"));

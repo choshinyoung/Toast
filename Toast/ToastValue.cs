@@ -112,7 +112,15 @@ public sealed record TypeValue : ToastValue
 
     public override ToastType Type => ToastType.Type;
 
-    public override string ToString() => TargetType.Name;
+    public override string ToString()
+    {
+        if (TargetType.Name == "type_factory")
+        {
+            var sortedMembers = DeclaredMembers.OrderBy(m => m);
+            return $"(type: {{ {string.Join(", ", sortedMembers)} }})";
+        }
+        return $"(type: {TargetType.Name})";
+    }
 }
 
 public sealed record IdentifierValue(string Name) : ToastValue

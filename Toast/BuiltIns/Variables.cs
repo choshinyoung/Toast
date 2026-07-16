@@ -167,32 +167,54 @@ public static class Variables
         }
         foreach (var stmt in funcVal.Statements)
         {
-            if (stmt is CallNode callNode && callNode.Callee is IdentifierNode idNode)
-            {
-                Command? cmd = null;
-                if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
-                    cmd = prefixCmd;
-                else if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
-                    cmd = infixCmd;
-                else if (
-                    context.HasVariable(idNode.Name)
-                    && context.GetValue(idNode.Name) is CommandValue cmdVal
-                )
-                    cmd = cmdVal.Command;
+            FindMembers(stmt);
+        }
+        return members;
 
-                if (cmd != null && cmd.DeclaresMember)
+        void FindMembers(Node node)
+        {
+            if (node is CallNode callNode)
+            {
+                if (callNode.Callee is IdentifierNode idNode)
                 {
-                    if (
-                        callNode.Arguments.Count > 0
-                        && callNode.Arguments[0] is IdentifierNode argId
+                    Command? cmd = null;
+                    if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
+                        cmd = prefixCmd;
+                    else if (
+                        context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd)
                     )
+                        cmd = infixCmd;
+                    else if (
+                        context.HasVariable(idNode.Name)
+                        && context.GetValue(idNode.Name) is CommandValue cmdVal
+                    )
+                        cmd = cmdVal.Command;
+
+                    if (cmd != null && cmd.DeclaresMember)
                     {
-                        members.Add(argId.Name);
+                        if (
+                            callNode.Arguments.Count > 0
+                            && callNode.Arguments[0] is IdentifierNode argId
+                        )
+                        {
+                            members.Add(argId.Name);
+                        }
                     }
+                }
+
+                foreach (var arg in callNode.Arguments)
+                {
+                    FindMembers(arg);
+                }
+            }
+            else if (node is GroupNode groupNode)
+            {
+                foreach (var item in groupNode.Items)
+                {
+                    FindMembers(item);
                 }
             }
         }
-        return members;
     }
 
     public static readonly Command TypeCreator = Command.CreateFunction(
