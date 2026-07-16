@@ -6,6 +6,7 @@ public class Context(Toaster toaster, Context? parent = null)
     private readonly Dictionary<string, ToastValue> _bindings = [];
 
     public Toaster Toaster { get; } = toaster;
+    public Context? Parent => _parent;
 
     public Context(Context parent)
         : this(parent.Toaster, parent) { }

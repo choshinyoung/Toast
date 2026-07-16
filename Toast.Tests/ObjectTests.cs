@@ -148,4 +148,32 @@ public class ObjectTests : BaseTest
         AssertResult("p.x", 4, context);
         AssertResult("p.y", 6, context);
     }
+
+    [Fact]
+    public void TestWithCommand()
+    {
+        var context = new Context(_toast);
+
+        // Class Point 정의
+        Evaluate(
+            @"class Point (x, y) => {
+            }",
+            context
+        );
+
+        // 1. 단일 with 연산 테스트
+        Evaluate("var p1 = Point(3, 4) with {{ x = 0 }}", context);
+        AssertResult("p1.x", 0, context);
+        AssertResult("p1.y", 4, context);
+
+        // 2. with 연산 체이닝 및 불변성 검증
+        Evaluate("var p2 = Point(1, 2) with {{ x = 10 }} with {{ y = 20 }}", context);
+        AssertResult("p2.x", 10, context);
+        AssertResult("p2.y", 20, context);
+
+        // 원본 Point(1, 2)는 변경되지 않았는지 확인
+        Evaluate("var original = Point(1, 2)", context);
+        AssertResult("original.x", 1, context);
+        AssertResult("original.y", 2, context);
+    }
 }

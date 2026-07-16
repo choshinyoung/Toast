@@ -241,6 +241,25 @@ public static class Variables
         declaresMember: true
     );
 
+    public static readonly Command With = Command.CreateFunction(
+        "with",
+        (Context context, ObjectValue left, ObjectValue right) =>
+        {
+            var newCtx = new Context(left.Context.Toaster, left.Context.Parent);
+            foreach (var kvp in left.Context.GetBindings())
+            {
+                newCtx.SetValueDirect(kvp.Key, kvp.Value);
+            }
+            foreach (var kvp in right.Context.GetBindings())
+            {
+                newCtx.SetValueDirect(kvp.Key, kvp.Value);
+            }
+            return new ObjectValue(newCtx, left.CustomType);
+        },
+        precedence: 6,
+        isInfix: true
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(Var);
@@ -251,5 +270,6 @@ public static class Variables
         toast.RegisterCommand(TypeCreator);
         toast.RegisterCommand(ClassCreator);
         toast.RegisterCommand(FunctionCreator);
+        toast.RegisterCommand(With);
     }
 }
