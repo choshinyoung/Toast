@@ -2,6 +2,8 @@ namespace Toast;
 
 public class Toaster
 {
+    public static readonly Toaster Empty = new(useBuiltIn: false);
+
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
     public readonly Dictionary<(ToastType Source, ToastType Target), TypeConverter> Converters = [];

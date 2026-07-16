@@ -198,7 +198,14 @@ public class Parser(
             ),
             TokenKind.String => new LiteralNode(
                 ToastType.String,
-                new StringValue(current.Value!.Trim('"'))
+                new StringValue(
+                    (
+                        (current.Value!.StartsWith('"') && current.Value!.EndsWith('"'))
+                        || (current.Value!.StartsWith('\'') && current.Value!.EndsWith('\''))
+                    )
+                        ? current.Value![1..^1]
+                        : current.Value!
+                )
             ),
             TokenKind.LParen => ParseGroup(),
             TokenKind.LBrace => ParseBlock(),

@@ -16,11 +16,56 @@ public record NullValue : ToastValue
     public override string ToString() => "null";
 }
 
-public record StringValue(string Value) : ToastValue
+public record StringValue : ObjectValue
 {
+    public string Value { get; }
     public override ToastType Type => ToastType.String;
 
+    public StringValue(string value)
+        : base(new Context(Toaster.Empty))
+    {
+        Value = value;
+        Context.SetValueDirect("length", new NumberValue(value.Length));
+
+        Context.SetValueDirect(
+            "substring",
+            new CommandValue(
+                Command.CreateFunction(
+                    "substring",
+                    (Context ctx, NumberValue start, NumberValue len) =>
+                    {
+                        int s = (int)start.Value;
+                        int l = (int)len.Value;
+                        return new StringValue(value.Substring(s, l));
+                    }
+                )
+            )
+        );
+
+        Context.SetValueDirect(
+            "contains",
+            new CommandValue(
+                Command.CreateFunction(
+                    "contains",
+                    (Context ctx, StringValue search) =>
+                    {
+                        return new BoolValue(value.Contains(search.Value));
+                    }
+                )
+            )
+        );
+    }
+
     public override string ToString() => Value;
+
+    public virtual bool Equals(StringValue? other)
+    {
+        if (other is null)
+            return false;
+        return Value == other.Value;
+    }
+
+    public override int GetHashCode() => Value.GetHashCode();
 }
 
 public record NumberValue(double Value) : ToastValue
@@ -37,11 +82,75 @@ public record BoolValue(bool Value) : ToastValue
     public override string ToString() => Value ? "true" : "false";
 }
 
-public record ListValue(List<ToastValue> Elements) : ToastValue
+public record ListValue : ObjectValue
 {
+    public List<ToastValue> Elements { get; }
     public override ToastType Type => ToastType.List;
 
+    public ListValue(List<ToastValue> elements)
+        : base(new Context(Toaster.Empty))
+    {
+        Elements = elements;
+        Context.SetValueDirect("length", new NumberValue(elements.Count));
+
+        Context.SetValueDirect(
+            "add",
+            new CommandValue(
+                Command.CreateFunction(
+                    "add",
+                    (Context ctx, ToastValue item) =>
+                    {
+                        elements.Add(item);
+                        Context.SetValueDirect("length", new NumberValue(elements.Count));
+                        return NullValue.Instance;
+                    }
+                )
+            )
+        );
+
+        Context.SetValueDirect(
+            "removeAt",
+            new CommandValue(
+                Command.CreateFunction(
+                    "removeAt",
+                    (Context ctx, NumberValue index) =>
+                    {
+                        int i = (int)index.Value;
+                        var removed = elements[i];
+                        elements.RemoveAt(i);
+                        Context.SetValueDirect("length", new NumberValue(elements.Count));
+                        return removed;
+                    }
+                )
+            )
+        );
+    }
+
     public override string ToString() => "[" + string.Join(", ", Elements) + "]";
+
+    public virtual bool Equals(ListValue? other)
+    {
+        if (other is null)
+            return false;
+        if (Elements.Count != other.Elements.Count)
+            return false;
+        for (int i = 0; i < Elements.Count; i++)
+        {
+            if (!Elements[i].Equals(other.Elements[i]))
+                return false;
+        }
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        int hash = 17;
+        foreach (var el in Elements)
+        {
+            hash = hash * 31 + (el?.GetHashCode() ?? 0);
+        }
+        return hash;
+    }
 }
 
 public record ObjectValue(Context Context, ToastType? CustomType = null) : ToastValue

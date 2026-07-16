@@ -275,4 +275,37 @@ public class ObjectTests : BaseTest
         Evaluate("var type_factory = 100", context);
         AssertResult("type_factory", 100, context);
     }
+
+    [Fact]
+    public void TestStringAndListObjectLikeMembers()
+    {
+        var context = new Context(_toast);
+
+        // 1. StringValue 멤버 접근 검증
+        Evaluate("var s = \"hello\"", context);
+        AssertResult("s.length", 5, context);
+        AssertResult("s.contains(\"ell\")", true, context);
+        AssertResult("s.substring(1, 3)", "ell", context);
+
+        // 홑따옴표와 쌍따옴표의 문자열 길이 파싱 무결성 검증
+        AssertResult("'asdf'.length", 4, context);
+        AssertResult("'hello'.length", 5, context);
+        AssertResult("\"Hello\".length", 5, context);
+        AssertResult("\"asdf\".length", 4, context);
+
+        // 2. ListValue 멤버 접근 검증
+        Evaluate("var l = [1, 2, 3]", context);
+        AssertResult("l.length", 3, context);
+        AssertResult("l.get(1)", 2, context);
+
+        // add 멤버 함수 동작 확인
+        Evaluate("l.add(4)", context);
+        AssertResult("l.length", 4, context);
+        AssertResult("l.get(3)", 4, context);
+
+        // removeAt 멤버 함수 동작 확인
+        AssertResult("l.removeAt(1)", 2, context);
+        AssertResult("l.length", 3, context);
+        AssertResult("l.get(1)", 3, context);
+    }
 }
