@@ -114,7 +114,13 @@ public record FunctionValue(
 {
     public override ToastType Type => ToastType.Function;
 
-    public override string ToString() => "function";
+    public override string ToString()
+    {
+        var paramStrings = Parameters.Select(p =>
+            p.Type != null ? $"{p.Name}: {p.Type.Type.Name}" : p.Name
+        );
+        return $"function({string.Join(", ", paramStrings)})";
+    }
 
     public ToastValue Execute(List<ToastValue> evalArgs)
     {
@@ -164,7 +170,11 @@ public record CommandValue(Command Command) : ToastValue
 {
     public override ToastType Type => ToastType.Function;
 
-    public override string ToString() => "function";
+    public override string ToString()
+    {
+        var paramStrings = Command.Parameters.Select(p => $"{p.Name}: {p.Type.Name}");
+        return $"function({string.Join(", ", paramStrings)})";
+    }
 }
 
 public record TypeValue : ToastValue

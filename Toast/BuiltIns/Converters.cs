@@ -65,13 +65,19 @@ public static class Converters
                     }
                     else
                     {
-                        items.Add($"{kvp.Key}: {kvp.Value}");
+                        items.Add($"{kvp.Key}: {innerVal}");
                     }
                 }
                 return new StringValue($"{{{string.Join(", ", items)}}}");
             }
             return new StringValue("{}");
         }
+    );
+
+    public static readonly TypeConverter FunctionToString = new(
+        ToastType.Function,
+        ToastType.String,
+        (_, val) => new StringValue(val.ToString())
     );
 
     public static readonly TypeConverter StringToNumber = new(
@@ -103,6 +109,7 @@ public static class Converters
         toast.RegisterConverter(BooleanToString);
         toast.RegisterConverter(ListToString);
         toast.RegisterConverter(ObjectToString);
+        toast.RegisterConverter(FunctionToString);
         toast.RegisterConverter(StringToNumber);
         toast.RegisterConverter(StringToBoolean);
         toast.RegisterConverter(StringToList);

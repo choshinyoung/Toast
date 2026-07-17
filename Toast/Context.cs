@@ -40,8 +40,8 @@ public class Context(Toaster toaster, Context? parent = null)
                                 Array.Copy(args, 0, boundArgs, 1, args.Length);
                                 return origCmd.TargetDelegate(ctx, boundArgs);
                             },
-                            parameterTypes: origCmd.ParameterTypes.Skip(1).ToList(),
-                            isParameterLazy: origCmd.IsParameterLazy.Skip(1).ToList()
+                            parameterTypes: [.. origCmd.Parameters.Skip(1).Select(p => p.Type)],
+                            isParameterLazy: [.. origCmd.Parameters.Skip(1).Select(p => p.IsLazy)]
                         );
                         merged[kvp.Key] = (new CommandValue(boundCmd), TypeValue.Any);
                     }

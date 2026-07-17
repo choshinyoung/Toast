@@ -122,4 +122,29 @@ public class FunctionTests : BaseTest
             new List<string> { "a", "b", "c" }
         );
     }
+
+    [Fact]
+    public void TestFunctionToStringAndObjectFormatting()
+    {
+        var context = new Context(_toast);
+        // Test `() => {}` ToString
+        var func = Evaluate("`(() => {})", context);
+        Assert.Equal("function()", func.ToString());
+
+        // Test `(x, y) => {}` ToString
+        var funcWithArgs = Evaluate("`((x, y) => {})", context);
+        Assert.Equal("function(x, y)", funcWithArgs.ToString());
+
+        // Test `(x: number, y: string) => {}` ToString
+        var funcWithTypedArgs = Evaluate("`((x: number, y: string) => {})", context);
+        Assert.Equal("function(x: number, y: string)", funcWithTypedArgs.ToString());
+
+        // Test inside object
+        var objStr = Evaluate("var obj = {{ x = () => {} }}\n string obj", context);
+        Assert.Equal("{x: function()}", objStr.ToString());
+
+        // Test C# Command/Builtin ToString formatting
+        var plusFunc = Evaluate("`(+)", context);
+        Assert.Equal("function(left: any, right: any)", plusFunc.ToString());
+    }
 }

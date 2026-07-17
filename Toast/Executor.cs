@@ -268,7 +268,7 @@ public class Executor(Toaster _toast)
 
         void EvaluateArg(int i)
         {
-            var isLazy = i < cmd.IsParameterLazy.Count && cmd.IsParameterLazy[i];
+            var isLazy = i < cmd.Parameters.Count && cmd.Parameters[i].IsLazy;
             if (isLazy)
             {
                 finalArgs[i] = new AstNodeValue(callArgs[i]);
@@ -276,7 +276,7 @@ public class Executor(Toaster _toast)
             else
             {
                 var expectedType =
-                    i < cmd.ParameterTypes.Count ? cmd.ParameterTypes[i] : ToastType.Any;
+                    i < cmd.Parameters.Count ? cmd.Parameters[i].Type : ToastType.Any;
                 var isReference = expectedType == ToastType.Reference;
 
                 ToastValue evalVal;

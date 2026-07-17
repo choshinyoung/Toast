@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 
 namespace Toast;
 
+public record CommandParameter(string Name, ToastType Type, bool IsLazy);
+
 public class Command
 {
     public string Name { get; }
@@ -11,9 +13,8 @@ public class Command
     public bool IsPrefix { get; }
     public bool IsInfix { get; }
     public bool DeclaresMember { get; }
-    public IReadOnlyList<ToastType> ParameterTypes { get; }
-    public IReadOnlyList<bool> IsParameterLazy { get; }
-    public int ParameterCount => ParameterTypes.Count;
+    public IReadOnlyList<CommandParameter> Parameters { get; }
+    public int ParameterCount => Parameters.Count;
 
     public Command(
         string name,
@@ -35,31 +36,34 @@ public class Command
         DeclaresMember = declaresMember;
 
         var method = targetDelegate.Method;
-        var parameters = method.GetParameters();
+        var methodParams = method.GetParameters();
 
         TargetDelegate = CompileDelegate(targetDelegate);
 
+        var list = new List<CommandParameter>();
         if (parameterTypes != null && isParameterLazy != null)
         {
-            ParameterTypes = parameterTypes;
-            IsParameterLazy = isParameterLazy;
+            for (int i = 0; i < parameterTypes.Count; i++)
+            {
+                var pName = (i + 1 < methodParams.Length) ? (methodParams[i + 1].Name ?? $"arg{i + 1}") : $"arg{i + 1}";
+                var pType = parameterTypes[i];
+                var pLazy = i < isParameterLazy.Count && isParameterLazy[i];
+                list.Add(new CommandParameter(pName, pType, pLazy));
+            }
         }
         else if (
-            parameters.Length > 0
-            && typeof(Context).IsAssignableFrom(parameters[0].ParameterType)
+            methodParams.Length > 0
+            && typeof(Context).IsAssignableFrom(methodParams[0].ParameterType)
         )
         {
-            var types = new List<ToastType>();
-            var isLazy = new List<bool>();
-            for (int i = 1; i < parameters.Length; i++)
+            for (int i = 1; i < methodParams.Length; i++)
             {
-                var paramType = parameters[i].ParameterType;
-                bool lazy = paramType == typeof(AstNodeValue);
-                isLazy.Add(lazy);
-                types.Add(MapToToastType(paramType));
+                var param = methodParams[i];
+                var pName = param.Name ?? $"arg{i}";
+                var pType = MapToToastType(param.ParameterType);
+                var pLazy = param.ParameterType == typeof(AstNodeValue);
+                list.Add(new CommandParameter(pName, pType, pLazy));
             }
-            ParameterTypes = types;
-            IsParameterLazy = isLazy;
         }
         else
         {
@@ -67,6 +71,7 @@ public class Command
                 $"Command delegate for '{name}' must have Context as its first parameter."
             );
         }
+        Parameters = list;
     }
 
     private static Func<Context, ToastValue[], ToastValue> CompileDelegate(Delegate del)
