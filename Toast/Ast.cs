@@ -22,3 +22,6 @@ public sealed record IdentifierNode(string Name) : Node;
 public sealed record LiteralNode(ToastType Type, ToastValue Value) : Node;
 
 public sealed record ObjectLiteralNode(IReadOnlyList<Node> Statements) : Node;
+
+public sealed record InterpolatedStringNode(IReadOnlyList<Node> Parts) : Node;
+

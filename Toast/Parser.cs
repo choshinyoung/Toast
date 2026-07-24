@@ -225,17 +225,7 @@ public class Parser(
                 ToastType.Number,
                 new NumberValue(double.Parse(current.Value!))
             ),
-            TokenKind.String => new LiteralNode(
-                ToastType.String,
-                new StringValue(
-                    (
-                        (current.Value!.StartsWith('"') && current.Value!.EndsWith('"'))
-                        || (current.Value!.StartsWith('\'') && current.Value!.EndsWith('\''))
-                    )
-                        ? current.Value![1..^1]
-                        : current.Value!
-                )
-            ),
+            TokenKind.String => ParseStringLiteral(current.Value!),
             TokenKind.LParen => ParseGroup(),
             TokenKind.LBrace => ParseBlock(),
             TokenKind.LDoubleBrace => ParseObjectLiteral(),
@@ -244,6 +234,146 @@ public class Parser(
                 $"Unexpected token '{current.Kind}' ('{current.Value}')."
             ),
         };
+    }
+
+    private Node ParseStringLiteral(string rawTokenValue)
+    {
+        string str = rawTokenValue;
+        if (
+            (str.StartsWith('"') && str.EndsWith('"'))
+            || (str.StartsWith('\'') && str.EndsWith('\''))
+        )
+        {
+            str = str[1..^1];
+        }
+
+        var parts = new List<Node>();
+        var sbStatic = new System.Text.StringBuilder();
+        int i = 0;
+        int len = str.Length;
+
+        while (i < len)
+        {
+            if (str[i] == '\\' && i + 1 < len)
+            {
+                char next = str[i + 1];
+                switch (next)
+                {
+                    case 'n': sbStatic.Append('\n'); break;
+                    case '"': sbStatic.Append('"'); break;
+                    case '\'': sbStatic.Append('\''); break;
+                    case '\\': sbStatic.Append('\\'); break;
+                    case '{': sbStatic.Append('{'); break;
+                    case '}': sbStatic.Append('}'); break;
+                    default:
+                        throw new InvalidOperationException(
+                            $"Invalid escape sequence '\\{next}' in string literal."
+                        );
+                }
+                i += 2;
+                continue;
+            }
+
+            if (str[i] == '{')
+            {
+                if (sbStatic.Length > 0)
+                {
+                    parts.Add(new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString())));
+                    sbStatic.Clear();
+                }
+
+                int startExpr = i + 1;
+                int depth = 1;
+                int j = startExpr;
+                bool inString = false;
+                char stringQuote = '\0';
+
+                while (j < len && depth > 0)
+                {
+                    char c = str[j];
+                    if (inString)
+                    {
+                        if (c == '\\' && j + 1 < len)
+                        {
+                            j += 2;
+                            continue;
+                        }
+                        if (c == stringQuote)
+                        {
+                            inString = false;
+                        }
+                    }
+                    else
+                    {
+                        if (c == '"' || c == '\'')
+                        {
+                            inString = true;
+                            stringQuote = c;
+                        }
+                        else if (c == '{')
+                        {
+                            depth++;
+                        }
+                        else if (c == '}')
+                        {
+                            depth--;
+                        }
+                    }
+                    if (depth > 0) j++;
+                }
+
+                if (depth != 0)
+                {
+                    throw new InvalidOperationException("Unmatched '{' in string interpolation.");
+                }
+
+                string exprStr = str[startExpr..j];
+                i = j + 1;
+
+                if (string.IsNullOrWhiteSpace(exprStr))
+                {
+                    parts.Add(new LiteralNode(ToastType.String, new StringValue("")));
+                }
+                else
+                {
+                    var tokens = Lexer.Tokenize(exprStr);
+                    var programNode = Parse(tokens, _infixResolver, _prefixResolver);
+                    if (programNode.Statements.Count == 1)
+                    {
+                        parts.Add(programNode.Statements[0]);
+                    }
+                    else if (programNode.Statements.Count > 1)
+                    {
+                        parts.Add(new GroupNode(programNode.Statements));
+                    }
+                    else
+                    {
+                        parts.Add(new LiteralNode(ToastType.String, new StringValue("")));
+                    }
+                }
+                continue;
+            }
+
+            sbStatic.Append(str[i]);
+            i++;
+        }
+
+        if (sbStatic.Length > 0)
+        {
+            parts.Add(new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString())));
+        }
+
+        if (parts.Count == 0)
+        {
+            return new LiteralNode(ToastType.String, new StringValue(""));
+        }
+
+        if (parts.Count == 1 && parts[0] is LiteralNode literalNode)
+        {
+            return literalNode;
+        }
+
+        return new InterpolatedStringNode(parts);
     }
 
     private ObjectLiteralNode ParseObjectLiteral()

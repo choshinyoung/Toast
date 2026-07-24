@@ -50,6 +50,10 @@ public class Executor(Toaster _toast)
                     _toast
                 ),
                 CallNode call => EvaluateCall(call, context),
+                InterpolatedStringNode interpolated => EvaluateInterpolatedString(
+                    interpolated,
+                    context
+                ),
                 _ => throw new NotSupportedException(
                     $"Node type '{node.GetType().Name}' is not supported."
                 ),
@@ -320,5 +324,24 @@ public class Executor(Toaster _toast)
     private static ToastValue ExecuteFunction(FunctionValue funcVal, List<ToastValue> evalArgs)
     {
         return funcVal.Execute(evalArgs);
+    }
+
+    private ToastValue EvaluateInterpolatedString(
+        InterpolatedStringNode interpolated,
+        Context context
+    )
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var part in interpolated.Parts)
+        {
+            var val = Evaluate(
+                part,
+                context,
+                suppressZeroArgFunction: false,
+                suppressDereference: false
+            );
+            sb.Append(val.ToString());
+        }
+        return new StringValue(sb.ToString());
     }
 }

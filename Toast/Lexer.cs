@@ -1,4 +1,5 @@
 using Superpower;
+using Superpower.Model;
 using Superpower.Parsers;
 using Superpower.Tokenizers;
 
@@ -32,8 +33,8 @@ public static class Lexer
         .Ignore(Comment.CPlusPlusStyle)
         .Ignore(Comment.CStyle)
         .Match(Span.Regex(@"(?:\r\n|\n|\r)"), TokenKind.NewLine)
-        .Match(QuotedString.CStyle, TokenKind.String)
-        .Match(QuotedString.SqlStyle, TokenKind.String)
+        .Match(CustomStringParser('"'), TokenKind.String)
+        .Match(CustomStringParser('\''), TokenKind.String)
         .Match(Span.Regex(@"(?:\d+\.\d+|\.\d+)"), TokenKind.Float)
         .Match(Numerics.Natural, TokenKind.Integer)
         .Match(Span.Regex(@"[A-Za-z_][A-Za-z0-9_]*"), TokenKind.Identifier)
@@ -56,4 +57,93 @@ public static class Lexer
     }
 
     private static bool IsHorizontalWhitespace(char ch) => ch is ' ' or '	' or '\f' or '\v';
+
+    private static TextParser<TextSpan> CustomStringParser(char quote) => input =>
+    {
+        if (input.IsAtEnd)
+        {
+            return Result.Empty<TextSpan>(input);
+        }
+
+        var str = input.Source;
+        if (str == null)
+        {
+            return Result.Empty<TextSpan>(input);
+        }
+
+        int start = input.Position.Absolute;
+        if (start >= str.Length || str[start] != quote)
+        {
+            return Result.Empty<TextSpan>(input);
+        }
+
+        int i = start + 1;
+        int len = str.Length;
+        int braceDepth = 0;
+        bool inString = false;
+        char inStringQuote = '\0';
+
+        while (i < len)
+        {
+            char c = str[i];
+
+            if (braceDepth > 0)
+            {
+                if (inString)
+                {
+                    if (c == '\\' && i + 1 < len)
+                    {
+                        i += 2;
+                        continue;
+                    }
+                    if (c == inStringQuote)
+                    {
+                        inString = false;
+                    }
+                }
+                else
+                {
+                    if (c == '"' || c == '\'')
+                    {
+                        inString = true;
+                        inStringQuote = c;
+                    }
+                    else if (c == '{')
+                    {
+                        braceDepth++;
+                    }
+                    else if (c == '}')
+                    {
+                        braceDepth--;
+                    }
+                }
+                i++;
+                continue;
+            }
+
+            if (c == '\\' && i + 1 < len)
+            {
+                i += 2;
+                continue;
+            }
+
+            if (c == '{')
+            {
+                braceDepth++;
+                i++;
+                continue;
+            }
+
+            if (c == quote)
+            {
+                i++;
+                var remainder = input.Skip(i - start);
+                return Result.Value(input.Until(remainder), input, remainder);
+            }
+
+            i++;
+        }
+
+        return Result.Empty<TextSpan>(input, $"Unterminated string literal starting with '{quote}'.");
+    };
 }
