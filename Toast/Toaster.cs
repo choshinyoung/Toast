@@ -168,12 +168,18 @@ public class Toaster
             return true;
         }
 
+        if (expected == ToastType.ErrorValue && actual == ToastType.ErrorValue)
+        {
+            return true;
+        }
+
         if (expected == ToastType.Object)
         {
             if (
                 actual == ToastType.Object
                 || actual == ToastType.String
                 || actual == ToastType.List
+                || actual == ToastType.ErrorValue
             )
             {
                 return true;
@@ -193,7 +199,10 @@ public class Toaster
             }
         }
 
-        if (ToastType.BuiltInTypeNames.Contains(expected.Name) || ToastType.BuiltInTypeNames.Contains(actual.Name))
+        if (
+            ToastType.BuiltInTypeNames.Contains(expected.Name)
+            || ToastType.BuiltInTypeNames.Contains(actual.Name)
+        )
         {
             return false;
         }

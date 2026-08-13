@@ -53,9 +53,7 @@ public static class Variables
 
             if (context.GetBindings().ContainsKey(varName))
             {
-                throw new InvalidOperationException(
-                    $"Variable '{varName}' is already defined in the current scope."
-                );
+                throw new ToastException(RuntimeError.AlreadyDefined(varName));
             }
             context.GetOrCreateLocal(varName, typeConstraint);
             return new ReferenceValue(new VariableAssignTarget(context, varName));
@@ -90,7 +88,7 @@ public static class Variables
             }
             else
             {
-                throw new InvalidOperationException("Invalid types for += operator.");
+                throw new ToastException(new TypeError("Invalid types for += operator."));
             }
             leftVal.Target.SetValue(newVal);
             return newVal;
@@ -110,7 +108,7 @@ public static class Variables
                 leftVal.Target.SetValue(newVal);
                 return newVal;
             }
-            throw new InvalidOperationException("Invalid types for -= operator.");
+            throw new ToastException(new TypeError("Invalid types for -= operator."));
         },
         precedence: 1,
         isRightAssociative: true
@@ -122,12 +120,12 @@ public static class Variables
         {
             if (left is not ObjectValue objVal)
             {
-                throw new InvalidOperationException("Left side of '.' must be an object.");
+                throw new ToastException(new TypeError("Left side of '.' must be an object."));
             }
 
             if (rightNode.Node is not IdentifierNode idNode)
             {
-                throw new InvalidOperationException("Right side of '.' must be an identifier.");
+                throw new ToastException(new TypeError("Right side of '.' must be an identifier."));
             }
 
             string fieldName = idNode.Name;
@@ -140,9 +138,7 @@ public static class Variables
             var bindings = objVal.Context.GetBindings();
             if (!bindings.TryGetValue(fieldName, out var binding))
             {
-                throw new InvalidOperationException(
-                    $"Property '{fieldName}' is not defined on target object."
-                );
+                throw new ToastException(RuntimeError.PropertyNotDefined(fieldName));
             }
 
             var val = binding.Value;
@@ -176,10 +172,10 @@ public static class Variables
             name,
             (Context callerCtx, ToastValue[] args) =>
             {
-                if (args.Length != funcVal.Parameters.Count)
+                if (funcVal.Parameters.Count != args.Length)
                 {
-                    throw new InvalidOperationException(
-                        $"Arity mismatch: {kind} constructor expects {funcVal.Parameters.Count} arguments, but got {args.Length}."
+                    throw new ToastException(
+                        TypeError.ArityMismatch(kind, funcVal.Parameters.Count, args.Length)
                     );
                 }
 
@@ -206,8 +202,8 @@ public static class Variables
                                 )
                             )
                             {
-                                throw new InvalidOperationException(
-                                    $"Type mismatch: Constructor parameter '{param.Name}' expects {expectedType}, but got {argVal.Type}."
+                                throw new ToastException(
+                                    TypeError.Mismatch(expectedType, argVal.Type, param.Name)
                                 );
                             }
                             argVal = converted;
@@ -348,9 +344,7 @@ public static class Variables
         {
             if (context.GetBindings().ContainsKey(id.Name))
             {
-                throw new InvalidOperationException(
-                    $"Variable '{id.Name}' is already defined in the current scope."
-                );
+                throw new ToastException(RuntimeError.AlreadyDefined(id.Name));
             }
             context.SetValueDirect(id.Name, funcVal);
             return funcVal;

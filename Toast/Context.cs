@@ -92,8 +92,7 @@ public class Context(Toaster toaster, Context? parent = null)
     public ToastValue GetValue(string name)
     {
         var ctx =
-            FindContext(name)
-            ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
+            FindContext(name) ?? throw new ToastException(RuntimeError.UndefinedVariable(name));
         return ctx.GetValueDirect(name);
     }
 
@@ -109,14 +108,13 @@ public class Context(Toaster toaster, Context? parent = null)
             _bindings[name] = extBinding;
             return extBinding.Value;
         }
-        throw new InvalidOperationException($"Variable '{name}' is not defined in this context.");
+        throw new ToastException(RuntimeError.UndefinedVariable(name));
     }
 
     public TypeValue GetConstraint(string name)
     {
         var ctx =
-            FindContext(name)
-            ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
+            FindContext(name) ?? throw new ToastException(RuntimeError.UndefinedVariable(name));
         ctx.GetValueDirect(name); // 캐싱 강제
         return ctx._bindings[name].Constraint;
     }
@@ -124,8 +122,7 @@ public class Context(Toaster toaster, Context? parent = null)
     public void SetValue(string name, ToastValue value)
     {
         var ctx =
-            FindContext(name)
-            ?? throw new InvalidOperationException($"Variable '{name}' is not defined.");
+            FindContext(name) ?? throw new ToastException(RuntimeError.UndefinedVariable(name));
         ctx.SetValueDirect(name, value);
     }
 
@@ -143,8 +140,8 @@ public class Context(Toaster toaster, Context? parent = null)
                 && !Toaster.IsCompatible(value.Type, binding.Constraint.TargetType, this)
             )
             {
-                throw new InvalidOperationException(
-                    $"Type mismatch: Cannot assign value of type {value.Type} to variable '{name}' which is constrained to {binding.Constraint.TargetType}."
+                throw new ToastException(
+                    TypeError.CannotAssign(value.Type, name, binding.Constraint.TargetType)
                 );
             }
             _bindings[name] = (value, binding.Constraint);

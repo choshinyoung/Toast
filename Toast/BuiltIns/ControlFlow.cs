@@ -57,7 +57,9 @@ public static class ControlFlow
                 }
             }
 
-            throw new InvalidOperationException("Left side of 'else' must be an 'if' expression.");
+            throw new ToastException(
+                new SyntaxError("Left side of 'else' must be an 'if' expression.")
+            );
         },
         precedence: 6,
         isRightAssociative: true,

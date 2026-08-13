@@ -88,7 +88,7 @@ public class Parser(
                     }
                     else
                     {
-                        left = new CallNode(left, argList);
+                        left = new CallNode(left, argList) { Location = left.Location };
                     }
                 }
                 else
@@ -104,7 +104,7 @@ public class Parser(
                     else
                     {
                         var arguments = new[] { ParseExpression(PrefixPrecedence) };
-                        left = new CallNode(left, arguments);
+                        left = new CallNode(left, arguments) { Location = left.Location };
                     }
                 }
 
@@ -214,7 +214,7 @@ public class Parser(
 
     private Node ParsePrimary(Token current)
     {
-        return current.Kind switch
+        Node node = current.Kind switch
         {
             TokenKind.Identifier => new IdentifierNode(current.Value!),
             TokenKind.Integer => new LiteralNode(
@@ -230,10 +230,19 @@ public class Parser(
             TokenKind.LBrace => ParseBlock(),
             TokenKind.LDoubleBrace => ParseObjectLiteral(),
             TokenKind.LBracket => ParseList(),
-            _ => throw new InvalidOperationException(
-                $"Unexpected token '{current.Kind}' ('{current.Value}')."
+            _ => throw new ToastException(
+                new SyntaxError(
+                    $"Unexpected token '{current.Kind}' ('{current.Value}').",
+                    current.Location
+                )
             ),
         };
+
+        if (node.Location == null || node.Location == Location.Unknown)
+        {
+            return node with { Location = current.Location };
+        }
+        return node;
     }
 
     private Node ParseStringLiteral(string rawTokenValue)
@@ -259,12 +268,24 @@ public class Parser(
                 char next = str[i + 1];
                 switch (next)
                 {
-                    case 'n': sbStatic.Append('\n'); break;
-                    case '"': sbStatic.Append('"'); break;
-                    case '\'': sbStatic.Append('\''); break;
-                    case '\\': sbStatic.Append('\\'); break;
-                    case '{': sbStatic.Append('{'); break;
-                    case '}': sbStatic.Append('}'); break;
+                    case 'n':
+                        sbStatic.Append('\n');
+                        break;
+                    case '"':
+                        sbStatic.Append('"');
+                        break;
+                    case '\'':
+                        sbStatic.Append('\'');
+                        break;
+                    case '\\':
+                        sbStatic.Append('\\');
+                        break;
+                    case '{':
+                        sbStatic.Append('{');
+                        break;
+                    case '}':
+                        sbStatic.Append('}');
+                        break;
                     default:
                         throw new InvalidOperationException(
                             $"Invalid escape sequence '\\{next}' in string literal."
@@ -278,7 +299,9 @@ public class Parser(
             {
                 if (sbStatic.Length > 0)
                 {
-                    parts.Add(new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString())));
+                    parts.Add(
+                        new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString()))
+                    );
                     sbStatic.Clear();
                 }
 
@@ -319,7 +342,8 @@ public class Parser(
                             depth--;
                         }
                     }
-                    if (depth > 0) j++;
+                    if (depth > 0)
+                        j++;
                 }
 
                 if (depth != 0)
@@ -485,7 +509,13 @@ public class Parser(
         var nextPrecedence = isRight ? precedence - 1 : precedence;
         var right = ParseExpression(nextPrecedence);
 
-        return new CallNode(new IdentifierNode(opToken.Value!), [left, right]);
+        return new CallNode(
+            new IdentifierNode(opToken.Value!) { Location = opToken.Location },
+            [left, right]
+        )
+        {
+            Location = left.Location,
+        };
     }
 
     private bool IsFunctionLiteral()
@@ -595,7 +625,8 @@ public class Parser(
         SkipIgnoredNewlines();
         if (IsAtEnd())
         {
-            throw new InvalidOperationException("Unexpected end of file.");
+            var loc = _tokens.Count > 0 ? _tokens[^1].Location : new Location(1, 1);
+            throw new ToastException(new SyntaxError("Unexpected end of file.", loc));
         }
 
         var token = _tokens[_position];
@@ -639,8 +670,11 @@ public class Parser(
             return Consume();
         }
 
+        var loc = IsAtEnd()
+            ? (_tokens.Count > 0 ? _tokens[^1].Location : new Location(1, 1))
+            : Peek().Location;
         var current = IsAtEnd() ? "end of file" : $"'{Peek().Value}' ({Peek().Kind})";
-        throw new InvalidOperationException($"{message} Found {current}.");
+        throw new ToastException(new SyntaxError($"{message} Found {current}.", loc));
     }
 
     private void Expect(TokenKind kind, string value, string message)
@@ -650,7 +684,10 @@ public class Parser(
             return;
         }
 
+        var loc = IsAtEnd()
+            ? (_tokens.Count > 0 ? _tokens[^1].Location : new Location(1, 1))
+            : Peek().Location;
         var current = IsAtEnd() ? "end of file" : $"'{Peek().Value}' ({Peek().Kind})";
-        throw new InvalidOperationException($"{message} Found {current}.");
+        throw new ToastException(new SyntaxError($"{message} Found {current}.", loc));
     }
 }

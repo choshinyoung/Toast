@@ -192,7 +192,7 @@ public class ObjectTests : BaseTest
         Evaluate("var x: number = 10", context);
         AssertResult("x", 10, context);
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             Evaluate("x = \"hello\"", context);
         });
@@ -205,13 +205,13 @@ public class ObjectTests : BaseTest
         );
         Evaluate("var p: Point = Point(3, 4)", context);
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             // Point가 아닌 number 대입 시도
             Evaluate("p = 42", context);
         });
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             // 객체 멤버에 number가 아닌 string 대입 시도
             Evaluate("p.x = \"hello\"", context);
@@ -244,7 +244,7 @@ public class ObjectTests : BaseTest
         AssertResult("p.y", 2, context);
 
         // 반대로 Point3D 변수 p3d 에 Point 타입 객체 v 대입 시도는 실패해야 함 (z 멤버 부족)
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             Evaluate("p3d = v", context);
         });
@@ -256,7 +256,7 @@ public class ObjectTests : BaseTest
 
         // 자동 형변환이 불가능한 클래스 인스턴스를 number 매개변수에 전달 시 에러 발생
         Evaluate("var g = (x: number) => x * x", context);
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             Evaluate("g(p)", context);
         });
@@ -328,7 +328,7 @@ public class ObjectTests : BaseTest
             sandboxCtx
         );
         // length도 이제 BuiltIn 이므로 등록되지 않아 예외를 발생시켜야 함
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             sandboxToast.Evaluate(
                 Parser.Parse(
@@ -341,7 +341,7 @@ public class ObjectTests : BaseTest
         });
 
         // 하지만 substring 이나 contains 같은 빌트인 함수 멤버들은 등록되지 않았으므로 예외를 발생시켜야 함!
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             sandboxToast.Evaluate(
                 Parser.Parse(
@@ -352,7 +352,7 @@ public class ObjectTests : BaseTest
                 sandboxCtx
             );
         });
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             sandboxToast.Evaluate(
                 Parser.Parse(
@@ -372,13 +372,13 @@ public class ObjectTests : BaseTest
 
         // 1. . 연산자 뒤에 변수 이름 a 가 오더라도 부모 스코프 a="# "를 가져오지 않고 해당 멤버가 없으면 예외 발생
         Evaluate("var a = \"#\"", context);
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             Evaluate("\"hello\".a", context);
         });
 
         // 2. . 연산자 뒤에는 식별자(Identifier)만 올 수 있으며, 문자열 리터럴 "length" 가 오면 예외 발생
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsAny<InvalidOperationException>(() =>
         {
             Evaluate("\"hello\".\"length\"", context);
         });
@@ -388,4 +388,3 @@ public class ObjectTests : BaseTest
         AssertResult("\"hello\".length", 5, context);
     }
 }
-

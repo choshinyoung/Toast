@@ -15,6 +15,7 @@ public record ToastType(string Name)
         public const string Any = "any";
         public const string Reference = "reference";
         public const string Type = "type";
+        public const string Error = "Error";
     }
 
     public static readonly ToastType String = new(Names.String);
@@ -28,6 +29,8 @@ public record ToastType(string Name)
     public static readonly ToastType Any = new(Names.Any);
     public static readonly ToastType Reference = new(Names.Reference);
     public static readonly ToastType Type = new(Names.Type);
+    public static readonly ToastType Error = new(Names.Error);
+    public static readonly ToastType ErrorValue = Error;
 
     public static readonly HashSet<string> BuiltInTypeNames =
     [
@@ -39,6 +42,7 @@ public record ToastType(string Name)
         Names.Any,
         Names.Null,
         Names.Function,
+        Names.Error,
     ];
 
     public static ToastType FromName(string typeName)
@@ -56,6 +60,7 @@ public record ToastType(string Name)
             Names.Any => Any,
             Names.Reference => Reference,
             Names.Type => Type,
+            Names.Error => Error,
             _ => new ToastType(typeName),
         };
     }

@@ -24,7 +24,7 @@ public class VariableTests : BaseTest
     {
         var context = new Context(_toast);
         Evaluate("var x = 10", context);
-        Assert.Throws<InvalidOperationException>(() => Evaluate("var x = 20", context));
+        Assert.ThrowsAny<InvalidOperationException>(() => Evaluate("var x = 20", context));
     }
 
     [Fact]
@@ -46,8 +46,8 @@ public class VariableTests : BaseTest
     public void TestQuoteInvalidOperandThrows()
     {
         var context = new Context(_toast);
-        Assert.Throws<InvalidOperationException>(() => Evaluate("`10", context));
-        Assert.Throws<InvalidOperationException>(() => Evaluate("`(1 + 2)", context));
+        Assert.ThrowsAny<InvalidOperationException>(() => Evaluate("`10", context));
+        Assert.ThrowsAny<InvalidOperationException>(() => Evaluate("`(1 + 2)", context));
     }
 
     [Fact]

@@ -11,6 +11,7 @@ public class Executor(Toaster _toast)
 
     public bool SuppressZeroArgFunction { get; set; } = false;
     public bool SuppressDereference { get; set; } = false;
+    public Location CurrentLocation { get; private set; } = new Location(1, 1);
 
     public ToastValue Evaluate(Node node, Context context)
     {
@@ -24,6 +25,12 @@ public class Executor(Toaster _toast)
         bool suppressDereference
     )
     {
+        var prevLoc = CurrentLocation;
+        if (node.Location != null && node.Location != Location.Unknown)
+        {
+            CurrentLocation = node.Location;
+        }
+
         var prevSuppress = SuppressZeroArgFunction;
         SuppressZeroArgFunction = suppressZeroArgFunction;
 
@@ -54,8 +61,11 @@ public class Executor(Toaster _toast)
                     interpolated,
                     context
                 ),
-                _ => throw new NotSupportedException(
-                    $"Node type '{node.GetType().Name}' is not supported."
+                _ => throw new ToastException(
+                    new SyntaxError(
+                        $"Node type '{node.GetType().Name}' is not supported.",
+                        CurrentLocation
+                    )
                 ),
             };
 
@@ -66,10 +76,29 @@ public class Executor(Toaster _toast)
 
             return result;
         }
+        catch (ToastException ex)
+        {
+            if (ex.Error.Location == Location.Unknown)
+            {
+                throw new ToastException(ex.Error.WithLocation(CurrentLocation));
+            }
+            throw;
+        }
+        catch (IndexOutOfRangeException)
+        {
+            throw new ToastException(
+                IndexError.OutOfRange(-1, 0, "collection").WithLocation(CurrentLocation)
+            );
+        }
+        catch (Exception ex)
+        {
+            throw new ToastException(new RuntimeError(ex.Message, CurrentLocation));
+        }
         finally
         {
             SuppressZeroArgFunction = prevSuppress;
             SuppressDereference = prevSuppressRef;
+            CurrentLocation = prevLoc;
         }
     }
 
@@ -215,8 +244,12 @@ public class Executor(Toaster _toast)
         {
             if (funcVal2.Parameters.Count != callArgs.Count)
             {
-                throw new InvalidOperationException(
-                    $"Arity mismatch: function expects {funcVal2.Parameters.Count} arguments, but got {callArgs.Count}."
+                throw new ToastException(
+                    TypeError.ArityMismatch(
+                        call.Callee.ToString()!,
+                        funcVal2.Parameters.Count,
+                        callArgs.Count
+                    )
                 );
             }
 
@@ -233,22 +266,27 @@ public class Executor(Toaster _toast)
         {
             if (typeVal.Constructor == null)
             {
-                throw new InvalidOperationException(
-                    $"Type '{typeVal.TargetType.Name}' does not have a constructor."
+                throw new ToastException(
+                    new TypeError($"Type '{typeVal.TargetType.Name}' does not have a constructor.")
                 );
             }
             return ExecuteCommand(typeVal.Constructor, callArgs, context);
         }
 
-        throw new InvalidOperationException($"Callee is not a callable function or command.");
+        throw new ToastException(new TypeError("Callee is not a callable function or command."));
     }
 
     private ToastValue ExecuteCommand(Command cmd, List<Node> callArgs, Context context)
     {
-        if (cmd.ParameterCount != callArgs.Count)
+        if (callArgs.Count < cmd.ParameterCount)
         {
-            throw new InvalidOperationException(
-                $"Arity mismatch: command '{cmd.Name}' expects {cmd.ParameterCount} arguments, but got {callArgs.Count}."
+            throw new ToastException(
+                TypeError.ArityMismatch(
+                    cmd.Name,
+                    cmd.ParameterCount,
+                    callArgs.Count,
+                    isAtLeast: true
+                )
             );
         }
 

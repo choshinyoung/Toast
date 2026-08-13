@@ -47,11 +47,11 @@ public static class List
                 {
                     return indexCmd.Command.TargetDelegate(context, [index]);
                 }
-                throw new InvalidOperationException(
-                    $"Type '{left.Type}' does not support '#' indexing."
+                throw new ToastException(
+                    new TypeError($"Type '{left.Type}' does not support '#' indexing.")
                 );
             }
-            throw new InvalidOperationException("Can only index ObjectValue types with '#'.");
+            throw new ToastException(new TypeError("Can only index ObjectValue types with '#'."));
         },
         precedence: 10
     );
@@ -149,8 +149,10 @@ public static class List
                         return na.Value.CompareTo(nb.Value);
                     if (a is StringValue sa && b is StringValue sb)
                         return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
-                    throw new InvalidOperationException(
-                        "Can only sort lists containing only numbers or only strings."
+                    throw new ToastException(
+                        new TypeError(
+                            "Can only sort lists containing only numbers or only strings."
+                        )
                     );
                 }
             );
@@ -173,8 +175,8 @@ public static class List
                         return na.Value.CompareTo(nb.Value);
                     if (ka is StringValue sa && kb is StringValue sb)
                         return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
-                    throw new InvalidOperationException(
-                        "Sorted keys must be comparable numbers or strings."
+                    throw new ToastException(
+                        new TypeError("Sorted keys must be comparable numbers or strings.")
                     );
                 }
             );

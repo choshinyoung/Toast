@@ -18,7 +18,9 @@ public static class Logical
             var res = context.Toaster.Evaluate(right.Node, context);
             if (res is BoolValue rb)
                 return rb;
-            throw new InvalidOperationException("Right side of '&&' must evaluate to a boolean.");
+            throw new ToastException(
+                new TypeError("Right side of '&&' must evaluate to a boolean.")
+            );
         },
         precedence: 2
     );
@@ -32,7 +34,9 @@ public static class Logical
             var res = context.Toaster.Evaluate(right.Node, context);
             if (res is BoolValue rb)
                 return rb;
-            throw new InvalidOperationException("Right side of '||' must evaluate to a boolean.");
+            throw new ToastException(
+                new TypeError("Right side of '||' must evaluate to a boolean.")
+            );
         },
         precedence: 2
     );

@@ -75,14 +75,47 @@ while (true)
         Console.ResetColor();
         Console.WriteLine();
     }
+    catch (ToastException ex)
+    {
+        PrintError(ex.Error, input);
+    }
     catch (Exception ex)
     {
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"Error: {ex.Message}");
-
-        Console.ResetColor();
-        Console.WriteLine();
+        PrintError(new RuntimeError(ex.Message), input);
     }
+}
+
+static void PrintError(ErrorValue error, string input)
+{
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.Write($"[{error.ErrorType}] ");
+    Console.ForegroundColor = ConsoleColor.White;
+    Console.WriteLine(error.Message);
+
+    var loc = error.Location;
+    if (loc != null && loc.Line > 0)
+    {
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine($"  at Line {loc.Line}, Column {loc.Column}");
+
+        var lines = input.Split('\n');
+        if (loc.Line <= lines.Length)
+        {
+            string srcLine = lines[loc.Line - 1].Replace('\r', ' ');
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.Write($"  {loc.Line} | ");
+            Console.ResetColor();
+            Console.WriteLine(srcLine);
+
+            int col = Math.Max(1, loc.Column);
+            int indent = loc.Line.ToString().Length + 5 + (col - 1);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(new string(' ', indent) + "^");
+        }
+    }
+
+    Console.ResetColor();
+    Console.WriteLine();
 }
 
 static bool IsIncomplete(string input, Toaster toast)
@@ -97,6 +130,10 @@ static bool IsIncomplete(string input, Toaster toast)
         var tokens = Lexer.Tokenize(input);
         Parser.Parse(tokens, toast.GetInfixInfo, toast.IsPrefix);
         return false;
+    }
+    catch (ToastException ex) when (ex.Error.Message.Contains("end of file"))
+    {
+        return true;
     }
     catch (Exception ex) when (ex.Message.Contains("end of file"))
     {

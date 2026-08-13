@@ -21,7 +21,7 @@ public static class Math
             {
                 return new NumberValue(ln.Value + rn.Value);
             }
-            throw new InvalidOperationException("Cannot add non-number/non-string values.");
+            throw new ToastException(new TypeError("Cannot add non-number/non-string values."));
         },
         precedence: 7
     );

@@ -79,8 +79,10 @@ public static class Relational
             }
             else
             {
-                throw new InvalidOperationException(
-                    "Right side of 'is' must evaluate to a type, identifier, or string."
+                throw new ToastException(
+                    new TypeError(
+                        "Right side of 'is' must evaluate to a type, identifier, or string."
+                    )
                 );
             }
 
@@ -109,14 +111,17 @@ public static class Relational
         }
 
         bool isTypeCompatible = Toaster.IsCompatible(left.Type, targetType, context);
-
-        if (targetTypeVal.DeclaredMembers.Count > 0)
+        if (isTypeCompatible)
         {
-            if (left is not ObjectValue objVal)
-            {
-                return false;
-            }
+            return true;
+        }
 
+        if (
+            left is ObjectValue objVal
+            && left is not ErrorValue
+            && targetTypeVal.DeclaredMembers.Count > 0
+        )
+        {
             var bindings = objVal.Context.GetBindings();
             foreach (var reqMember in targetTypeVal.DeclaredMembers)
             {
@@ -137,7 +142,7 @@ public static class Relational
             return true;
         }
 
-        return isTypeCompatible;
+        return false;
     }
 
     public static void Register(Toaster toast)

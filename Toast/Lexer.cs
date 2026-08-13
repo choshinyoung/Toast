@@ -5,7 +5,11 @@ using Superpower.Tokenizers;
 
 namespace Toast;
 
-public sealed record Token(TokenKind Kind, string? Value);
+public sealed record Token(TokenKind Kind, string? Value, Location Location = default!)
+{
+    public Token(TokenKind kind, string? value)
+        : this(kind, value, new Location(1, 1)) { }
+}
 
 public enum TokenKind
 {
@@ -52,98 +56,117 @@ public static class Lexer
 
     public static List<Token> Tokenize(string source)
     {
-        var tokens = Tokenizer.Tokenize(source);
-        return [.. tokens.Select(x => new Token(x.Kind, x.HasValue ? x.ToStringValue() : null))];
+        try
+        {
+            var tokens = Tokenizer.Tokenize(source);
+            return
+            [
+                .. tokens.Select(x => new Token(
+                    x.Kind,
+                    x.HasValue ? x.ToStringValue() : null,
+                    new Location(x.Position.Line, x.Position.Column)
+                )),
+            ];
+        }
+        catch (ParseException ex)
+        {
+            var loc = new Location(ex.ErrorPosition.Line, ex.ErrorPosition.Column);
+            throw new ToastException(new SyntaxError(ex.Message, loc));
+        }
     }
 
     private static bool IsHorizontalWhitespace(char ch) => ch is ' ' or '	' or '\f' or '\v';
 
-    private static TextParser<TextSpan> CustomStringParser(char quote) => input =>
-    {
-        if (input.IsAtEnd)
+    private static TextParser<TextSpan> CustomStringParser(char quote) =>
+        input =>
         {
-            return Result.Empty<TextSpan>(input);
-        }
-
-        var str = input.Source;
-        if (str == null)
-        {
-            return Result.Empty<TextSpan>(input);
-        }
-
-        int start = input.Position.Absolute;
-        if (start >= str.Length || str[start] != quote)
-        {
-            return Result.Empty<TextSpan>(input);
-        }
-
-        int i = start + 1;
-        int len = str.Length;
-        int braceDepth = 0;
-        bool inString = false;
-        char inStringQuote = '\0';
-
-        while (i < len)
-        {
-            char c = str[i];
-
-            if (braceDepth > 0)
+            if (input.IsAtEnd)
             {
-                if (inString)
+                return Result.Empty<TextSpan>(input);
+            }
+
+            var str = input.Source;
+            if (str == null)
+            {
+                return Result.Empty<TextSpan>(input);
+            }
+
+            int start = input.Position.Absolute;
+            if (start >= str.Length || str[start] != quote)
+            {
+                return Result.Empty<TextSpan>(input);
+            }
+
+            int i = start + 1;
+            int len = str.Length;
+            int braceDepth = 0;
+            bool inString = false;
+            char inStringQuote = '\0';
+
+            while (i < len)
+            {
+                char c = str[i];
+
+                if (braceDepth > 0)
                 {
-                    if (c == '\\' && i + 1 < len)
+                    if (inString)
                     {
-                        i += 2;
-                        continue;
+                        if (c == '\\' && i + 1 < len)
+                        {
+                            i += 2;
+                            continue;
+                        }
+                        if (c == inStringQuote)
+                        {
+                            inString = false;
+                        }
                     }
-                    if (c == inStringQuote)
+                    else
                     {
-                        inString = false;
+                        if (c == '"' || c == '\'')
+                        {
+                            inString = true;
+                            inStringQuote = c;
+                        }
+                        else if (c == '{')
+                        {
+                            braceDepth++;
+                        }
+                        else if (c == '}')
+                        {
+                            braceDepth--;
+                        }
                     }
+                    i++;
+                    continue;
                 }
-                else
+
+                if (c == '\\' && i + 1 < len)
                 {
-                    if (c == '"' || c == '\'')
-                    {
-                        inString = true;
-                        inStringQuote = c;
-                    }
-                    else if (c == '{')
-                    {
-                        braceDepth++;
-                    }
-                    else if (c == '}')
-                    {
-                        braceDepth--;
-                    }
+                    i += 2;
+                    continue;
                 }
+
+                if (c == '{')
+                {
+                    braceDepth++;
+                    i++;
+                    continue;
+                }
+
+                if (c == quote)
+                {
+                    i++;
+                    var remainder = input.Skip(i - start);
+                    return Result.Value(input.Until(remainder), input, remainder);
+                }
+
                 i++;
-                continue;
             }
 
-            if (c == '\\' && i + 1 < len)
-            {
-                i += 2;
-                continue;
-            }
-
-            if (c == '{')
-            {
-                braceDepth++;
-                i++;
-                continue;
-            }
-
-            if (c == quote)
-            {
-                i++;
-                var remainder = input.Skip(i - start);
-                return Result.Value(input.Until(remainder), input, remainder);
-            }
-
-            i++;
-        }
-
-        return Result.Empty<TextSpan>(input, $"Unterminated string literal starting with '{quote}'.");
-    };
+            return Result.Empty<TextSpan>(
+                input,
+                $"Unterminated string literal starting with '{quote}'."
+            );
+        };
 }

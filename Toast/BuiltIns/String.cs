@@ -108,17 +108,17 @@ public static class String
         {
             if (context.Toaster.Executor.SuppressDereference)
             {
-                throw new InvalidOperationException(
-                    "Strings are immutable and cannot be modified via index assignment."
+                throw new ToastException(
+                    new TypeError(
+                        "Strings are immutable and cannot be modified via index assignment."
+                    )
                 );
             }
 
             int idx = (int)index.Value;
             if (idx < 0 || idx >= str.Value.Length)
             {
-                throw new IndexOutOfRangeException(
-                    $"Index {idx} is out of range for string of length {str.Value.Length}."
-                );
+                throw new ToastException(IndexError.OutOfRange(idx, str.Value.Length, "string"));
             }
 
             return new StringValue(str.Value[idx].ToString());

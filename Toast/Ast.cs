@@ -1,6 +1,9 @@
 namespace Toast;
 
-public abstract record Node;
+public abstract record Node
+{
+    public Location Location { get; init; } = new Location(1, 1);
+}
 
 public sealed record ProgramNode(IReadOnlyList<Node> Statements) : Node;
 
@@ -24,4 +27,3 @@ public sealed record LiteralNode(ToastType Type, ToastValue Value) : Node;
 public sealed record ObjectLiteralNode(IReadOnlyList<Node> Statements) : Node;
 
 public sealed record InterpolatedStringNode(IReadOnlyList<Node> Parts) : Node;
-

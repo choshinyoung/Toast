@@ -1,0 +1,71 @@
+namespace Toast.Tests;
+
+public class ErrorTests : BaseTest
+{
+    [Fact]
+    public void TestErrorValuePropertiesAndHierarchy()
+    {
+        var context = new Context(_toast);
+
+        // 1. Error creation & Toast language is check
+        Evaluate("var synErr = Error(\"SyntaxError\", \"Unmatched bracket\", 2, 5)", context);
+        AssertResult("synErr.message", "Unmatched bracket", context);
+        AssertResult("synErr.line", 2.0, context);
+        AssertResult("synErr.column", 5.0, context);
+        AssertResult("synErr.errorType", "SyntaxError", context);
+
+        AssertResult("synErr is Error", true, context);
+        AssertResult("synErr is ErrorValue", true, context);
+        AssertResult("synErr is object", true, context);
+
+        // 2. TypeError creation & is check
+        Evaluate("var typeErr = Error(\"TypeError\", \"Type mismatch\", 1, 10)", context);
+        AssertResult("typeErr.errorType", "TypeError", context);
+        AssertResult("typeErr is Error", true, context);
+    }
+
+    [Fact]
+    public void TestLexerAndParserLineColumnTrackingInException()
+    {
+        var context = new Context(_toast);
+
+        // Syntax Error on line 2, column 1
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("var x = 10\nvar y =", context);
+        });
+
+        Assert.Equal("SyntaxError", ex.Error.ErrorType);
+        Assert.Equal(2, ex.Error.Location.Line);
+        Assert.True(ex.Error.Location.Column >= 1);
+    }
+
+    [Fact]
+    public void TestRuntimeTypeErrorLineColumnTracking()
+    {
+        var context = new Context(_toast);
+
+        // Type error on line 2
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("var a: number = 10\na = \"hello\"", context);
+        });
+
+        Assert.Equal("TypeError", ex.Error.ErrorType);
+        Assert.Equal(2, ex.Error.Location.Line);
+    }
+
+    [Fact]
+    public void TestUndefinedVariableRuntimeErrorLineColumnTracking()
+    {
+        var context = new Context(_toast);
+
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("var x = 10\nvar y = undefinedVar + 5", context);
+        });
+
+        Assert.Equal("RuntimeError", ex.Error.ErrorType);
+        Assert.Equal(2, ex.Error.Location.Line);
+    }
+}
