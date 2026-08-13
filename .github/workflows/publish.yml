@@ -74,7 +74,7 @@ jobs:
         working-directory: ./editors/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish --pre-release --pat $VSCE_PAT --no-dependencies
+        run: npx @vscode/vsce publish --pre-release --pat $VSCE_PAT
 
   publish-open-vsx:
     name: Publish to Open VSX Registry
@@ -106,4 +106,4 @@ jobs:
         working-directory: ./editors/vscode
         env:
           OPENVSX_TOKEN: ${{ secrets.OPENVSX_TOKEN }}
-        run: npx ovsx publish --no-dependencies -p $OPENVSX_TOKEN
+        run: npx ovsx publish -p $OPENVSX_TOKEN

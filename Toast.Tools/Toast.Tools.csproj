@@ -19,9 +19,9 @@
     <Description>Tools for Toast Language</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
-    <Version>2.0.4-beta</Version>
+    <Version>2.0.5-beta</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <PackageReleaseNotes>Release v2.0.4-beta</PackageReleaseNotes>
+    <PackageReleaseNotes>Release v2.0.5-beta</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

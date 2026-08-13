@@ -19,7 +19,7 @@
 
 전역 도구 설치:
 ```bash
-dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.4-beta
+dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.5-beta
 ```
 
 대화형 도구 실행:
@@ -33,7 +33,7 @@ toast
 
 라이브러리 설치:
 ```bash
-dotnet add package choshinyoung.Toast --version 2.0.4-beta
+dotnet add package choshinyoung.Toast --version 2.0.5-beta
 ```
 
 C# 코드 사용 예시:
@@ -49,7 +49,7 @@ Console.WriteLine(result); // 출력 결과: 7
 
 ## 🎨 VS Code 확장 (Extension)
 
-* **VS Code Marketplace**: [Toast Programming Language](https://marketplace.visualstudio.com/items?itemName=choshinyoung.toast-vscode)
-* **Open VSX Registry**: [toast-vscode](https://open-vsx.org/extension/choshinyoung/toast-vscode)
+* [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=choshinyoung.toast-vscode)
+* [Open VSX Registry](https://open-vsx.org/extension/choshinyoung/toast-vscode)
 
 VS Code 마켓플레이스 또는 확장 탭에서 **`Toast Programming Language`**를 검색하여 설치할 수 있습니다. 문법 하이라이팅 및 실시간 진단/자동완성을 제공합니다.
