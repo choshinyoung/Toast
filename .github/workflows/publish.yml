@@ -74,4 +74,4 @@ jobs:
         working-directory: ./editors/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --pat $VSCE_PAT
+        run: npx vsce publish --pre-release --pat $VSCE_PAT --no-dependencies
