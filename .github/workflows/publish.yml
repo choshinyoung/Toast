@@ -44,8 +44,8 @@ jobs:
       - name: Publish to NuGet
         run: dotnet nuget push nupkg/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
-  publish-vscode-extension:
-    name: Publish VS Code Extension
+  publish-vscode-marketplace:
+    name: Publish to VS Code Marketplace
     runs-on: ubuntu-latest
 
     steps:
@@ -74,7 +74,33 @@ jobs:
         working-directory: ./editors/vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx vsce publish --pre-release --pat $VSCE_PAT --no-dependencies
+        run: npx @vscode/vsce publish --pre-release --pat $VSCE_PAT --no-dependencies
+
+  publish-open-vsx:
+    name: Publish to Open VSX Registry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+          dotnet-quality: "preview"
+
+      - name: Build Toast Solution
+        run: dotnet build --configuration Release
+
+      - name: Install Extension Dependencies
+        working-directory: ./editors/vscode
+        run: npm ci
 
       - name: Publish to Open VSX Registry
         working-directory: ./editors/vscode
