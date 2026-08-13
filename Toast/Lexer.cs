@@ -41,7 +41,7 @@ public static class Lexer
         .Match(CustomStringParser('\''), TokenKind.String)
         .Match(Span.Regex(@"(?:\d+\.\d+|\.\d+)"), TokenKind.Float)
         .Match(Numerics.Natural, TokenKind.Integer)
-        .Match(Span.Regex(@"[A-Za-z_][A-Za-z0-9_]*"), TokenKind.Identifier)
+        .Match(Span.Regex(@"[\p{L}_][\p{L}\p{Nd}_]*"), TokenKind.Identifier)
         .Match(Character.EqualTo('('), TokenKind.LParen)
         .Match(Character.EqualTo(')'), TokenKind.RParen)
         .Match(Span.EqualTo("{{"), TokenKind.LDoubleBrace)

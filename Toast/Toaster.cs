@@ -38,7 +38,7 @@ public class Toaster
         var constructorCmd = new Command(
             name,
             constructorFunc,
-            parameterTypes: Enumerable.Repeat(ToastType.Any, 1).ToList()
+            parameterTypes: [.. Enumerable.Repeat(ToastType.Any, 1)]
         );
         var typeVal = new TypeValue(toastType, constructorCmd, declaredMembers);
         GlobalContext.SetValueDirect(name, typeVal);

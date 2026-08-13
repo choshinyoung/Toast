@@ -75,4 +75,24 @@ public class VariableTests : BaseTest
         Evaluate("var t_p = typeof p", context);
         AssertResult("t_p == Point", true, context);
     }
+
+    [Fact]
+    public void TestKoreanAndUnicodeIdentifiers()
+    {
+        var context = new Context(_toast);
+
+        // 1. Korean variables
+        Evaluate("var 변수 = 100", context);
+        AssertResult("변수 + 50", 150.0, context);
+
+        // 2. Korean function declaration and call
+        Evaluate("function 더하기(가, 나) => { 가 + 나 }", context);
+        AssertResult("더하기(10, 20)", 30.0, context);
+
+        // 3. Korean type definition and member access
+        Evaluate("var 사람타입 = type { var 이름 = \"홍길동\"\n var 나이 = 25 }", context);
+        Evaluate("var 사람 = 사람타입", context);
+        AssertResult("사람.이름", "홍길동", context);
+        AssertResult("사람.나이", 25.0, context);
+    }
 }
