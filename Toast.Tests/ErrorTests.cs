@@ -68,4 +68,42 @@ public class ErrorTests : BaseTest
         Assert.Equal("RuntimeError", ex.Error.ErrorType);
         Assert.Equal(2, ex.Error.Location.Line);
     }
+
+    [Fact]
+    public void TestThrowTryCatch()
+    {
+        var context = new Context(_toast);
+
+        // 1. throw Error object and catch with lambda
+        Evaluate(
+            "var res1 = try { throw (Error(\"something went wrong\")) } catch (err) => { err.message }",
+            context
+        );
+        AssertResult("res1", "something went wrong", context);
+
+        // 2. try block without exception returns result
+        Evaluate("var res2 = try { 10 + 20 } catch (err) => { 0 }", context);
+        AssertResult("res2", 30.0, context);
+
+        // 3. throw custom Error object and catch with explicit parameter
+        Evaluate(
+            "var res3 = try { throw (Error(\"CustomError\", \"division by zero\", 5, 10)) } catch (err) => { err.errorType }",
+            context
+        );
+        AssertResult("res3", "CustomError", context);
+
+        // 4. Catching language runtime error (e.g. undefined variable)
+        Evaluate(
+            "var res4 = try { var val = nonExistentVariable + 1 } catch (err) => { err.errorType }",
+            context
+        );
+        AssertResult("res4", "RuntimeError", context);
+
+        // 5. Throwing non-Error value raises TypeError
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("throw \"not an error object\"", context);
+        });
+        Assert.Equal("TypeError", ex.Error.ErrorType);
+    }
 }

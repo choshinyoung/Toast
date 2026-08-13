@@ -119,11 +119,89 @@ public static class ControlFlow
         }
     );
 
+    public static readonly Command Throw = Command.CreateFunction(
+        "throw",
+        (Context context, ErrorValue err) =>
+        {
+            throw new ToastException(err);
+        }
+    );
+
+    public static readonly Command Try = Command.CreateFunction(
+        "try",
+        (Context context, AstNodeValue bodyNode) =>
+        {
+            try
+            {
+                var val = context.Toaster.Evaluate(bodyNode.Node, context);
+                if (val is FunctionValue funcVal && funcVal.Parameters.Count == 0)
+                {
+                    val = funcVal.Execute([]);
+                }
+                return val;
+            }
+            catch (ToastException ex)
+            {
+                return ex.Error;
+            }
+        }
+    );
+
+    public static readonly Command Catch = Command.CreateFunction(
+        "catch",
+        (Context context, AstNodeValue leftNode, AstNodeValue rightNode) =>
+        {
+            var rawLeftNode = leftNode.Node;
+            while (rawLeftNode is GroupNode gn && gn.Items.Count == 1)
+            {
+                rawLeftNode = gn.Items[0];
+            }
+
+            if (
+                rawLeftNode is CallNode callNode
+                && callNode.Callee is IdentifierNode idNode
+                && idNode.Name == "try"
+                && callNode.Arguments.Count == 1
+            )
+            {
+                ToastValue tryVal;
+                try
+                {
+                    tryVal = context.Toaster.Evaluate(callNode.Arguments[0], context);
+                    if (tryVal is FunctionValue f && f.Parameters.Count == 0)
+                    {
+                        tryVal = f.Execute([]);
+                    }
+                    return tryVal;
+                }
+                catch (ToastException ex)
+                {
+                    var handlerVal = context.Toaster.Evaluate(rightNode.Node, context);
+                    if (handlerVal is FunctionValue funcVal)
+                    {
+                        return funcVal.Execute([ex.Error]);
+                    }
+                    return handlerVal;
+                }
+            }
+
+            throw new ToastException(
+                new SyntaxError("Left side of 'catch' must be a 'try' expression.")
+            );
+        },
+        precedence: 6,
+        isRightAssociative: true,
+        isInfix: true
+    );
+
     public static void Register(Toaster toast)
     {
         toast.RegisterCommand(If);
         toast.RegisterCommand(Else);
         toast.RegisterCommand(While);
         toast.RegisterCommand(For);
+        toast.RegisterCommand(Throw);
+        toast.RegisterCommand(Try);
+        toast.RegisterCommand(Catch);
     }
 }

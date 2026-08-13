@@ -45,7 +45,10 @@ public class Command
         {
             for (int i = 0; i < parameterTypes.Count; i++)
             {
-                var pName = (i + 1 < methodParams.Length) ? (methodParams[i + 1].Name ?? $"arg{i + 1}") : $"arg{i + 1}";
+                var pName =
+                    (i + 1 < methodParams.Length)
+                        ? (methodParams[i + 1].Name ?? $"arg{i + 1}")
+                        : $"arg{i + 1}";
                 var pType = parameterTypes[i];
                 var pLazy = i < isParameterLazy.Count && isParameterLazy[i];
                 list.Add(new CommandParameter(pName, pType, pLazy));
@@ -195,6 +198,8 @@ public class Command
             return ToastType.List;
         if (type == typeof(ObjectValue))
             return ToastType.Object;
+        if (type == typeof(ErrorValue) || typeof(ErrorValue).IsAssignableFrom(type))
+            return ToastType.ErrorValue;
         if (type == typeof(FunctionValue) || type == typeof(CommandValue))
             return ToastType.Function;
         if (type == typeof(IdentifierValue))

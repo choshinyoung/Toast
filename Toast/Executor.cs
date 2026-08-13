@@ -216,7 +216,9 @@ public class Executor(Toaster _toast)
 
         if (call.Callee is IdentifierNode idNode)
         {
-            bool isInfixContext = callArgs.Count == 2;
+            bool isInfixContext =
+                context.Toaster.InfixCommands.ContainsKey(idNode.Name) && callArgs.Count >= 2;
+
             Command? cmd = null;
             if (isInfixContext && _toast.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
             {
@@ -351,8 +353,9 @@ public class Executor(Toaster _toast)
                 }
                 else
                 {
-                    throw new InvalidOperationException(
-                        $"Type mismatch: parameter {i} of '{cmd.Name}' expects {expectedType}, but got {actualType}."
+                    var paramName = i < cmd.Parameters.Count ? cmd.Parameters[i].Name : $"arg{i}";
+                    throw new ToastException(
+                        TypeError.Mismatch(expectedType, actualType, paramName)
                     );
                 }
             }
