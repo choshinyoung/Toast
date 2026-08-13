@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Toast.Cli;
+namespace Toast.Tools;
 
 public static class InteractiveRunner
 {

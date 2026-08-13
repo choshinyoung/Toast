@@ -15,13 +15,13 @@
     <ToolCommandName>toast</ToolCommandName>
 
     <Authors>choshinyoung</Authors>
-    <PackageId>choshinyoung.Toast.Cli</PackageId>
-    <Description>CLI Tool for Toast Language</Description>
+    <PackageId>choshinyoung.Toast.Tools</PackageId>
+    <Description>Tools for Toast Language</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
-    <Version>2.0.1-beta</Version>
+    <Version>2.0.2-beta</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-    <PackageReleaseNotes>Release v2.0.1-beta</PackageReleaseNotes>
+    <PackageReleaseNotes>Release v2.0.2-beta</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

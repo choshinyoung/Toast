@@ -1,5 +1,5 @@
 using System.Reflection;
-using Toast.Cli;
+using Toast.Tools;
 
 string version = Assembly
     .GetExecutingAssembly()

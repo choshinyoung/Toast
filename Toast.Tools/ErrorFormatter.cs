@@ -1,4 +1,4 @@
-namespace Toast.Cli;
+namespace Toast.Tools;
 
 public static class ErrorFormatter
 {
