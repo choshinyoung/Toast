@@ -1,0 +1,23 @@
+// Toast Language Demo Script
+
+// 1. Variables and Arithmetic
+var greeting = "Hello, Toast Language!"
+print(greeting)
+
+// 2. Functions & Recursion
+function fibonacci(n) => {
+    if (n <= 1) {
+        n
+    } else {
+        fibonacci(n - 1) + fibonacci(n - 2)
+    }
+}
+var fib10 = fibonacci(10)
+print("fibonacci(10) = " + fib10)
+
+// 3. Custom Types & Objects
+var Person = type (name, age) => {
+    var isAdult = age >= 18
+}
+var p1 = Person("Alice", 22)
+print(p1.name + " is adult: " + p1.isAdult)
