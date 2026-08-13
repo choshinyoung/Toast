@@ -1,7 +1,7 @@
 # 🍞 Toast
 
 [![Library NuGet](https://img.shields.io/nuget/vpre/choshinyoung.Toast?label=choshinyoung.Toast&logo=nuget)](https://www.nuget.org/packages/choshinyoung.Toast/)
-[![Tool NuGet](https://img.shields.io/nuget/vpre/choshinyoung.Toast.Interactive?label=choshinyoung.Toast.Interactive&logo=nuget)](https://www.nuget.org/packages/choshinyoung.Toast.Interactive/)
+[![Tool NuGet](https://img.shields.io/nuget/vpre/choshinyoung.Toast.Tools?label=choshinyoung.Toast.Tools&logo=nuget)](https://www.nuget.org/packages/choshinyoung.Toast.Tools/)
 
 > [!WARNING]
 > **본 프로젝트는 현재 미완성 상태입니다!**  
