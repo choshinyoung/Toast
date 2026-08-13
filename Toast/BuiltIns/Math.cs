@@ -50,14 +50,26 @@ public static class Math
     public static readonly Command Division = Command.CreateOperator(
         "/",
         (Context context, NumberValue left, NumberValue right) =>
-            new NumberValue(left.Value / right.Value),
+        {
+            if (right.Value == 0)
+            {
+                throw new ToastException(RuntimeError.DivisionByZero());
+            }
+            return new NumberValue(left.Value / right.Value);
+        },
         precedence: 8
     );
 
     public static readonly Command Modulus = Command.CreateOperator(
         "%",
         (Context context, NumberValue left, NumberValue right) =>
-            new NumberValue(left.Value % right.Value),
+        {
+            if (right.Value == 0)
+            {
+                throw new ToastException(RuntimeError.DivisionByZero());
+            }
+            return new NumberValue(left.Value % right.Value);
+        },
         precedence: 8
     );
 
@@ -71,7 +83,13 @@ public static class Math
     public static readonly Command FloorDivision = Command.CreateFunction(
         "floorDiv",
         (Context ctx, NumberValue x, NumberValue y) =>
-            new NumberValue(System.Math.Floor(x.Value / y.Value)),
+        {
+            if (y.Value == 0)
+            {
+                throw new ToastException(RuntimeError.DivisionByZero());
+            }
+            return new NumberValue(System.Math.Floor(x.Value / y.Value));
+        },
         precedence: 8,
         isInfix: true
     );

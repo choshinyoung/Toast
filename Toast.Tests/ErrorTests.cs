@@ -106,4 +106,18 @@ public class ErrorTests : BaseTest
         });
         Assert.Equal("TypeError", ex.Error.ErrorType);
     }
+
+    [Fact]
+    public void TestDivisionByZeroRuntimeError()
+    {
+        var context = new Context(_toast);
+
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("1 / 0", context);
+        });
+
+        Assert.Equal("RuntimeError", ex.Error.ErrorType);
+        Assert.Equal("Division by zero.", ex.Error.Message);
+    }
 }
