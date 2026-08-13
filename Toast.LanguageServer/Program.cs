@@ -18,7 +18,7 @@ public static class Program
                 .WithInput(Console.OpenStandardInput())
                 .WithOutput(Console.OpenStandardOutput())
                 .ConfigureLogging(x =>
-                    x.AddLanguageProtocolLogging().SetMinimumLevel(LogLevel.Error)
+                    x.AddLanguageProtocolLogging().SetMinimumLevel(LogLevel.Information)
                 )
                 .WithHandler<TextDocumentHandler>()
                 .WithHandler<HoverHandler>()
@@ -33,7 +33,7 @@ public static class Program
                 )
                 .OnNotification(
                     "exit",
-                    (CancellationToken token) =>
+                    token =>
                     {
                         Environment.Exit(0);
                         return Task.CompletedTask;

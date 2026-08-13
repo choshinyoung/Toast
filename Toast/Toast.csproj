@@ -11,8 +11,8 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/choshinyoung/Toast</PackageProjectUrl>
 
-    <Version>2.0.3-beta</Version>
-    <PackageReleaseNotes>Release v2.0.3-beta</PackageReleaseNotes>
+    <Version>2.0.4-beta</Version>
+    <PackageReleaseNotes>Release v2.0.4-beta</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

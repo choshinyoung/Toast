@@ -31,11 +31,23 @@ function activate(context) {
 
   context.subscriptions.push(client);
 
-  client.start().catch((err) => {
-    console.error("[Toast Extension] Failed to start LanguageClient:", err);
-  });
+  client.outputChannel.appendLine(
+    "[Toast Extension] Activating Toast Language Client..."
+  );
 
-  console.log("[Toast Extension] Toast Language Client started.");
+  client
+    .start()
+    .then(() => {
+      client.outputChannel.appendLine(
+        "[Toast Extension] Toast Language Client started successfully."
+      );
+    })
+    .catch((err) => {
+      client.outputChannel.appendLine(
+        `[Toast Extension] Failed to start LanguageClient: ${err}`
+      );
+      console.error("[Toast Extension] Failed to start LanguageClient:", err);
+    });
 }
 
 function deactivate() {
