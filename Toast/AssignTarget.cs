@@ -24,3 +24,26 @@ public class ListIndexAssignTarget(ListValue listVal, int index) : IAssignTarget
 
     public void SetValue(ToastValue value) => listVal.Elements[index] = value;
 }
+
+public class ObjectPropertyAssignTarget(ObjectValue objVal, string fieldName) : IAssignTarget
+{
+    public string Identifier => $"{objVal}.{fieldName}";
+
+    public ToastValue GetValue()
+    {
+        var bindings = objVal.Context.GetBindings();
+        if (bindings.TryGetValue(fieldName, out var binding))
+        {
+            return binding.Value;
+        }
+        throw new InvalidOperationException(
+            $"Property '{fieldName}' is not defined on target object."
+        );
+    }
+
+    public void SetValue(ToastValue value)
+    {
+        objVal.Context.SetValueDirect(fieldName, value);
+    }
+}
+

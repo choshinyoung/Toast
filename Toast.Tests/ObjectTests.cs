@@ -364,4 +364,28 @@ public class ObjectTests : BaseTest
             );
         });
     }
+
+    [Fact]
+    public void TestStrictMemberAccess()
+    {
+        var context = new Context(_toast);
+
+        // 1. . 연산자 뒤에 변수 이름 a 가 오더라도 부모 스코프 a="# "를 가져오지 않고 해당 멤버가 없으면 예외 발생
+        Evaluate("var a = \"#\"", context);
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            Evaluate("\"hello\".a", context);
+        });
+
+        // 2. . 연산자 뒤에는 식별자(Identifier)만 올 수 있으며, 문자열 리터럴 "length" 가 오면 예외 발생
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            Evaluate("\"hello\".\"length\"", context);
+        });
+
+        // 3. 외부 스코프에 length 변수가 정의되어 있어도 식별자 length 자체를 멤버 이름으로 검색하여 정상 반환
+        Evaluate("var length = \"toLower\"", context);
+        AssertResult("\"hello\".length", 5, context);
+    }
 }
+

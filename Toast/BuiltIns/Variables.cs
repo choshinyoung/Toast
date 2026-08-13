@@ -133,30 +133,27 @@ public static class Variables
                 throw new InvalidOperationException("Left side of '.' must be an object.");
             }
 
-            string fieldName;
-            if (rightNode.Node is IdentifierNode idNode)
+            if (rightNode.Node is not IdentifierNode idNode)
             {
-                fieldName = idNode.Name;
+                throw new InvalidOperationException("Right side of '.' must be an identifier.");
             }
-            else
-            {
-                var evalRight = context.Toaster.Evaluate(rightNode.Node, context);
-                fieldName = evalRight switch
-                {
-                    IdentifierValue idVal => idVal.Name,
-                    StringValue strVal => strVal.Value,
-                    _ => throw new InvalidOperationException(
-                        "Right side of '.' must be an identifier or string."
-                    ),
-                };
-            }
+
+            string fieldName = idNode.Name;
 
             if (context.Toaster.Executor.SuppressDereference)
             {
-                return new ReferenceValue(new VariableAssignTarget(objVal.Context, fieldName));
+                return new ReferenceValue(new ObjectPropertyAssignTarget(objVal, fieldName));
             }
 
-            var val = objVal.Context.GetValue(fieldName);
+            var bindings = objVal.Context.GetBindings();
+            if (!bindings.TryGetValue(fieldName, out var binding))
+            {
+                throw new InvalidOperationException(
+                    $"Property '{fieldName}' is not defined on target object."
+                );
+            }
+
+            var val = binding.Value;
             if (
                 !context.Toaster.Executor.SuppressZeroArgFunction
                 && val is FunctionValue funcVal
