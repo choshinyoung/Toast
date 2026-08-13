@@ -19,15 +19,7 @@ public static class Variables
             }
         }
 
-        var targetType = typeName switch
-        {
-            "string" => ToastType.String,
-            "number" => ToastType.Number,
-            "boolean" => ToastType.Boolean,
-            "list" => ToastType.List,
-            "object" => ToastType.Object,
-            _ => new ToastType(typeName),
-        };
+        var targetType = ToastType.FromName(typeName);
 
         return new TypeValue(targetType, null);
     }

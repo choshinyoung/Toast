@@ -452,16 +452,7 @@ public class Parser(
     private TypeNode ParseType()
     {
         var typeToken = Expect(TokenKind.Identifier, "Expected type name.");
-        ToastType typeEnum = typeToken.Value switch
-        {
-            "string" => ToastType.String,
-            "number" => ToastType.Number,
-            "boolean" => ToastType.Boolean,
-            "list" => ToastType.List,
-            "object" => ToastType.Object,
-            _ => new ToastType(typeToken.Value!),
-        };
-
+        ToastType typeEnum = ToastType.FromName(typeToken.Value!);
         return new TypeNode(typeEnum);
     }
 

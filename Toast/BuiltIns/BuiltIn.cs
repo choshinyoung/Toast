@@ -27,15 +27,16 @@ public static class BuiltIn
 
     public static void RegisterBuiltInTypes(Toaster toast)
     {
-        RegisterType(toast, ToastType.Number, "number");
-        RegisterType(toast, ToastType.String, "string");
-        RegisterType(toast, ToastType.Boolean, "boolean");
-        RegisterType(toast, ToastType.List, "list");
-        RegisterType(toast, ToastType.Object, "object");
+        RegisterType(toast, ToastType.Number);
+        RegisterType(toast, ToastType.String);
+        RegisterType(toast, ToastType.Boolean);
+        RegisterType(toast, ToastType.List);
+        RegisterType(toast, ToastType.Object);
     }
 
-    private static void RegisterType(Toaster toast, ToastType targetType, string name)
+    private static void RegisterType(Toaster toast, ToastType targetType)
     {
+        var name = targetType.Name;
         var cmd = new Command(
             name,
             (Context context, ToastValue val) => ConvertToType(context, val, targetType),

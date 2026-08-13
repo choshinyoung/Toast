@@ -73,17 +73,7 @@ public static class Relational
                 }
                 else
                 {
-                    var targetType = typeName switch
-                    {
-                        "string" => ToastType.String,
-                        "number" => ToastType.Number,
-                        "boolean" => ToastType.Boolean,
-                        "list" => ToastType.List,
-                        "object" => ToastType.Object,
-                        "any" => ToastType.Any,
-                        "null" => ToastType.Null,
-                        _ => new ToastType(typeName),
-                    };
+                    var targetType = ToastType.FromName(typeName);
                     typeVal = new TypeValue(targetType, null);
                 }
             }

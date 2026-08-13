@@ -161,18 +161,6 @@ public class Toaster
         return Executor.Evaluate(node, context);
     }
 
-    private static readonly HashSet<string> BuiltInTypeNames =
-    [
-        "number",
-        "string",
-        "boolean",
-        "list",
-        "object",
-        "any",
-        "null",
-        "function",
-    ];
-
     public static bool IsCompatible(ToastType actual, ToastType expected, Context context)
     {
         if (expected == ToastType.Any || expected == actual)
@@ -205,7 +193,7 @@ public class Toaster
             }
         }
 
-        if (BuiltInTypeNames.Contains(expected.Name) || BuiltInTypeNames.Contains(actual.Name))
+        if (ToastType.BuiltInTypeNames.Contains(expected.Name) || ToastType.BuiltInTypeNames.Contains(actual.Name))
         {
             return false;
         }
