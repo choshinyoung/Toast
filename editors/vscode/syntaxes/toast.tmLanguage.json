@@ -1,0 +1,137 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Toast",
+  "scopeName": "source.toast",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#operators" },
+    { "include": "#functions" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.toast",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.toast",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.toast",
+          "match": "\\b(if|else|while|for|try|catch|throw)\\b"
+        },
+        {
+          "name": "keyword.declaration.toast",
+          "match": "\\b(var|function|type)\\b"
+        },
+        {
+          "name": "keyword.operator.toast",
+          "match": "\\b(is|in|to|typeof)\\b"
+        },
+        {
+          "name": "constant.language.toast",
+          "match": "\\b(true|false|null)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.toast",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.toast",
+              "match": "\\\\."
+            },
+            {
+              "name": "meta.interpolation.toast",
+              "begin": "\\{\\{",
+              "end": "\\}\\}",
+              "patterns": [{ "include": "$self" }]
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.toast",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.toast",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.toast",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.toast",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.toast",
+          "match": "=>"
+        },
+        {
+          "name": "keyword.operator.comparison.toast",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.arithmetic.toast",
+          "match": "\\*\\*|\\+|\\-|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.assignment.toast",
+          "match": "="
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.toast",
+          "match": "\\b(function)\\s+([\\p{L}_][\\p{L}\\p{Nd}_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.toast" },
+            "2": { "name": "entity.name.function.toast" }
+          }
+        },
+        {
+          "name": "entity.name.function.toast",
+          "match": "([\\p{L}_][\\p{L}\\p{Nd}_]*)(?=\\()"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.other.readwrite.toast",
+          "match": "[\\p{L}_][\\p{L}\\p{Nd}_]*"
+        }
+      ]
+    }
+  }
+}

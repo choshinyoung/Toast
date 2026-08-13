@@ -1,13 +1,10 @@
 using System.Reflection;
 using Toast.Cli;
 
-string version = (
-    Assembly
-        .GetExecutingAssembly()
-        .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-        ?.InformationalVersion
-    ?? "2.0.0-beta"
-).Split('+')[0];
+string version = Assembly
+    .GetExecutingAssembly()
+    .GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
+    .InformationalVersion;
 
 var options = Options.Parse(args);
 
@@ -16,6 +13,7 @@ return options.Mode switch
     ExecutionMode.ShowVersion => PrintVersion(version),
     ExecutionMode.ShowHelp => PrintHelp(options.ErrorMessage),
     ExecutionMode.Repl => RunInteractive(version),
+    ExecutionMode.LanguageServer => await RunLanguageServerAsync(),
     ExecutionMode.ReadStdin => ScriptRunner.RunStdin(),
     ExecutionMode.EvalCode => ScriptRunner.ProcessCode(
         options.EvalCode!,
@@ -47,4 +45,9 @@ static int RunInteractive(string version)
 {
     InteractiveRunner.Run(version);
     return 0;
+}
+
+static async Task<int> RunLanguageServerAsync()
+{
+    return await Toast.LanguageServer.Program.RunServerAsync();
 }

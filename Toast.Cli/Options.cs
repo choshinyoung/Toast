@@ -8,6 +8,7 @@ public enum ExecutionMode
     ReadStdin,
     ShowHelp,
     ShowVersion,
+    LanguageServer,
 }
 
 public sealed class Options
@@ -40,6 +41,9 @@ public sealed class Options
             var arg = args[i];
             switch (arg)
             {
+                case "--lsp":
+                case "lsp":
+                    return new Options { Mode = ExecutionMode.LanguageServer };
                 case "-v":
                 case "--version":
                     return new Options { Mode = ExecutionMode.ShowVersion };

@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Toast.Cli/Toast.Cli.csproj" />
+  <Project Path="Toast.LanguageServer/Toast.LanguageServer.csproj" />
   <Project Path="Toast.Tests/Toast.Tests.csproj" />
   <Project Path="Toast/Toast.csproj" />
 </Solution>
