@@ -357,17 +357,30 @@ public static class Variables
         (Context context, ObjectValue left, ObjectValue right) =>
         {
             var newCtx = new Context(left.Context.Toaster, left.Context.Parent);
+            var newObj = new ObjectValue(newCtx, left.CustomType);
+            newCtx.Owner = newObj;
+
             foreach (var kvp in left.Context.GetBindings())
             {
                 newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
-                newCtx.SetValueDirect(kvp.Key, kvp.Value.Value);
+                var val = kvp.Value.Value;
+                if (val is FunctionValue funcVal)
+                {
+                    val = funcVal with { ClosureContext = newCtx };
+                }
+                newCtx.SetValueDirect(kvp.Key, val);
             }
             foreach (var kvp in right.Context.GetBindings())
             {
                 newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
-                newCtx.SetValueDirect(kvp.Key, kvp.Value.Value);
+                var val = kvp.Value.Value;
+                if (val is FunctionValue funcVal)
+                {
+                    val = funcVal with { ClosureContext = newCtx };
+                }
+                newCtx.SetValueDirect(kvp.Key, val);
             }
-            return new ObjectValue(newCtx, left.CustomType);
+            return newObj;
         },
         precedence: 6,
         isInfix: true

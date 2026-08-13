@@ -181,6 +181,11 @@ public class ObjectTests : BaseTest
         Evaluate("var original = Point(1, 2)", context);
         AssertResult("original.x", 1, context);
         AssertResult("original.y", 2, context);
+
+        // 3. with 연산 시 함수 클로저 재바인딩 검증
+        Evaluate("var rawP1 = {{ x = 3, y = 4 }}", context);
+        Evaluate("var p3 = rawP1 with {{ z = 10, magnitude = () => { x * x + y * y + z * z } }}", context);
+        AssertResult("p3.magnitude", 125, context);
     }
 
     [Fact]
