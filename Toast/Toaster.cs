@@ -182,7 +182,21 @@ public class Toaster
 
         if (expected == ToastType.Object)
         {
-            if (actual != ToastType.Null && actual != ToastType.Any)
+            if (
+                actual == ToastType.Object
+                || actual == ToastType.String
+                || actual == ToastType.List
+            )
+            {
+                return true;
+            }
+            if (
+                actual != ToastType.Null
+                && actual != ToastType.Any
+                && actual != ToastType.Number
+                && actual != ToastType.Boolean
+                && actual != ToastType.Function
+            )
             {
                 if (context.HasVariable(actual.Name) && context.GetValue(actual.Name) is TypeValue)
                 {

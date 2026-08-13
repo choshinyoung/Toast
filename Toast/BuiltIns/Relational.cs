@@ -51,39 +51,104 @@ public static class Relational
                 return new BoolValue(left is NullValue);
             }
 
-            if (right is not TypeValue typeVal)
+            TypeValue typeVal;
+            if (right is TypeValue tv)
+            {
+                typeVal = tv;
+            }
+            else if (right is StringValue || right is IdentifierValue)
+            {
+                var typeName = right.ToString();
+                if (typeName == "null")
+                {
+                    return new BoolValue(left is NullValue);
+                }
+
+                if (
+                    context.HasVariable(typeName)
+                    && context.GetValue(typeName) is TypeValue resolvedTv
+                )
+                {
+                    typeVal = resolvedTv;
+                }
+                else
+                {
+                    var targetType = typeName switch
+                    {
+                        "string" => ToastType.String,
+                        "number" => ToastType.Number,
+                        "boolean" => ToastType.Boolean,
+                        "list" => ToastType.List,
+                        "object" => ToastType.Object,
+                        "any" => ToastType.Any,
+                        "null" => ToastType.Null,
+                        _ => new ToastType(typeName),
+                    };
+                    typeVal = new TypeValue(targetType, null);
+                }
+            }
+            else
             {
                 throw new InvalidOperationException(
-                    "Right side of 'is' must evaluate to a type or null."
+                    "Right side of 'is' must evaluate to a type, identifier, or string."
                 );
             }
 
-            var targetType = typeVal.TargetType;
-            var declaredMembers = typeVal.DeclaredMembers;
-
-            if (declaredMembers.Count == 0)
-            {
-                return new BoolValue(left.Type.Name == targetType.Name);
-            }
-
-            if (left is ObjectValue targetObj)
-            {
-                var objBindings = targetObj.Context.GetBindings();
-                foreach (var reqMember in declaredMembers)
-                {
-                    if (!objBindings.ContainsKey(reqMember))
-                    {
-                        return new BoolValue(false);
-                    }
-                }
-                return new BoolValue(true);
-            }
-
-            return new BoolValue(false);
+            return new BoolValue(CheckIsCompatible(context, left, typeVal));
         },
         precedence: 6,
         isInfix: true
     );
+
+    private static bool CheckIsCompatible(Context context, ToastValue left, TypeValue targetTypeVal)
+    {
+        var targetType = targetTypeVal.TargetType;
+        if (targetType == ToastType.Any)
+        {
+            return true;
+        }
+
+        if (targetType == ToastType.Null)
+        {
+            return left is NullValue;
+        }
+
+        if (left is NullValue)
+        {
+            return false;
+        }
+
+        bool isTypeCompatible = Toaster.IsCompatible(left.Type, targetType, context);
+
+        if (targetTypeVal.DeclaredMembers.Count > 0)
+        {
+            if (left is not ObjectValue objVal)
+            {
+                return false;
+            }
+
+            var bindings = objVal.Context.GetBindings();
+            foreach (var reqMember in targetTypeVal.DeclaredMembers)
+            {
+                if (!bindings.TryGetValue(reqMember, out var binding))
+                {
+                    return false;
+                }
+
+                if (targetTypeVal.MemberTypes.TryGetValue(reqMember, out var expectedMemberType))
+                {
+                    var actualMemberVal = binding.Value;
+                    if (!Toaster.IsCompatible(actualMemberVal.Type, expectedMemberType, context))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        return isTypeCompatible;
+    }
 
     public static void Register(Toaster toast)
     {

@@ -66,6 +66,14 @@ public class BuiltInTests : BaseTest
         AssertResult("true && false", false);
         AssertResult("false || true", true);
         AssertResult("!false", true);
+        AssertResult("5 is number", true);
+        AssertResult("\"hello\" is string", true);
+        AssertResult("5 is string", false);
+        AssertResult("5 is object", false);
+        AssertResult("[1, 2] is list", true);
+        AssertResult("null is null", true);
+        AssertResult("5 is null", false);
+        AssertResult("{{ x = 10 }} is object", true);
 
         // 3. Bitwise Operators
         AssertResult("5 & 3", 1);
