@@ -264,7 +264,6 @@ public class Toaster
             return true;
         }
 
-        // Fallback for custom objects: treat them as ToastType.Object
         if (
             actual != ToastType.Object
             && obj is ObjectValue

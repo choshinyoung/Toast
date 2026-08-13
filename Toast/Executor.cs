@@ -367,7 +367,7 @@ public class Executor(Toaster _toast)
         return funcVal.Execute(evalArgs);
     }
 
-    private ToastValue EvaluateInterpolatedString(
+    private StringValue EvaluateInterpolatedString(
         InterpolatedStringNode interpolated,
         Context context
     )

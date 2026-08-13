@@ -115,7 +115,7 @@ public class Context(Toaster toaster, Context? parent = null)
     {
         var ctx =
             FindContext(name) ?? throw new ToastException(RuntimeError.UndefinedVariable(name));
-        ctx.GetValueDirect(name); // 캐싱 강제
+        ctx.GetValueDirect(name);
         return ctx._bindings[name].Constraint;
     }
 
