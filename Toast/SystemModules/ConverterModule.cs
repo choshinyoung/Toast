@@ -1,7 +1,10 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class Converters
+public class ConverterModule : IToastModule
 {
+    public string Name => "converter";
+    public string Description => "Standard type converters between Toast types.";
+
     public static readonly TypeConverter NumberToString = new(
         ToastType.Number,
         ToastType.String,
@@ -96,11 +99,9 @@ public static class Converters
         ToastType.String,
         ToastType.List,
         (_, val) =>
-            new ListValue(
-                ((StringValue)val)
-                    .Value.Select(c => (ToastValue)new StringValue(c.ToString()))
-                    .ToList()
-            )
+            new ListValue([
+                .. ((StringValue)val).Value.Select(c => (ToastValue)new StringValue(c.ToString())),
+            ])
     );
 
     public static void Register(Toaster toast)
@@ -113,5 +114,11 @@ public static class Converters
         toast.RegisterConverter(StringToNumber);
         toast.RegisterConverter(StringToBoolean);
         toast.RegisterConverter(StringToList);
+    }
+
+    public void Load(Toaster toaster, Context callerContext)
+    {
+        Register(toaster);
+        SystemModule.RegisterBuiltInTypes(toaster);
     }
 }

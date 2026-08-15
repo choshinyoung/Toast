@@ -4,7 +4,7 @@ public static class ScriptRunner
 {
     public static int ProcessCode(string code, string sourceName, bool printTokens, bool printAst)
     {
-        var toast = new Toaster(useBuiltIn: true);
+        var toast = new Toaster(useSystemModules: false);
 
         try
         {

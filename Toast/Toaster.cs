@@ -2,7 +2,7 @@ namespace Toast;
 
 public class Toaster
 {
-    public static readonly Toaster Empty = new(useBuiltIn: false);
+    public static readonly Toaster Empty = new(useSystemModules: false);
 
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
@@ -12,13 +12,14 @@ public class Toaster
     public readonly Context GlobalContext;
     public readonly Executor Executor;
 
-    public Toaster(bool useBuiltIn = false)
+    public Toaster(bool useSystemModules = false)
     {
         Executor = new Executor(this);
         GlobalContext = new Context(this);
-        if (useBuiltIn)
+        SystemModules.ImportModule.Register(this);
+        if (useSystemModules)
         {
-            BuiltIns.BuiltIn.Register(this);
+            SystemModules.SystemModule.Register(this);
         }
     }
 
@@ -65,11 +66,21 @@ public class Toaster
         Delegate targetDelegate,
         int precedence,
         bool isRightAssociative = false,
-        bool isPrefix = false
+        bool isPrefix = false,
+        string? description = null,
+        ToastType? returnType = null
     )
     {
         RegisterCommand(
-            Command.CreateOperator(name, targetDelegate, precedence, isRightAssociative, isPrefix)
+            Command.CreateOperator(
+                name,
+                targetDelegate,
+                precedence,
+                isRightAssociative,
+                isPrefix,
+                description: description,
+                returnType: returnType
+            )
         );
     }
 
@@ -79,7 +90,9 @@ public class Toaster
         int precedence = 0,
         bool isRightAssociative = false,
         bool isPrefix = false,
-        bool isInfix = false
+        bool isInfix = false,
+        string? description = null,
+        ToastType? returnType = null
     )
     {
         RegisterCommand(
@@ -89,7 +102,9 @@ public class Toaster
                 precedence,
                 isRightAssociative,
                 isPrefix,
-                isInfix
+                isInfix,
+                description: description,
+                returnType: returnType
             )
         );
     }
@@ -156,6 +171,11 @@ public class Toaster
         return Executor.Execute(rawInput);
     }
 
+    public ToastValue Execute(string rawInput, Context context)
+    {
+        return Executor.Execute(rawInput, context);
+    }
+
     public ToastValue Evaluate(Node node, Context context)
     {
         return Executor.Evaluate(node, context);
@@ -168,7 +188,7 @@ public class Toaster
             return true;
         }
 
-        if (expected == ToastType.ErrorValue && actual == ToastType.ErrorValue)
+        if (expected == ToastType.Error && actual == ToastType.Error)
         {
             return true;
         }
@@ -179,7 +199,7 @@ public class Toaster
                 actual == ToastType.Object
                 || actual == ToastType.String
                 || actual == ToastType.List
-                || actual == ToastType.ErrorValue
+                || actual == ToastType.Error
             )
             {
                 return true;
@@ -200,8 +220,8 @@ public class Toaster
         }
 
         if (
-            ToastType.BuiltInTypeNames.Contains(expected.Name)
-            || ToastType.BuiltInTypeNames.Contains(actual.Name)
+            ToastType.SystemTypeNames.Contains(expected.Name)
+            || ToastType.SystemTypeNames.Contains(actual.Name)
         )
         {
             return false;

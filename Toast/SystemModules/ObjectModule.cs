@@ -1,7 +1,11 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class Variables
+public class ObjectModule : IToastModule
 {
+    public string Name => "object";
+    public string Description =>
+        "Variable declarations, assignments, object member access, and type definitions.";
+
     private static TypeValue ResolveType(Context context, ToastValue typeVal)
     {
         if (typeVal is TypeValue tv)
@@ -31,9 +35,9 @@ public static class Variables
             return new TypedIdentifierValue(id.Name, ResolveType(context, typeVal));
         },
         precedence: 10,
-        isRightAssociative: false
+        isRightAssociative: false,
+        description: "Type annotation operator, constrains a variable or parameter to a specified type."
     );
-
     public static readonly Command Var = Command.CreateFunction(
         "var",
         (Context context, IdentifierValue target) =>
@@ -58,9 +62,9 @@ public static class Variables
             context.GetOrCreateLocal(varName, typeConstraint);
             return new ReferenceValue(new VariableAssignTarget(context, varName));
         },
-        declaresMember: true
+        declaresMember: true,
+        description: "Declares a new variable in the current scope."
     );
-
     public static readonly Command Assign = Command.CreateOperator(
         "=",
         (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
@@ -69,9 +73,9 @@ public static class Variables
             return rightVal;
         },
         precedence: 1,
-        isRightAssociative: true
+        isRightAssociative: true,
+        description: "Assignment operator, stores a value into a variable or object property."
     );
-
     public static readonly Command AssignAdd = Command.CreateOperator(
         "+=",
         (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
@@ -94,9 +98,9 @@ public static class Variables
             return newVal;
         },
         precedence: 1,
-        isRightAssociative: true
+        isRightAssociative: true,
+        description: "Addition assignment operator."
     );
-
     public static readonly Command AssignSub = Command.CreateOperator(
         "-=",
         (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
@@ -111,16 +115,55 @@ public static class Variables
             throw new ToastException(new TypeError("Invalid types for -= operator."));
         },
         precedence: 1,
-        isRightAssociative: true
+        isRightAssociative: true,
+        description: "Subtraction assignment operator."
     );
-
     public static readonly Command MemberAccess = Command.CreateOperator(
         ".",
         (Context context, ToastValue left, AstNodeValue rightNode) =>
         {
+            if (left is TypeValue typeVal)
+            {
+                if (rightNode.Node is not IdentifierNode typeIdNode)
+                {
+                    throw new ToastException(
+                        new TypeError("Right side of '.' must be an identifier.")
+                    );
+                }
+                string staticFieldName = typeIdNode.Name;
+                if (
+                    context.Toaster.ExtensionMembers.TryGetValue(
+                        typeVal.TargetType,
+                        out var members
+                    ) && members.TryGetValue(staticFieldName, out var staticMemberVal)
+                )
+                {
+                    if (
+                        !context.Toaster.Executor.SuppressZeroArgFunction
+                        && staticMemberVal is FunctionValue sfv
+                        && sfv.Parameters.Count == 0
+                    )
+                    {
+                        return sfv.Execute([]);
+                    }
+                    if (
+                        !context.Toaster.Executor.SuppressZeroArgFunction
+                        && staticMemberVal is CommandValue scv
+                        && scv.Command.Parameters.Count == 0
+                    )
+                    {
+                        return scv.Command.TargetDelegate(context, []);
+                    }
+                    return staticMemberVal;
+                }
+                throw new ToastException(RuntimeError.PropertyNotDefined(staticFieldName));
+            }
+
             if (left is not ObjectValue objVal)
             {
-                throw new ToastException(new TypeError("Left side of '.' must be an object."));
+                throw new ToastException(
+                    new TypeError("Left side of '.' must be an object or type.")
+                );
             }
 
             if (rightNode.Node is not IdentifierNode idNode)
@@ -138,6 +181,29 @@ public static class Variables
             var bindings = objVal.Context.GetBindings();
             if (!bindings.TryGetValue(fieldName, out var binding))
             {
+                if (
+                    context.Toaster.ExtensionMembers.TryGetValue(objVal.Type, out var extMembers)
+                    && extMembers.TryGetValue(fieldName, out var extVal)
+                )
+                {
+                    if (
+                        !context.Toaster.Executor.SuppressZeroArgFunction
+                        && extVal is FunctionValue efv
+                        && efv.Parameters.Count == 0
+                    )
+                    {
+                        return efv.Execute([]);
+                    }
+                    if (
+                        !context.Toaster.Executor.SuppressZeroArgFunction
+                        && extVal is CommandValue ecv
+                        && ecv.Command.Parameters.Count == 0
+                    )
+                    {
+                        return ecv.Command.TargetDelegate(context, []);
+                    }
+                    return extVal;
+                }
                 throw new ToastException(RuntimeError.PropertyNotDefined(fieldName));
             }
 
@@ -160,7 +226,8 @@ public static class Variables
             }
             return val;
         },
-        precedence: 10
+        precedence: 10,
+        description: "Member access operator, accesses a property or method of an object."
     );
 
     private static Command CreateConstructorFactory(string name, string kind, FunctionValue funcVal)
@@ -225,7 +292,8 @@ public static class Variables
                 return new ObjectValue(objCtx, customType);
             },
             parameterTypes: parameterTypes,
-            isParameterLazy: isParameterLazy
+            isParameterLazy: isParameterLazy,
+            description: $"Constructor factory for '{name}'."
         );
     }
 
@@ -305,9 +373,9 @@ public static class Variables
                 declaredMembers,
                 memberTypes
             );
-        }
+        },
+        description: "Creates an anonymous custom type constructor."
     );
-
     public static readonly Command ClassCreator = Command.CreateFunction(
         "class",
         (Context context, IdentifierValue id, FunctionValue funcVal) =>
@@ -335,9 +403,9 @@ public static class Variables
             context.SetValueDirect(id.Name, typeVal);
             return typeVal;
         },
-        declaresMember: true
+        declaresMember: true,
+        description: "Declares a named class/type."
     );
-
     public static readonly Command FunctionCreator = Command.CreateFunction(
         "function",
         (Context context, IdentifierValue id, FunctionValue funcVal) =>
@@ -349,9 +417,9 @@ public static class Variables
             context.SetValueDirect(id.Name, funcVal);
             return funcVal;
         },
-        declaresMember: true
+        declaresMember: true,
+        description: "Declares a named function in the current scope."
     );
-
     public static readonly Command With = Command.CreateFunction(
         "with",
         (Context context, ObjectValue left, ObjectValue right) =>
@@ -383,9 +451,9 @@ public static class Variables
             return newObj;
         },
         precedence: 6,
-        isInfix: true
+        isInfix: true,
+        description: "Merges properties of two objects to produce a combined object."
     );
-
     public static readonly Command TypeOf = Command.CreateFunction(
         "typeof",
         (Context context, ToastValue val) =>
@@ -402,7 +470,8 @@ public static class Variables
             return new TypeValue(val.Type, null);
         },
         precedence: 9,
-        isPrefix: true
+        isPrefix: true,
+        description: "Returns the Type value of the given expression."
     );
 
     public static void Register(Toaster toast)
@@ -418,5 +487,10 @@ public static class Variables
         toast.RegisterCommand(With);
         toast.RegisterCommand(TypeAnnotation);
         toast.RegisterCommand(TypeOf);
+    }
+
+    public void Load(Toaster toaster, Context callerContext)
+    {
+        Register(toaster);
     }
 }

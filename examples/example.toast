@@ -1,4 +1,5 @@
 // Toast Language Demo Script
+import "system"
 
 // 1. Variables and Arithmetic
 var greeting = "Hello, Toast Language!"

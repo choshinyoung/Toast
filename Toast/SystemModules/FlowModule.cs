@@ -1,7 +1,10 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class ControlFlow
+public class FlowModule : IToastModule
 {
+    public string Name => "flow";
+    public string Description => "Control flow commands (if, else, while, for, try, catch, throw)";
+
     public static readonly Command If = Command.CreateFunction(
         "if",
         (Context context, BoolValue cond, AstNodeValue body) =>
@@ -16,9 +19,9 @@ public static class ControlFlow
                 return val;
             }
             return NullValue.Instance;
-        }
+        },
+        description: "Evaluates and returns the body expression if the condition is true."
     );
-
     public static readonly Command Else = Command.CreateFunction(
         "else",
         (Context context, AstNodeValue leftNode, AstNodeValue rightNode) =>
@@ -63,9 +66,9 @@ public static class ControlFlow
         },
         precedence: 6,
         isRightAssociative: true,
-        isInfix: true
+        isInfix: true,
+        description: "Provides an alternative expression to evaluate when an 'if' condition is false."
     );
-
     public static readonly Command While = Command.CreateFunction(
         "while",
         (Context context, AstNodeValue cond, AstNodeValue body) =>
@@ -92,9 +95,9 @@ public static class ControlFlow
                 }
             }
             return lastVal;
-        }
+        },
+        description: "Repeatedly evaluates the body expression while the condition remains true."
     );
-
     public static readonly Command For = Command.CreateFunction(
         "for",
         (Context context, ListValue items, AstNodeValue body) =>
@@ -116,17 +119,17 @@ public static class ControlFlow
                 }
             }
             return lastVal;
-        }
+        },
+        description: "Iterates over elements of a list, executing the body function for each element."
     );
-
     public static readonly Command Throw = Command.CreateFunction(
         "throw",
         (Context context, ErrorValue err) =>
         {
             throw new ToastException(err);
-        }
+        },
+        description: "Throws an error/exception, interrupting execution."
     );
-
     public static readonly Command Try = Command.CreateFunction(
         "try",
         (Context context, AstNodeValue bodyNode) =>
@@ -144,9 +147,9 @@ public static class ControlFlow
             {
                 return ex.Error;
             }
-        }
+        },
+        description: "Executes a block of code, capturing any errors thrown."
     );
-
     public static readonly Command Catch = Command.CreateFunction(
         "catch",
         (Context context, AstNodeValue leftNode, AstNodeValue rightNode) =>
@@ -191,7 +194,8 @@ public static class ControlFlow
         },
         precedence: 6,
         isRightAssociative: true,
-        isInfix: true
+        isInfix: true,
+        description: "Catches an error thrown in a 'try' block and executes an error handling function."
     );
 
     public static void Register(Toaster toast)
@@ -203,5 +207,10 @@ public static class ControlFlow
         toast.RegisterCommand(Throw);
         toast.RegisterCommand(Try);
         toast.RegisterCommand(Catch);
+    }
+
+    public void Load(Toaster toaster, Context callerContext)
+    {
+        Register(toaster);
     }
 }

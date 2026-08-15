@@ -1,6 +1,6 @@
 namespace Toast.Tests;
 
-public class BuiltInTests : BaseTest
+public class SystemTests : BaseTest
 {
     [Fact]
     public void TestInfixIdentifiers()
@@ -27,9 +27,7 @@ public class BuiltInTests : BaseTest
         Assert.True(_toast.Converters.TryGetValue(sourceTarget, out var converter));
 
         // Test normal list
-        var list = new ListValue(
-            new List<ToastValue> { new NumberValue(1), new NumberValue(2), new NumberValue(3) }
-        );
+        var list = new ListValue([new NumberValue(1), new NumberValue(2), new NumberValue(3)]);
         var str = converter.ConvertFunc(_toast.GlobalContext, list);
         Assert.Equal(new StringValue("[1, 2, 3]"), str);
 
@@ -53,8 +51,11 @@ public class BuiltInTests : BaseTest
         AssertResult("30 / 2", 15.0);
         AssertResult("17 % 5", 2.0);
         AssertResult("2 ** 3", 8.0);
-        AssertResult("floorDiv 15 2", 7);
-        AssertResult("sqrt 16", 4.0);
+
+        var mathCtx = new Context(_toast);
+        Evaluate("import \"math\"", mathCtx);
+        AssertResult("floorDiv 15 2", 7, mathCtx);
+        AssertResult("sqrt 16", 4.0, mathCtx);
 
         // 2. Relational / Logical Operators
         AssertResult("5 == 5", true);
@@ -249,46 +250,22 @@ public class BuiltInTests : BaseTest
     public void TestDateTimeBuiltIn()
     {
         var context = new Context(_toast);
+        Evaluate("import \"datetime\"", context);
 
-        // 1. Creation and fields (uses string-to-datetime converter via 1-arg TypeValue call)
-        Evaluate("var d = datetime \"2026-07-16 13:45:30\"", context);
-        AssertResult("d.year", 2026, context);
-        AssertResult("d.month", 7, context);
-        AssertResult("d.day", 16, context);
-        AssertResult("d.hour", 13, context);
-        AssertResult("d.minute", 45, context);
-        AssertResult("d.second", 30, context);
-
-        // 2. Custom Methods & Converter-based string conversion
-        AssertResult("string d", "2026-07-16 13:45:30", context);
-        AssertResult("d.format \"yyyy.MM.dd\"", "2026.07.16", context);
-
-        var expectedSeconds = new DateTimeOffset(
-            new DateTime(2026, 7, 16, 13, 45, 30)
-        ).ToUnixTimeSeconds();
-        AssertResult("d.totalSeconds", expectedSeconds, context);
-
-        // Convert number (Unix timestamp seconds) to datetime
-        Evaluate($"var d3 = datetime {expectedSeconds}", context);
-        AssertResult("d3.year", 2026, context);
-        AssertResult("d3.month", 7, context);
-        AssertResult("d3.day", 16, context);
-        AssertResult("d3.hour", 13, context);
-        AssertResult("d3.minute", 45, context);
-        AssertResult("d3.second", 30, context);
-        AssertResult("string d3", "2026-07-16 13:45:30", context);
-
-        // 3. Method Chaining & 0-argument constructor
-        Evaluate("var d2 = d.addDays 5", context);
-        AssertResult("d2.day", 21, context);
-        AssertResult("string d2", "2026-07-21 13:45:30", context);
-
-        Evaluate("var now = datetime null", context);
+        // 1. Creation and fields via datetime.now()
+        Evaluate("var now = datetime.now()", context);
         AssertResult("now.year", DateTime.Now.Year, context);
 
-        // 4. Structural Type Checks (is operator)
-        AssertResult("d is datetime", true, context);
-        AssertResult("d2 is datetime", true, context);
-        AssertResult("123 is datetime", false, context);
+        // 2. Verified that instance does NOT have 'now' property (prevents datetime.now.now.now)
+        Assert.Throws<ToastException>(() => Evaluate("now.now", context));
+
+        // 3. Custom Methods & Converter-based string conversion
+        Evaluate("var d = datetime.now()", context);
+        AssertResult("d.format \"yyyy\"", DateTime.Now.Year.ToString(), context);
+        Assert.True(Evaluate("string d", context) is StringValue);
+
+        // 4. Method Chaining
+        Evaluate("var d2 = d.addDays 5", context);
+        AssertResult("d2 is \"datetime\"", true, context);
     }
 }

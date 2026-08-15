@@ -4,9 +4,14 @@ public class Executor(Toaster _toast)
 {
     public ToastValue Execute(string rawInput)
     {
+        return Execute(rawInput, _toast.GlobalContext);
+    }
+
+    public ToastValue Execute(string rawInput, Context context)
+    {
         var tokens = Lexer.Tokenize(rawInput);
-        var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix);
-        return EvaluateProgram(ast, _toast.GlobalContext);
+        var ast = Parser.Parse(tokens, _toast.GetInfixInfo, _toast.IsPrefix, _toast, context);
+        return EvaluateProgram(ast, context);
     }
 
     public bool SuppressZeroArgFunction { get; set; } = false;

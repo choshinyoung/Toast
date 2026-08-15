@@ -23,6 +23,7 @@ public static class Program
                 .WithHandler<TextDocumentHandler>()
                 .WithHandler<HoverHandler>()
                 .WithHandler<CompletionHandler>()
+                .WithHandler<SemanticTokensHandler>()
                 .OnRequest(
                     "shutdown",
                     async token =>

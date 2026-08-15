@@ -1,7 +1,11 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class BuiltIn
+public class SystemModule : IToastModule
 {
+    public string Name => "system";
+    public string Description =>
+        "System bundle providing all built-in modules (default, object, flow, string, list, utility, converter, import)";
+
     public static void Register(Toaster toast)
     {
         RegisterConverters(toast);
@@ -27,21 +31,23 @@ public static class BuiltIn
 
     public static void RegisterBuiltInTypes(Toaster toast)
     {
-        RegisterType(toast, ToastType.Number);
-        RegisterType(toast, ToastType.String);
-        RegisterType(toast, ToastType.Boolean);
-        RegisterType(toast, ToastType.List);
-        RegisterType(toast, ToastType.Object);
-        RegisterErrorType(toast, ToastType.ErrorValue);
+        RegisterType(toast, ToastType.Number, "Converts a value to a number type.");
+        RegisterType(toast, ToastType.String, "Converts a value to a string type.");
+        RegisterType(toast, ToastType.Boolean, "Converts a value to a boolean type.");
+        RegisterType(toast, ToastType.List, "Converts a value to a list type.");
+        RegisterType(toast, ToastType.Object, "Converts a value to an object type.");
+        RegisterErrorType(toast, ToastType.Error);
     }
 
-    private static void RegisterType(Toaster toast, ToastType targetType)
+    private static void RegisterType(Toaster toast, ToastType targetType, string description = "")
     {
         var name = targetType.Name;
         var cmd = new Command(
             name,
             (Context context, ToastValue val) => ConvertToType(context, val, targetType),
-            parameterTypes: [ToastType.Any]
+            parameterTypes: [ToastType.Any],
+            description: description,
+            returnType: targetType
         );
         var typeValue = new TypeValue(targetType, cmd);
         toast.GlobalContext.SetValueDirect(name, typeValue);
@@ -83,7 +89,9 @@ public static class BuiltIn
                 return ErrorValue.Create(errType, msg, new Location(line, col), cause);
             },
             parameterTypes: [ToastType.Any],
-            isParameterLazy: [false]
+            isParameterLazy: [false],
+            description: "Creates an Error object with error type, message, location, and optional cause.",
+            returnType: targetType
         );
         var declaredMembers = new HashSet<string>
         {
@@ -95,76 +103,33 @@ public static class BuiltIn
         };
         var typeValue = new TypeValue(targetType, cmd, declaredMembers);
         toast.GlobalContext.SetValueDirect(name, typeValue);
-        toast.GlobalContext.SetValueDirect("ErrorValue", typeValue);
     }
 
     public static void RegisterConverters(Toaster toast)
     {
-        Converters.Register(toast);
+        ConverterModule.Register(toast);
     }
 
     public static void RegisterAllCommands(Toaster toast)
     {
-        RegisterLiterals(toast);
-        RegisterVariables(toast);
-        RegisterMath(toast);
-        RegisterRelational(toast);
-        RegisterLogical(toast);
-        RegisterBitwise(toast);
-        RegisterControlFlow(toast);
-        RegisterList(toast);
-        RegisterString(toast);
-        RegisterUtility(toast);
-        DateTimeBuiltIn.Register(toast);
+        ImportModule.Register(toast);
+        DefaultModule.Register(toast);
+        ObjectModule.Register(toast);
+        FlowModule.Register(toast);
+        ListModule.Register(toast);
+        StringModule.Register(toast);
+        UtilityModule.Register(toast);
     }
 
-    public static void RegisterLiterals(Toaster toast)
+    public void Load(Toaster toaster, Context callerContext)
     {
-        Literals.Register(toast);
-    }
-
-    public static void RegisterVariables(Toaster toast)
-    {
-        Variables.Register(toast);
-    }
-
-    public static void RegisterMath(Toaster toast)
-    {
-        Math.Register(toast);
-    }
-
-    public static void RegisterRelational(Toaster toast)
-    {
-        Relational.Register(toast);
-    }
-
-    public static void RegisterLogical(Toaster toast)
-    {
-        Logical.Register(toast);
-    }
-
-    public static void RegisterBitwise(Toaster toast)
-    {
-        Bitwise.Register(toast);
-    }
-
-    public static void RegisterControlFlow(Toaster toast)
-    {
-        ControlFlow.Register(toast);
-    }
-
-    public static void RegisterList(Toaster toast)
-    {
-        List.Register(toast);
-    }
-
-    public static void RegisterString(Toaster toast)
-    {
-        String.Register(toast);
-    }
-
-    public static void RegisterUtility(Toaster toast)
-    {
-        Utility.Register(toast);
+        new DefaultModule().Load(toaster, callerContext);
+        new ObjectModule().Load(toaster, callerContext);
+        new FlowModule().Load(toaster, callerContext);
+        new ConverterModule().Load(toaster, callerContext);
+        new StringModule().Load(toaster, callerContext);
+        new ListModule().Load(toaster, callerContext);
+        new UtilityModule().Load(toaster, callerContext);
+        new ImportModule().Load(toaster, callerContext);
     }
 }

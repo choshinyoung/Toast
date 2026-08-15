@@ -1,14 +1,15 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class Math
+public partial class DefaultModule
 {
     public static readonly Command UnaryPlus = Command.CreateOperator(
         "+",
         (Context context, NumberValue val) => val,
         precedence: 9,
-        isPrefix: true
+        isPrefix: true,
+        description: "Unary plus operator.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Addition = Command.CreateOperator(
         "+",
         ToastValue (Context context, ToastValue left, ToastValue right) =>
@@ -23,30 +24,33 @@ public static class Math
             }
             throw new ToastException(new TypeError("Cannot add non-number/non-string values."));
         },
-        precedence: 7
+        precedence: 7,
+        description: "Addition operator for numbers or concatenation for strings."
     );
-
     public static readonly Command UnaryMinus = Command.CreateOperator(
         "-",
         (Context context, NumberValue val) => new NumberValue(-val.Value),
         precedence: 9,
-        isPrefix: true
+        isPrefix: true,
+        description: "Unary minus operator, negates a number.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Subtraction = Command.CreateOperator(
         "-",
         (Context context, NumberValue left, NumberValue right) =>
             new NumberValue(left.Value - right.Value),
-        precedence: 7
+        precedence: 7,
+        description: "Subtraction operator.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Multiplication = Command.CreateOperator(
         "*",
         (Context context, NumberValue left, NumberValue right) =>
             new NumberValue(left.Value * right.Value),
-        precedence: 8
+        precedence: 8,
+        description: "Multiplication operator.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Division = Command.CreateOperator(
         "/",
         (Context context, NumberValue left, NumberValue right) =>
@@ -57,9 +61,10 @@ public static class Math
             }
             return new NumberValue(left.Value / right.Value);
         },
-        precedence: 8
+        precedence: 8,
+        description: "Division operator.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Modulus = Command.CreateOperator(
         "%",
         (Context context, NumberValue left, NumberValue right) =>
@@ -70,36 +75,21 @@ public static class Math
             }
             return new NumberValue(left.Value % right.Value);
         },
-        precedence: 8
+        precedence: 8,
+        description: "Modulus operator.",
+        returnType: ToastType.Number
     );
-
     public static readonly Command Exponentiation = Command.CreateOperator(
         "**",
-        (Context ctx, NumberValue x, NumberValue y) =>
-            new NumberValue(System.Math.Pow(x.Value, y.Value)),
-        precedence: 8
+        (Context context, NumberValue left, NumberValue right) =>
+            new NumberValue(System.Math.Pow(left.Value, right.Value)),
+        precedence: 9,
+        isRightAssociative: true,
+        description: "Exponentiation operator.",
+        returnType: ToastType.Number
     );
 
-    public static readonly Command FloorDivision = Command.CreateFunction(
-        "floorDiv",
-        (Context ctx, NumberValue x, NumberValue y) =>
-        {
-            if (y.Value == 0)
-            {
-                throw new ToastException(RuntimeError.DivisionByZero());
-            }
-            return new NumberValue(System.Math.Floor(x.Value / y.Value));
-        },
-        precedence: 8,
-        isInfix: true
-    );
-
-    public static readonly Command Sqrt = Command.CreateFunction(
-        "sqrt",
-        (Context context, NumberValue val) => new NumberValue(System.Math.Sqrt(val.Value))
-    );
-
-    public static void Register(Toaster toast)
+    public static void RegisterArithmetic(Toaster toast)
     {
         toast.RegisterCommand(UnaryPlus);
         toast.RegisterCommand(Addition);
@@ -109,7 +99,5 @@ public static class Math
         toast.RegisterCommand(Division);
         toast.RegisterCommand(Modulus);
         toast.RegisterCommand(Exponentiation);
-        toast.RegisterCommand(FloorDivision);
-        toast.RegisterCommand(Sqrt);
     }
 }

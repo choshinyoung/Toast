@@ -15,6 +15,12 @@ return options.Mode switch
     ExecutionMode.Repl => RunInteractive(version),
     ExecutionMode.LanguageServer => await RunLanguageServerAsync(),
     ExecutionMode.ReadStdin => ScriptRunner.RunStdin(),
+    ExecutionMode.InstallModule => await ModuleRunner.InstallAsync(
+        options.InstallSource!,
+        options.TargetModuleName
+    ),
+    ExecutionMode.ListModules => ModuleRunner.List(),
+    ExecutionMode.UninstallModule => ModuleRunner.Uninstall(options.UninstallModuleName!),
     ExecutionMode.EvalCode => ScriptRunner.ProcessCode(
         options.EvalCode!,
         "<eval>",

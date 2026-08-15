@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using MediatR;
 using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
@@ -12,7 +11,6 @@ namespace Toast.LanguageServer.Handlers;
 public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyncHandlerBase
 {
     private readonly ILanguageServerFacade _router = router;
-    private readonly ConcurrentDictionary<DocumentUri, string> _documents = new();
 
     public override TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
     {
@@ -26,7 +24,7 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
     {
         var uri = request.TextDocument.Uri;
         var text = request.TextDocument.Text;
-        _documents[uri] = text;
+        DocumentManager.Instance.UpdateDocument(uri, text);
         ValidateDocument(uri, text);
         return Unit.Task;
     }
@@ -40,7 +38,7 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
         var text = request.ContentChanges.FirstOrDefault()?.Text;
         if (text != null)
         {
-            _documents[uri] = text;
+            DocumentManager.Instance.UpdateDocument(uri, text);
             ValidateDocument(uri, text);
         }
         return Unit.Task;
@@ -59,7 +57,7 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
         CancellationToken cancellationToken
     )
     {
-        _documents.TryRemove(request.TextDocument.Uri, out _);
+        DocumentManager.Instance.RemoveDocument(request.TextDocument.Uri);
         return Unit.Task;
     }
 
@@ -85,7 +83,7 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
     private void ValidateDocument(DocumentUri uri, string text)
     {
         var diagnostics = new List<Diagnostic>();
-        var toast = new Toaster(useBuiltIn: true);
+        var toast = DocumentManager.Instance.GetToasterForDocument(uri);
 
         try
         {

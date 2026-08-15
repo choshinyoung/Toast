@@ -9,6 +9,9 @@ public enum ExecutionMode
     ShowHelp,
     ShowVersion,
     LanguageServer,
+    InstallModule,
+    ListModules,
+    UninstallModule,
 }
 
 public sealed class Options
@@ -16,6 +19,9 @@ public sealed class Options
     public ExecutionMode Mode { get; init; } = ExecutionMode.Repl;
     public string? ScriptPath { get; init; }
     public string? EvalCode { get; init; }
+    public string? InstallSource { get; init; }
+    public string? TargetModuleName { get; init; }
+    public string? UninstallModuleName { get; init; }
     public bool PrintTokens { get; init; }
     public bool PrintAst { get; init; }
     public string? ErrorMessage { get; init; }
@@ -29,6 +35,80 @@ public sealed class Options
                 return new Options { Mode = ExecutionMode.ReadStdin };
             }
             return new Options { Mode = ExecutionMode.Repl };
+        }
+
+        var first = args[0].ToLowerInvariant();
+
+        if (first == "module")
+        {
+            if (args.Length < 2)
+            {
+                return new Options
+                {
+                    Mode = ExecutionMode.ShowHelp,
+                    ErrorMessage = "Usage: toast module (install|list|uninstall) [arguments...]",
+                };
+            }
+
+            var subCommand = args[1].ToLowerInvariant();
+            if (subCommand == "install" || subCommand == "add")
+            {
+                if (args.Length < 3)
+                {
+                    return new Options
+                    {
+                        Mode = ExecutionMode.ShowHelp,
+                        ErrorMessage =
+                            "Usage: toast module install <url-or-file-path> [--name <moduleName>]",
+                    };
+                }
+
+                string source = args[2];
+                string? name = null;
+                for (int i = 3; i < args.Length; i++)
+                {
+                    if (args[i] == "--name" && i + 1 < args.Length)
+                    {
+                        name = args[++i];
+                    }
+                }
+
+                return new Options
+                {
+                    Mode = ExecutionMode.InstallModule,
+                    InstallSource = source,
+                    TargetModuleName = name,
+                };
+            }
+
+            if (subCommand == "list")
+            {
+                return new Options { Mode = ExecutionMode.ListModules };
+            }
+
+            if (subCommand == "uninstall" || subCommand == "remove")
+            {
+                if (args.Length < 3)
+                {
+                    return new Options
+                    {
+                        Mode = ExecutionMode.ShowHelp,
+                        ErrorMessage = "Usage: toast module uninstall <moduleName>",
+                    };
+                }
+                return new Options
+                {
+                    Mode = ExecutionMode.UninstallModule,
+                    UninstallModuleName = args[2],
+                };
+            }
+
+            return new Options
+            {
+                Mode = ExecutionMode.ShowHelp,
+                ErrorMessage =
+                    $"Unknown module subcommand '{args[1]}'. Use 'toast module (install|list|uninstall)'.",
+            };
         }
 
         bool printTokens = false;

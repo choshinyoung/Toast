@@ -1,7 +1,10 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class DateTimeBuiltIn
+public class DateTimeModule : IToastModule
 {
+    public string Name => "datetime";
+    public string Description => "Date and time manipulation module";
+
     public static readonly ToastType DateTimeType = new("datetime");
 
     public static ObjectValue CreateDateTimeObject(Toaster toaster, DateTime dt)
@@ -18,14 +21,18 @@ public static class DateTimeBuiltIn
             "addDays",
             (Context context, NumberValue days) =>
                 CreateDateTimeObject(context.Toaster, dt.AddDays(days.Value)),
-            parameterTypes: [ToastType.Number]
+            parameterTypes: [ToastType.Number],
+            description: "Adds the specified number of days to the datetime value.",
+            returnType: DateTimeType
         );
         objCtx.SetValueDirect("addDays", new CommandValue(addDays));
 
         var format = new Command(
             "format",
             (Context context, StringValue fmt) => new StringValue(dt.ToString(fmt.Value)),
-            parameterTypes: [ToastType.String]
+            parameterTypes: [ToastType.String],
+            description: "Formats the datetime value using a standard format string.",
+            returnType: ToastType.String
         );
         objCtx.SetValueDirect("format", new CommandValue(format));
 
@@ -33,7 +40,9 @@ public static class DateTimeBuiltIn
         var totalSeconds = new Command(
             "totalSeconds",
             (Context context) => new NumberValue(unixTime),
-            parameterTypes: []
+            parameterTypes: [],
+            description: "Gets the Unix epoch timestamp in seconds.",
+            returnType: ToastType.Number
         );
         objCtx.SetValueDirect("totalSeconds", new CommandValue(totalSeconds));
 
@@ -43,12 +52,6 @@ public static class DateTimeBuiltIn
     public static void Register(Toaster toast)
     {
         toast.RegisterType(DateTimeType);
-
-        var constructorCmd = new Command(
-            "datetime",
-            (Context context, ToastValue val) => BuiltIn.ConvertToType(context, val, DateTimeType),
-            parameterTypes: [ToastType.Any]
-        );
 
         toast.RegisterConverter(
             new TypeConverter(
@@ -103,21 +106,30 @@ public static class DateTimeBuiltIn
                 }
             )
         );
+    }
 
-        var declaredMembers = new HashSet<string>
-        {
-            "year",
-            "month",
-            "day",
-            "hour",
-            "minute",
-            "second",
-            "addDays",
-            "format",
-            "totalSeconds",
-        };
+    public void Load(Toaster toaster, Context callerContext)
+    {
+        Register(toaster);
 
-        var typeValue = new TypeValue(DateTimeType, constructorCmd, declaredMembers);
-        toast.GlobalContext.SetValueDirect("datetime", typeValue);
+        var nowCmd = Command.CreateFunction(
+            "now",
+            (Context c) => CreateDateTimeObject(toaster, DateTime.Now),
+            description: "Gets the current local date and time.",
+            returnType: DateTimeType
+        );
+        var utcNowCmd = Command.CreateFunction(
+            "utcNow",
+            (Context c) => CreateDateTimeObject(toaster, DateTime.UtcNow),
+            description: "Gets the current UTC date and time.",
+            returnType: DateTimeType
+        );
+
+        var dtCtx = new Context(toaster.GlobalContext);
+        dtCtx.SetValueDirect("now", new CommandValue(nowCmd));
+        dtCtx.SetValueDirect("utcNow", new CommandValue(utcNowCmd));
+
+        var dtObj = new ObjectValue(dtCtx, new ToastType("datetimeModule"));
+        callerContext.SetValueDirect("datetime", dtObj);
     }
 }

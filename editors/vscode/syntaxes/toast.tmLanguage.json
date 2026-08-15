@@ -4,11 +4,9 @@
   "scopeName": "source.toast",
   "patterns": [
     { "include": "#comments" },
-    { "include": "#keywords" },
     { "include": "#strings" },
     { "include": "#numbers" },
-    { "include": "#operators" },
-    { "include": "#functions" },
+    { "include": "#symbols" },
     { "include": "#identifiers" }
   ],
   "repository": {
@@ -22,26 +20,6 @@
           "name": "comment.block.toast",
           "begin": "/\\*",
           "end": "\\*/"
-        }
-      ]
-    },
-    "keywords": {
-      "patterns": [
-        {
-          "name": "keyword.control.toast",
-          "match": "\\b(if|else|while|for|try|catch|throw)\\b"
-        },
-        {
-          "name": "keyword.declaration.toast",
-          "match": "\\b(var|function|type)\\b"
-        },
-        {
-          "name": "keyword.operator.toast",
-          "match": "\\b(is|in|to|typeof)\\b"
-        },
-        {
-          "name": "constant.language.toast",
-          "match": "\\b(true|false|null)\\b"
         }
       ]
     },
@@ -81,7 +59,7 @@
       "patterns": [
         {
           "name": "constant.numeric.float.toast",
-          "match": "\\b\\d+\\.\\d+\\b"
+          "match": "\\b(?:\\d+\\.\\d+|\\.\\d+)\\b"
         },
         {
           "name": "constant.numeric.integer.toast",
@@ -89,39 +67,11 @@
         }
       ]
     },
-    "operators": {
+    "symbols": {
       "patterns": [
         {
-          "name": "keyword.operator.arrow.toast",
-          "match": "=>"
-        },
-        {
-          "name": "keyword.operator.comparison.toast",
-          "match": "==|!=|<=|>=|<|>"
-        },
-        {
-          "name": "keyword.operator.arithmetic.toast",
-          "match": "\\*\\*|\\+|\\-|\\*|/|%"
-        },
-        {
-          "name": "keyword.operator.assignment.toast",
-          "match": "="
-        }
-      ]
-    },
-    "functions": {
-      "patterns": [
-        {
-          "name": "entity.name.function.toast",
-          "match": "\\b(function)\\s+([\\p{L}_][\\p{L}\\p{Nd}_]*)",
-          "captures": {
-            "1": { "name": "keyword.declaration.toast" },
-            "2": { "name": "entity.name.function.toast" }
-          }
-        },
-        {
-          "name": "entity.name.function.toast",
-          "match": "([\\p{L}_][\\p{L}\\p{Nd}_]*)(?=\\()"
+          "name": "keyword.operator.toast",
+          "match": "[!@#$%^&*\\-=+\\.?/<>|:~`]+"
         }
       ]
     },

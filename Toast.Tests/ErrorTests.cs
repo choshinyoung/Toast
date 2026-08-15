@@ -15,7 +15,6 @@ public class ErrorTests : BaseTest
         AssertResult("synErr.errorType", "SyntaxError", context);
 
         AssertResult("synErr is Error", true, context);
-        AssertResult("synErr is ErrorValue", true, context);
         AssertResult("synErr is object", true, context);
 
         // 2. TypeError creation & is check

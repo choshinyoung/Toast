@@ -1,47 +1,53 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class Relational
+public partial class DefaultModule
 {
     public static readonly Command Equal = Command.CreateOperator(
         "==",
         (Context context, ToastValue left, ToastValue right) => new BoolValue(Equals(left, right)),
-        precedence: 4
+        precedence: 4,
+        description: "Equality operator, checks if two values are equal.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command NotEqual = Command.CreateOperator(
         "!=",
         (Context context, ToastValue left, ToastValue right) => new BoolValue(!Equals(left, right)),
-        precedence: 4
+        precedence: 4,
+        description: "Inequality operator, checks if two values are not equal.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command LessThan = Command.CreateOperator(
         "<",
         (Context context, NumberValue left, NumberValue right) =>
             new BoolValue(left.Value < right.Value),
-        precedence: 5
+        precedence: 5,
+        description: "Less than comparison operator.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command GreaterThan = Command.CreateOperator(
         ">",
         (Context context, NumberValue left, NumberValue right) =>
             new BoolValue(left.Value > right.Value),
-        precedence: 5
+        precedence: 5,
+        description: "Greater than comparison operator.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command LessThanOrEqual = Command.CreateOperator(
         "<=",
         (Context context, NumberValue left, NumberValue right) =>
             new BoolValue(left.Value <= right.Value),
-        precedence: 5
+        precedence: 5,
+        description: "Less than or equal comparison operator.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command GreaterThanOrEqual = Command.CreateOperator(
         ">=",
         (Context context, NumberValue left, NumberValue right) =>
             new BoolValue(left.Value >= right.Value),
-        precedence: 5
+        precedence: 5,
+        description: "Greater than or equal comparison operator.",
+        returnType: ToastType.Boolean
     );
-
     public static readonly Command Is = Command.CreateFunction(
         "is",
         (Context context, ToastValue left, ToastValue right) =>
@@ -89,7 +95,9 @@ public static class Relational
             return new BoolValue(CheckIsCompatible(context, left, typeVal));
         },
         precedence: 6,
-        isInfix: true
+        isInfix: true,
+        description: "Checks whether a value is compatible with the specified type.",
+        returnType: ToastType.Boolean
     );
 
     private static bool CheckIsCompatible(Context context, ToastValue left, TypeValue targetTypeVal)
@@ -145,7 +153,7 @@ public static class Relational
         return false;
     }
 
-    public static void Register(Toaster toast)
+    public static void RegisterRelational(Toaster toast)
     {
         toast.RegisterCommand(Equal);
         toast.RegisterCommand(NotEqual);

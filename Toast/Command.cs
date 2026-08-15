@@ -13,6 +13,8 @@ public class Command
     public bool IsPrefix { get; }
     public bool IsInfix { get; }
     public bool DeclaresMember { get; }
+    public string Description { get; init; } = "";
+    public ToastType ReturnType { get; init; } = ToastType.Any;
     public IReadOnlyList<CommandParameter> Parameters { get; }
     public int ParameterCount => Parameters.Count;
 
@@ -25,7 +27,9 @@ public class Command
         bool isInfix = false,
         IReadOnlyList<ToastType>? parameterTypes = null,
         IReadOnlyList<bool>? isParameterLazy = null,
-        bool declaresMember = false
+        bool declaresMember = false,
+        string? description = null,
+        ToastType? returnType = null
     )
     {
         Name = name;
@@ -38,10 +42,25 @@ public class Command
         var method = targetDelegate.Method;
         var methodParams = method.GetParameters();
 
+        Description = description ?? "";
+
+        if (returnType != null)
+        {
+            ReturnType = returnType;
+        }
+        else if (method.ReturnType == typeof(void) || method.ReturnType == typeof(NullValue))
+        {
+            ReturnType = ToastType.Null;
+        }
+        else
+        {
+            ReturnType = ToastType.TryFromClrType(method.ReturnType) ?? ToastType.Any;
+        }
+
         TargetDelegate = CompileDelegate(targetDelegate);
 
         var list = new List<CommandParameter>();
-        if (parameterTypes != null && isParameterLazy != null)
+        if (parameterTypes != null)
         {
             for (int i = 0; i < parameterTypes.Count; i++)
             {
@@ -50,7 +69,8 @@ public class Command
                         ? (methodParams[i + 1].Name ?? $"arg{i + 1}")
                         : $"arg{i + 1}";
                 var pType = parameterTypes[i];
-                var pLazy = i < isParameterLazy.Count && isParameterLazy[i];
+                var pLazy =
+                    isParameterLazy != null && i < isParameterLazy.Count && isParameterLazy[i];
                 list.Add(new CommandParameter(pName, pType, pLazy));
             }
         }
@@ -63,7 +83,7 @@ public class Command
             {
                 var param = methodParams[i];
                 var pName = param.Name ?? $"arg{i}";
-                var pType = MapToToastType(param.ParameterType);
+                var pType = ToastType.FromClrType(param.ParameterType);
                 var pLazy = param.ParameterType == typeof(AstNodeValue);
                 list.Add(new CommandParameter(pName, pType, pLazy));
             }
@@ -75,6 +95,21 @@ public class Command
             );
         }
         Parameters = list;
+    }
+
+    public string GetSignature()
+    {
+        if (IsInfix && Parameters.Count == 2)
+        {
+            return $"({Parameters[0].Name}: {Parameters[0].Type.Name}) {Name} ({Parameters[1].Name}: {Parameters[1].Type.Name}): {ReturnType.Name}";
+        }
+        if (IsPrefix && Parameters.Count == 1)
+        {
+            return $"{Name}({Parameters[0].Name}: {Parameters[0].Type.Name}): {ReturnType.Name}";
+        }
+
+        var paramStrs = Parameters.Select(p => $"{p.Name}: {p.Type.Name}");
+        return $"{Name}({string.Join(", ", paramStrs)}): {ReturnType.Name}";
     }
 
     private static Func<Context, ToastValue[], ToastValue> CompileDelegate(Delegate del)
@@ -138,26 +173,6 @@ public class Command
         }
     }
 
-    public static Command CreateOperator(
-        string name,
-        Delegate targetDelegate,
-        int precedence,
-        bool isRightAssociative = false,
-        bool isPrefix = false,
-        bool declaresMember = false
-    )
-    {
-        return new Command(
-            name,
-            targetDelegate,
-            precedence: precedence,
-            isRightAssociative: isRightAssociative,
-            isPrefix: isPrefix,
-            isInfix: !isPrefix,
-            declaresMember: declaresMember
-        );
-    }
-
     public static Command CreateFunction(
         string name,
         Delegate targetDelegate,
@@ -165,7 +180,11 @@ public class Command
         bool isRightAssociative = false,
         bool isPrefix = false,
         bool isInfix = false,
-        bool declaresMember = false
+        IReadOnlyList<ToastType>? parameterTypes = null,
+        IReadOnlyList<bool>? isParameterLazy = null,
+        bool declaresMember = false,
+        string? description = null,
+        ToastType? returnType = null
     )
     {
         return new Command(
@@ -175,42 +194,38 @@ public class Command
             isRightAssociative: isRightAssociative,
             isPrefix: isPrefix,
             isInfix: isInfix,
-            declaresMember: declaresMember
+            parameterTypes: parameterTypes,
+            isParameterLazy: isParameterLazy,
+            declaresMember: declaresMember,
+            description: description,
+            returnType: returnType
         );
     }
 
-    private static ToastType MapToToastType(Type type)
+    public static Command CreateOperator(
+        string name,
+        Delegate targetDelegate,
+        int precedence,
+        bool isInfix = false,
+        bool isRightAssociative = false,
+        bool isPrefix = false,
+        IReadOnlyList<ToastType>? parameterTypes = null,
+        IReadOnlyList<bool>? isParameterLazy = null,
+        string? description = null,
+        ToastType? returnType = null
+    )
     {
-        if (!typeof(ToastValue).IsAssignableFrom(type))
-        {
-            throw new InvalidOperationException(
-                $"Command parameter type '{type.Name}' must inherit from ToastValue."
-            );
-        }
-
-        if (type == typeof(StringValue))
-            return ToastType.String;
-        if (type == typeof(NumberValue))
-            return ToastType.Number;
-        if (type == typeof(BoolValue))
-            return ToastType.Boolean;
-        if (type == typeof(ListValue))
-            return ToastType.List;
-        if (type == typeof(ObjectValue))
-            return ToastType.Object;
-        if (type == typeof(ErrorValue) || typeof(ErrorValue).IsAssignableFrom(type))
-            return ToastType.ErrorValue;
-        if (type == typeof(FunctionValue) || type == typeof(CommandValue))
-            return ToastType.Function;
-        if (type == typeof(IdentifierValue))
-            return ToastType.Identifier;
-        if (type == typeof(NullValue))
-            return ToastType.Null;
-        if (type == typeof(AstNodeValue))
-            return ToastType.Any;
-        if (type == typeof(ReferenceValue))
-            return ToastType.Reference;
-
-        return ToastType.Any;
+        return new Command(
+            name,
+            targetDelegate,
+            precedence: precedence,
+            isRightAssociative: isRightAssociative,
+            isPrefix: isPrefix,
+            isInfix: isInfix,
+            parameterTypes: parameterTypes,
+            isParameterLazy: isParameterLazy,
+            description: description,
+            returnType: returnType
+        );
     }
 }

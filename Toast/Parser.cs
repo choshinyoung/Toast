@@ -3,7 +3,9 @@ namespace Toast;
 public class Parser(
     List<Token> _tokens,
     Func<Token, (int Precedence, bool IsRight)> _infixResolver,
-    Func<Token, bool> _prefixResolver
+    Func<Token, bool> _prefixResolver,
+    Toaster? _toaster = null,
+    Context? _context = null
 )
 {
     private int _position = 0;
@@ -14,10 +16,12 @@ public class Parser(
     public static ProgramNode Parse(
         List<Token> tokens,
         Func<Token, (int Precedence, bool IsRight)> infixResolver,
-        Func<Token, bool> prefixResolver
+        Func<Token, bool> prefixResolver,
+        Toaster? toaster = null,
+        Context? context = null
     )
     {
-        var parser = new Parser(tokens, infixResolver, prefixResolver);
+        var parser = new Parser(tokens, infixResolver, prefixResolver, toaster, context);
         return parser.ParseProgram();
     }
 
@@ -32,7 +36,40 @@ public class Parser(
             if (IsAtEnd())
                 break;
 
-            expressions.Add(ParseExpression());
+            var expr = ParseExpression();
+            expressions.Add(expr);
+
+            if (
+                _toaster != null
+                && expr is CallNode call
+                && call.Callee is IdentifierNode id
+                && id.Name == "import"
+                && call.Arguments.Count > 0
+            )
+            {
+                var firstArg = call.Arguments[0];
+                string? modName = null;
+                if (firstArg is LiteralNode lit && lit.Value is StringValue sv)
+                    modName = sv.Value;
+                else if (firstArg is IdentifierNode idArg)
+                    modName = idArg.Name;
+
+                if (!string.IsNullOrEmpty(modName))
+                {
+                    try
+                    {
+                        ModuleManager.Instance.LoadModule(
+                            modName,
+                            _toaster,
+                            _context ?? _toaster.GlobalContext
+                        );
+                    }
+                    catch
+                    {
+                        // Ignore parse-time load errors, let runtime report properly
+                    }
+                }
+            }
 
             MatchWhileNewline();
         }

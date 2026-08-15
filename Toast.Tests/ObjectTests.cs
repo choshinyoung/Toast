@@ -36,6 +36,7 @@ public class ObjectTests : BaseTest
         AssertResult("p2.y", 200, context);
 
         // 5. Test Parameterless member function execution and suppression
+        Evaluate("import \"math\"", context);
         Evaluate(
             @"var Point2 = type (x, y) => {
           var magnitude = {
@@ -86,6 +87,8 @@ public class ObjectTests : BaseTest
     {
         var context = new Context(_toast);
 
+        // 2. Methods and property shorthand
+        Evaluate("import \"math\"", context);
         Evaluate(
             @"class Point2 (x, y) => {
   function magnitude () => sqrt(x * x + y * y)
@@ -184,7 +187,10 @@ public class ObjectTests : BaseTest
 
         // 3. with 연산 시 함수 클로저 재바인딩 검증
         Evaluate("var rawP1 = {{ x = 3, y = 4 }}", context);
-        Evaluate("var p3 = rawP1 with {{ z = 10, magnitude = () => { x * x + y * y + z * z } }}", context);
+        Evaluate(
+            "var p3 = rawP1 with {{ z = 10, magnitude = () => { x * x + y * y + z * z } }}",
+            context
+        );
         AssertResult("p3.magnitude", 125, context);
     }
 
@@ -318,10 +324,10 @@ public class ObjectTests : BaseTest
         AssertResult("s_with.length", 4, context);
         AssertResult("s_with.contains(\"sd\")", true, context);
 
-        // 3. 샌드박싱 (선택적 빌트인 등록) 검증
-        // useBuiltIn: false 로 생성한 샌드박스 Toaster 에서는 확장 멤버 함수들이 존재하지 않아야 함.
-        var sandboxToast = new Toaster(useBuiltIn: false);
-        Toast.BuiltIns.Variables.Register(sandboxToast); // . 연산자 사용을 위해 Variables만 등록
+        // 3. 샌드박싱 (선택적 시스템 커맨드 등록) 검증
+        // useSystemModules: false 로 생성한 샌드박스 Toaster 에서는 확장 멤버 함수들이 존재하지 않아야 함.
+        var sandboxToast = new Toaster(useSystemModules: false);
+        Toast.SystemModules.ObjectModule.Register(sandboxToast); // . 연산자 사용을 위해 ObjectModule만 등록
         var sandboxCtx = new Context(sandboxToast);
 
         sandboxToast.Evaluate(

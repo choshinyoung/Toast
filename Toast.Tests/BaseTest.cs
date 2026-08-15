@@ -2,7 +2,7 @@ namespace Toast.Tests;
 
 public abstract class BaseTest
 {
-    protected readonly Toaster _toast = new(useBuiltIn: true);
+    protected readonly Toaster _toast = new(useSystemModules: true);
 
     protected ToastValue Evaluate(string source, Context context)
     {

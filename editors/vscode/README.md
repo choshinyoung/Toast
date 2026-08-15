@@ -19,7 +19,7 @@
 
 전역 도구 설치:
 ```bash
-dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.5-beta
+dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.6-beta
 ```
 
 대화형 도구 실행:
@@ -33,14 +33,14 @@ toast
 
 라이브러리 설치:
 ```bash
-dotnet add package choshinyoung.Toast --version 2.0.5-beta
+dotnet add package choshinyoung.Toast --version 2.0.6-beta
 ```
 
 C# 코드 사용 예시:
 ```csharp
 using Toast;
 
-var toaster = new Toaster(useBuiltIn: true);
+var toaster = new Toaster(useSystemModules: true);
 var result = toaster.Execute("1 + 2 * 3");
 Console.WriteLine(result); // 출력 결과: 7
 ```

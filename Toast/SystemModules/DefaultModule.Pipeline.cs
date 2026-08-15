@@ -1,47 +1,7 @@
-namespace Toast.BuiltIns;
+namespace Toast.SystemModules;
 
-public static class Utility
+public partial class DefaultModule
 {
-    public static readonly Command Print = Command.CreateFunction(
-        "print",
-        (Context context, ToastValue val) =>
-        {
-            Console.WriteLine(val);
-            return NullValue.Instance;
-        }
-    );
-
-    public static readonly Command Input = Command.CreateFunction(
-        "input",
-        (Context context) => new StringValue(Console.ReadLine() ?? "")
-    );
-
-    public static readonly Command Execute = Command.CreateFunction(
-        "execute",
-        (Context context, FunctionValue func, ListValue args) =>
-        {
-            return func.Execute(args.Elements);
-        }
-    );
-
-    public static readonly Command Random = Command.CreateFunction(
-        "random",
-        (Context context, NumberValue min, NumberValue max) =>
-        {
-            return new NumberValue(new Random().Next((int)min.Value, (int)max.Value));
-        }
-    );
-
-    public static readonly Command RandomChoice = Command.CreateFunction(
-        "randomChoice",
-        (Context context, ListValue list) =>
-        {
-            if (list.Elements.Count == 0)
-                return NullValue.Instance;
-            return list.Elements[new Random().Next(0, list.Elements.Count)];
-        }
-    );
-
     public static readonly Command Quote = Command.CreateOperator(
         "`",
         (Context context, AstNodeValue nodeVal) =>
@@ -102,7 +62,8 @@ public static class Utility
             return finalResult;
         },
         precedence: 9,
-        isPrefix: true
+        isPrefix: true,
+        description: "Quotes an expression to obtain its command, function, or reference without direct invocation."
     );
 
     public static readonly Command Pipeline = Command.CreateOperator(
@@ -123,16 +84,12 @@ public static class Utility
                 return context.Toaster.Evaluate(newCallNode, context);
             }
         },
-        precedence: 2
+        precedence: 2,
+        description: "Pipes the result of the left expression as the first argument to the right function call."
     );
 
-    public static void Register(Toaster toast)
+    public static void RegisterPipeline(Toaster toast)
     {
-        toast.RegisterCommand(Print);
-        toast.RegisterCommand(Input);
-        toast.RegisterCommand(Execute);
-        toast.RegisterCommand(Random);
-        toast.RegisterCommand(RandomChoice);
         toast.RegisterCommand(Quote);
         toast.RegisterCommand(Pipeline);
     }

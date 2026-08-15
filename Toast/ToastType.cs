@@ -30,18 +30,20 @@ public record ToastType(string Name)
     public static readonly ToastType Reference = new(Names.Reference);
     public static readonly ToastType Type = new(Names.Type);
     public static readonly ToastType Error = new(Names.Error);
-    public static readonly ToastType ErrorValue = Error;
 
-    public static readonly HashSet<string> BuiltInTypeNames =
+    public static readonly HashSet<string> SystemTypeNames =
     [
         Names.Number,
         Names.String,
         Names.Boolean,
         Names.List,
         Names.Object,
-        Names.Any,
-        Names.Null,
         Names.Function,
+        Names.Identifier,
+        Names.Null,
+        Names.Any,
+        Names.Reference,
+        Names.Type,
         Names.Error,
     ];
 
@@ -63,6 +65,46 @@ public record ToastType(string Name)
             Names.Error => Error,
             _ => new ToastType(typeName),
         };
+    }
+
+    public static ToastType? TryFromClrType(Type type)
+    {
+        if (type == typeof(StringValue))
+            return String;
+        if (type == typeof(NumberValue))
+            return Number;
+        if (type == typeof(BoolValue))
+            return Boolean;
+        if (type == typeof(ListValue))
+            return List;
+        if (type == typeof(ObjectValue))
+            return Object;
+        if (type == typeof(ErrorValue) || typeof(ErrorValue).IsAssignableFrom(type))
+            return Error;
+        if (type == typeof(FunctionValue) || type == typeof(CommandValue))
+            return Function;
+        if (type == typeof(IdentifierValue))
+            return Identifier;
+        if (type == typeof(NullValue))
+            return Null;
+        if (type == typeof(AstNodeValue))
+            return Any;
+        if (type == typeof(ReferenceValue))
+            return Reference;
+
+        return null;
+    }
+
+    public static ToastType FromClrType(Type type)
+    {
+        if (!typeof(ToastValue).IsAssignableFrom(type))
+        {
+            throw new InvalidOperationException(
+                $"Command parameter type '{type.Name}' must inherit from ToastValue."
+            );
+        }
+
+        return TryFromClrType(type) ?? Any;
     }
 
     public override string ToString() => Name;

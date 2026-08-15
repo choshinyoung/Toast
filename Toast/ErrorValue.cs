@@ -15,7 +15,7 @@ public record ErrorValue : ObjectValue
     )
         : base(
             CreateErrorContext(errorType, message, location ?? Location.Unknown, cause),
-            ToastType.ErrorValue
+            ToastType.Error
         )
     {
         ErrorType = errorType;
@@ -138,8 +138,7 @@ public record RuntimeError : ErrorValue
     public static RuntimeError PropertyNotDefined(string name) =>
         new($"Property '{name}' is not defined on target object.");
 
-    public static RuntimeError DivisionByZero() =>
-        new("Division by zero.");
+    public static RuntimeError DivisionByZero() => new("Division by zero.");
 }
 
 public record IndexError : ErrorValue

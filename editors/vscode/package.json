@@ -2,7 +2,7 @@
   "name": "toast-vscode",
   "displayName": "Toast Programming Language",
   "description": "Syntax highlighting and Language Server integration for the Toast programming language",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "publisher": "choshinyoung",
   "license": "MIT",
   "repository": {
