@@ -30,7 +30,7 @@ public class HoverHandler : HoverHandlerBase
         }
 
         // 1. Check local scope symbols
-        var localSymbols = ScopeAnalyzer.GetAvailableSymbols(text, request.Position, toaster);
+        var localSymbols = ScopeAnalyzer.GetAvailableSymbols(text, toaster);
         var localSym = localSymbols.FirstOrDefault(s => s.Name == word);
         if (localSym != null)
         {

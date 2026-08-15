@@ -72,11 +72,7 @@ public class SemanticTokensHandler : ISemanticTokensFullHandler
         }
 
         var toaster = DocumentManager.Instance.GetToasterForDocument(uri);
-        var availableSymbols = ScopeAnalyzer.GetAvailableSymbols(
-            text,
-            new Position(int.MaxValue, int.MaxValue),
-            toaster
-        );
+        var availableSymbols = ScopeAnalyzer.GetAvailableSymbols(text, toaster);
         var symbols = availableSymbols.ToDictionary(s => s.Name, s => s);
 
         List<Token> tokens;
