@@ -157,19 +157,6 @@ public class StringModule : IToastModule
         toast.RegisterTypeMember(ToastType.String, "replace", new CommandValue(Replace));
         toast.RegisterTypeMember(ToastType.String, "toUpper", new CommandValue(ToUpper));
         toast.RegisterTypeMember(ToastType.String, "toLower", new CommandValue(ToLower));
-
-        toast.RegisterCommand(Split);
-        toast.RegisterCommand(Reverse);
-        toast.RegisterCommand(StartsWith);
-        toast.RegisterCommand(EndsWith);
-        toast.RegisterCommand(Contains);
-        toast.RegisterCommand(Trim);
-        toast.RegisterCommand(Substring);
-        toast.RegisterCommand(Join);
-        toast.RegisterCommand(Replace);
-        toast.RegisterCommand(ToUpper);
-        toast.RegisterCommand(ToLower);
-        toast.RegisterCommand(Length);
     }
 
     public void Load(Toaster toaster, Context callerContext)

@@ -49,7 +49,7 @@ public class ModuleTests
         var result = toaster.Execute(
             """
             import "system"
-            var parts = split("hello world", " ")
+            var parts = "hello world".split(" ")
             var doubled = map([10, 20], (x) => x * 2)
             doubled # 0
             """
