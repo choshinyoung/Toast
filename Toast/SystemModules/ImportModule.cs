@@ -9,6 +9,12 @@ public class ImportModule : IToastModule
         "import",
         (Context context, StringValue moduleName) =>
         {
+            if (context.Parent != null)
+            {
+                throw new ToastException(
+                    new RuntimeError("'import' can only be declared at top-level (depth 0).")
+                );
+            }
             ModuleManager.Instance.LoadModule(moduleName.Value, context.Toaster, context);
             return NullValue.Instance;
         },

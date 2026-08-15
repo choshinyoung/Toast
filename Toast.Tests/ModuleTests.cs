@@ -231,4 +231,42 @@ public class ModuleTests
         Assert.Contains(items, i => i.Label == "sqrt");
         Assert.Contains(items, i => i.Label == "floorDiv");
     }
+
+    [Fact]
+    public void TestImportInsideBlockThrowsSyntaxError()
+    {
+        var toaster = new Toaster(useSystemModules: true);
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            toaster.Execute(
+                """
+                if (true) {
+                    import "math"
+                }
+                """
+            );
+        });
+
+        Assert.Equal("SyntaxError", ex.Error.ErrorType);
+        Assert.Contains("depth 0", ex.Error.Message);
+    }
+
+    [Fact]
+    public void TestImportInsideFunctionThrowsSyntaxError()
+    {
+        var toaster = new Toaster(useSystemModules: true);
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            toaster.Execute(
+                """
+                var f = () => {
+                    import "math"
+                }
+                """
+            );
+        });
+
+        Assert.Equal("SyntaxError", ex.Error.ErrorType);
+        Assert.Contains("depth 0", ex.Error.Message);
+    }
 }

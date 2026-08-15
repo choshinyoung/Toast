@@ -12,6 +12,7 @@ public class Parser(
 {
     private int _position = 0;
     private int _depth = 0;
+    private int _inBlock = 0;
 
     private const int PrefixPrecedence = 9;
 
@@ -72,7 +73,11 @@ public class Parser(
                 )
                 {
                     var firstArg = call.Arguments[0];
-                    if (firstArg is LiteralNode lit && lit.Value is StringValue sv && !string.IsNullOrEmpty(sv.Value))
+                    if (
+                        firstArg is LiteralNode lit
+                        && lit.Value is StringValue sv
+                        && !string.IsNullOrEmpty(sv.Value)
+                    )
                     {
                         try
                         {
@@ -246,22 +251,30 @@ public class Parser(
 
     private FunctionNode ParseBlock()
     {
-        var statements = new List<Node>();
-
-        MatchWhileNewline();
-
-        if (!Check(TokenKind.RBrace))
+        _inBlock++;
+        try
         {
-            do
+            var statements = new List<Node>();
+
+            MatchWhileNewline();
+
+            if (!Check(TokenKind.RBrace))
             {
-                statements.Add(ParseExpression());
-                MatchWhileNewline();
-            } while (!IsAtEnd() && !Check(TokenKind.RBrace));
+                do
+                {
+                    statements.Add(ParseExpression());
+                    MatchWhileNewline();
+                } while (!IsAtEnd() && !Check(TokenKind.RBrace));
+            }
+
+            Expect(TokenKind.RBrace, "Expected '}' to close block.");
+
+            return new FunctionNode([], statements);
         }
-
-        Expect(TokenKind.RBrace, "Expected '}' to close block.");
-
-        return new FunctionNode([], statements);
+        finally
+        {
+            _inBlock--;
+        }
     }
 
     public ListNode ParseList()
@@ -293,6 +306,20 @@ public class Parser(
 
     private Node ParsePrimary(Token current)
     {
+        if (
+            current.Kind == TokenKind.Identifier
+            && current.Value == "import"
+            && (_depth > 0 || _inBlock > 0)
+        )
+        {
+            throw new ToastException(
+                new SyntaxError(
+                    "'import' can only be declared at top-level (depth 0).",
+                    current.Location
+                )
+            );
+        }
+
         Node node = current.Kind switch
         {
             TokenKind.Identifier => new IdentifierNode(current.Value!),
@@ -481,24 +508,32 @@ public class Parser(
 
     private ObjectLiteralNode ParseObjectLiteral()
     {
-        var statements = new List<Node>();
-
-        MatchWhileNewline();
-
-        if (!Check(TokenKind.RDoubleBrace))
+        _inBlock++;
+        try
         {
-            do
+            var statements = new List<Node>();
+
+            MatchWhileNewline();
+
+            if (!Check(TokenKind.RDoubleBrace))
             {
-                statements.Add(ParseExpression());
-                MatchWhileNewline();
-                Match(TokenKind.Comma);
-                MatchWhileNewline();
-            } while (!IsAtEnd() && !Check(TokenKind.RDoubleBrace));
+                do
+                {
+                    statements.Add(ParseExpression());
+                    MatchWhileNewline();
+                    Match(TokenKind.Comma);
+                    MatchWhileNewline();
+                } while (!IsAtEnd() && !Check(TokenKind.RDoubleBrace));
+            }
+
+            Expect(TokenKind.RDoubleBrace, "Expected '}}' to close object literal.");
+
+            return new ObjectLiteralNode(statements);
         }
-
-        Expect(TokenKind.RDoubleBrace, "Expected '}}' to close object literal.");
-
-        return new ObjectLiteralNode(statements);
+        finally
+        {
+            _inBlock--;
+        }
     }
 
     private FunctionNode ParseFunctionLiteral()
@@ -522,8 +557,16 @@ public class Parser(
         }
         else
         {
-            var body = ParseExpression();
-            return new FunctionNode(parameters, [body]);
+            _inBlock++;
+            try
+            {
+                var body = ParseExpression();
+                return new FunctionNode(parameters, [body]);
+            }
+            finally
+            {
+                _inBlock--;
+            }
         }
     }
 
