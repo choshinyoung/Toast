@@ -3,8 +3,7 @@ namespace Toast.SystemModules;
 public partial class DefaultModule : IToastModule
 {
     public string Name => "default";
-    public string Description =>
-        "Default primitive operators (arithmetic, relational, logical, bitwise, literals, pipeline, quote)";
+    public string Description => "Default primitive operator functions.";
 
     public static void Register(Toaster toast)
     {

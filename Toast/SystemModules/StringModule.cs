@@ -3,7 +3,7 @@ namespace Toast.SystemModules;
 public class StringModule : IToastModule
 {
     public string Name => "string";
-    public string Description => "String manipulation functions and extension methods.";
+    public string Description => "String functions.";
 
     public static readonly Command Split = Command.CreateFunction(
         "split",

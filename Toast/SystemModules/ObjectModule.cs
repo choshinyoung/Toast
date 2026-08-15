@@ -3,8 +3,7 @@ namespace Toast.SystemModules;
 public class ObjectModule : IToastModule
 {
     public string Name => "object";
-    public string Description =>
-        "Variable declarations, assignments, object member access, and type definitions.";
+    public string Description => "Variable, type and object function.";
 
     private static TypeValue ResolveType(Context context, ToastValue typeVal)
     {

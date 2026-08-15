@@ -3,8 +3,7 @@ namespace Toast.SystemModules;
 public class ListModule : IToastModule
 {
     public string Name => "list";
-    public string Description =>
-        "List collection operations and algorithms (map, filter, reduce, sort, etc.)";
+    public string Description => "List functions.";
 
     public static readonly Command To = Command.CreateFunction(
         "to",

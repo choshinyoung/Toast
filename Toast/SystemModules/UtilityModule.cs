@@ -3,7 +3,7 @@ namespace Toast.SystemModules;
 public class UtilityModule : IToastModule
 {
     public string Name => "utility";
-    public string Description => "Standard IO, random, and execution utilities.";
+    public string Description => "IO, random, and other utilities.";
 
     public static readonly Command Print = Command.CreateFunction(
         "print",

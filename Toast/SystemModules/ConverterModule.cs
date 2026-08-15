@@ -3,7 +3,7 @@ namespace Toast.SystemModules;
 public class ConverterModule : IToastModule
 {
     public string Name => "converter";
-    public string Description => "Standard type converters between Toast types.";
+    public string Description => "Standard type converters between types.";
 
     public static readonly TypeConverter NumberToString = new(
         ToastType.Number,

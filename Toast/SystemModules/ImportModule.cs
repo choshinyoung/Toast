@@ -3,7 +3,7 @@ namespace Toast.SystemModules;
 public class ImportModule : IToastModule
 {
     public string Name => "import";
-    public string Description => "Module loading command (import).";
+    public string Description => "import function.";
 
     public static readonly Command ImportCommand = Command.CreateFunction(
         "import",

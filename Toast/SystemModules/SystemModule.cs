@@ -3,8 +3,7 @@ namespace Toast.SystemModules;
 public class SystemModule : IToastModule
 {
     public string Name => "system";
-    public string Description =>
-        "System bundle providing all built-in modules (default, object, flow, string, list, utility, converter, import)";
+    public string Description => "System bundle providing all built-in modules.";
 
     public static void Register(Toaster toast)
     {

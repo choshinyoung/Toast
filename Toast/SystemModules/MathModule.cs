@@ -3,8 +3,7 @@ namespace Toast.SystemModules;
 public class MathModule : IToastModule
 {
     public string Name => "math";
-    public string Description =>
-        "Standard math operations and functions (sqrt, floorDiv, PI, E, operators)";
+    public string Description => "Standard math functions.";
 
     public static readonly Command Sqrt = Command.CreateFunction(
         "sqrt",

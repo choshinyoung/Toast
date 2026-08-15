@@ -3,7 +3,7 @@ namespace Toast.SystemModules;
 public class FlowModule : IToastModule
 {
     public string Name => "flow";
-    public string Description => "Control flow commands (if, else, while, for, try, catch, throw)";
+    public string Description => "Control flow functions.";
 
     public static readonly Command If = Command.CreateFunction(
         "if",
