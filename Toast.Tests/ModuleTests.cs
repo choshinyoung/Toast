@@ -269,4 +269,16 @@ public class ModuleTests
         Assert.Equal("SyntaxError", ex.Error.ErrorType);
         Assert.Contains("depth 0", ex.Error.Message);
     }
+
+    [Fact]
+    public void TestTopLevelImportInReplAndScriptSucceeds()
+    {
+        var toaster = new Toaster(useSystemModules: true);
+        var result = toaster.Execute("""import "math" """);
+        Assert.True(result is NullValue);
+
+        var sqrtResult = toaster.Execute("sqrt(25)");
+        Assert.True(sqrtResult is NumberValue);
+        Assert.Equal(5, ((NumberValue)sqrtResult).Value);
+    }
 }

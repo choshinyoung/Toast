@@ -24,7 +24,7 @@ public static class ModuleRunner
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(
-                $"Successfully installed module to global directory ({ModuleManager.Instance.GlobalModulesDirectory})."
+                $"Successfully installed module ({ModuleManager.Instance.GlobalModulesDirectory})."
             );
             Console.ResetColor();
             return 0;

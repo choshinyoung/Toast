@@ -1,0 +1,13 @@
+import "system"
+import "math"
+
+class Point(x, y) => {
+    function magnitude() => {
+        sqrt(x * x + y * y)
+    }
+
+    function normalize() => {
+        var mag = magnitude
+        Point(x / mag, y / mag)
+    }
+}
