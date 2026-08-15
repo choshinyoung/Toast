@@ -48,18 +48,12 @@ public class Parser(
             )
             {
                 var firstArg = call.Arguments[0];
-                string? modName = null;
-                if (firstArg is LiteralNode lit && lit.Value is StringValue sv)
-                    modName = sv.Value;
-                else if (firstArg is IdentifierNode idArg)
-                    modName = idArg.Name;
-
-                if (!string.IsNullOrEmpty(modName))
+                if (firstArg is LiteralNode lit && lit.Value is StringValue sv && !string.IsNullOrEmpty(sv.Value))
                 {
                     try
                     {
                         ModuleManager.Instance.LoadModule(
-                            modName,
+                            sv.Value,
                             _toaster,
                             _context ?? _toaster.GlobalContext
                         );
