@@ -30,11 +30,14 @@ public class CompletionHandler : CompletionHandlerBase
 
         var items = new List<CompletionItem>();
 
+        // 1. Local scope symbols (variables, functions, types, parameters)
+        var localSymbols = ScopeAnalyzer.GetAvailableSymbols(documentText, toaster);
+
         // Check if cursor is right after a dot (e.g. `obj.`)
         var dotTarget = ScopeAnalyzer.GetTargetBeforeDot(documentText, request.Position);
         if (!string.IsNullOrEmpty(dotTarget))
         {
-            AddDotAccessCompletions(dotTarget, toaster, documentText, request.Position, items);
+            AddDotAccessCompletions(dotTarget, toaster, localSymbols, items);
             return Task.FromResult(new CompletionList(items));
         }
 
@@ -67,12 +70,6 @@ public class CompletionHandler : CompletionHandlerBase
             return Task.FromResult(new CompletionList(items));
         }
 
-        // 1. Local scope symbols (variables, functions, types, parameters)
-        var localSymbols = ScopeAnalyzer.GetAvailableSymbols(
-            documentText,
-            request.Position,
-            toaster
-        );
         foreach (var sym in localSymbols)
         {
             var kind = sym.Kind switch
@@ -178,8 +175,7 @@ public class CompletionHandler : CompletionHandlerBase
     private static void AddDotAccessCompletions(
         string targetName,
         Toaster toaster,
-        string documentText,
-        Position position,
+        IReadOnlyList<DeclaredSymbol> localSymbols,
         List<CompletionItem> items
     )
     {
@@ -208,7 +204,6 @@ public class CompletionHandler : CompletionHandlerBase
         }
 
         // Check local symbols for type/class/module declared members
-        var localSymbols = ScopeAnalyzer.GetAvailableSymbols(documentText, position, toaster);
         var targetSymbol = localSymbols.FirstOrDefault(s => s.Name == targetName);
         if (targetSymbol != null)
         {

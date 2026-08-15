@@ -15,6 +15,7 @@ public class SemanticTokensHandler : ISemanticTokensFullHandler
         SemanticTokenType.Type,
         SemanticTokenType.Class,
         SemanticTokenType.Parameter,
+        SemanticTokenType.Property,
         SemanticTokenType.String,
         SemanticTokenType.Number,
         SemanticTokenType.Operator,
@@ -94,8 +95,9 @@ public class SemanticTokensHandler : ISemanticTokensFullHandler
         int lastLine = 0;
         int lastChar = 0;
 
-        foreach (var tok in tokens)
+        for (int i = 0; i < tokens.Count; i++)
         {
+            var tok = tokens[i];
             if (tok.Kind == TokenKind.NewLine || string.IsNullOrEmpty(tok.Value))
                 continue;
 
@@ -119,26 +121,48 @@ public class SemanticTokensHandler : ISemanticTokensFullHandler
                     break;
                 case TokenKind.Identifier:
                     var val = tok.Value;
-                    if (symbols.TryGetValue(val, out var sym))
+
+                    // 1. Check if preceded by a dot `.` (member / property access)
+                    bool isMemberAccess =
+                        i > 0
+                        && tokens[i - 1].Kind == TokenKind.Symbol
+                        && tokens[i - 1].Value == ".";
+
+                    // Check if followed by `(` (invocation)
+                    bool isCall = i + 1 < tokens.Count && tokens[i + 1].Kind == TokenKind.LParen;
+
+                    if (isMemberAccess)
                     {
-                        tokenType = sym.Kind switch
-                        {
-                            "type" or "class" => SemanticTokenType.Class,
-                            "function" => SemanticTokenType.Function,
-                            "parameter" => SemanticTokenType.Parameter,
-                            _ => SemanticTokenType.Variable,
-                        };
-                    }
-                    else if (
-                        toaster.PrefixCommands.ContainsKey(val)
-                        || toaster.InfixCommands.ContainsKey(val)
-                    )
-                    {
-                        tokenType = SemanticTokenType.Function;
+                        tokenType = isCall
+                            ? SemanticTokenType.Function
+                            : SemanticTokenType.Property;
                     }
                     else
                     {
-                        tokenType = SemanticTokenType.Variable;
+                        if (symbols.TryGetValue(val, out var sym))
+                        {
+                            tokenType = sym.Kind switch
+                            {
+                                "type" or "class" => SemanticTokenType.Class,
+                                "function" => SemanticTokenType.Function,
+                                "parameter" => SemanticTokenType.Parameter,
+                                _ => isCall
+                                    ? SemanticTokenType.Function
+                                    : SemanticTokenType.Variable,
+                            };
+                        }
+                        else if (
+                            toaster.PrefixCommands.ContainsKey(val)
+                            || toaster.InfixCommands.ContainsKey(val)
+                            || isCall
+                        )
+                        {
+                            tokenType = SemanticTokenType.Function;
+                        }
+                        else
+                        {
+                            tokenType = SemanticTokenType.Variable;
+                        }
                     }
                     break;
             }

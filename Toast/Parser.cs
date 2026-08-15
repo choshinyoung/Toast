@@ -1,5 +1,7 @@
 namespace Toast;
 
+public record ParseResult(ProgramNode Program, IReadOnlyList<ErrorValue> Errors);
+
 public class Parser(
     List<Token> _tokens,
     Func<Token, (int Precedence, bool IsRight)> _infixResolver,
@@ -13,6 +15,8 @@ public class Parser(
 
     private const int PrefixPrecedence = 9;
 
+    public List<ErrorValue> Errors { get; } = [];
+
     public static ProgramNode Parse(
         List<Token> tokens,
         Func<Token, (int Precedence, bool IsRight)> infixResolver,
@@ -21,8 +25,25 @@ public class Parser(
         Context? context = null
     )
     {
+        var result = ParseResilient(tokens, infixResolver, prefixResolver, toaster, context);
+        if (result.Errors.Count > 0)
+        {
+            throw new ToastException(result.Errors[0]);
+        }
+        return result.Program;
+    }
+
+    public static ParseResult ParseResilient(
+        List<Token> tokens,
+        Func<Token, (int Precedence, bool IsRight)> infixResolver,
+        Func<Token, bool> prefixResolver,
+        Toaster? toaster = null,
+        Context? context = null
+    )
+    {
         var parser = new Parser(tokens, infixResolver, prefixResolver, toaster, context);
-        return parser.ParseProgram();
+        var program = parser.ParseProgram();
+        return new ParseResult(program, parser.Errors);
     }
 
     public ProgramNode ParseProgram()
@@ -36,39 +57,66 @@ public class Parser(
             if (IsAtEnd())
                 break;
 
-            var expr = ParseExpression();
-            expressions.Add(expr);
-
-            if (
-                _toaster != null
-                && expr is CallNode call
-                && call.Callee is IdentifierNode id
-                && id.Name == "import"
-                && call.Arguments.Count > 0
-            )
+            int beforePos = _position;
+            try
             {
-                var firstArg = call.Arguments[0];
-                if (firstArg is LiteralNode lit && lit.Value is StringValue sv && !string.IsNullOrEmpty(sv.Value))
+                var expr = ParseExpression();
+                expressions.Add(expr);
+
+                if (
+                    _toaster != null
+                    && expr is CallNode call
+                    && call.Callee is IdentifierNode id
+                    && id.Name == "import"
+                    && call.Arguments.Count > 0
+                )
                 {
-                    try
+                    var firstArg = call.Arguments[0];
+                    if (firstArg is LiteralNode lit && lit.Value is StringValue sv && !string.IsNullOrEmpty(sv.Value))
                     {
-                        ModuleManager.Instance.LoadModule(
-                            sv.Value,
-                            _toaster,
-                            _context ?? _toaster.GlobalContext
-                        );
-                    }
-                    catch
-                    {
-                        // Ignore parse-time load errors, let runtime report properly
+                        try
+                        {
+                            ModuleManager.Instance.LoadModule(
+                                sv.Value,
+                                _toaster,
+                                _context ?? _toaster.GlobalContext
+                            );
+                        }
+                        catch
+                        {
+                            // Ignore parse-time load errors, let runtime report properly
+                        }
                     }
                 }
+            }
+            catch (ToastException ex)
+            {
+                Errors.Add(ex.Error);
+                Synchronize(beforePos);
             }
 
             MatchWhileNewline();
         }
 
         return new ProgramNode(expressions);
+    }
+
+    private void Synchronize(int beforePos)
+    {
+        if (_position == beforePos && !IsAtEnd())
+        {
+            _position++;
+        }
+
+        while (!IsAtEnd())
+        {
+            if (Peek().Kind == TokenKind.NewLine)
+            {
+                _position++;
+                return;
+            }
+            _position++;
+        }
     }
 
     private Node ParseExpression(int precedence = 0)

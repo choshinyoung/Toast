@@ -24,22 +24,6 @@ public static class Program
                 .WithHandler<HoverHandler>()
                 .WithHandler<CompletionHandler>()
                 .WithHandler<SemanticTokensHandler>()
-                .OnRequest(
-                    "shutdown",
-                    async token =>
-                    {
-                        await Console.Out.FlushAsync(token);
-                        return (object?)null;
-                    }
-                )
-                .OnNotification(
-                    "exit",
-                    token =>
-                    {
-                        Environment.Exit(0);
-                        return Task.CompletedTask;
-                    }
-                )
         );
 
         await server.WaitForExit;

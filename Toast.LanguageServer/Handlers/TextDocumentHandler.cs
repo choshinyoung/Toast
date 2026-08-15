@@ -4,7 +4,6 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server;
-using LspRange = OmniSharp.Extensions.LanguageServer.Protocol.Models.Range;
 
 namespace Toast.LanguageServer.Handlers;
 
@@ -49,6 +48,12 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
         CancellationToken cancellationToken
     )
     {
+        var uri = request.TextDocument.Uri;
+        var text = DocumentManager.Instance.GetDocument(uri);
+        if (text != null)
+        {
+            ValidateDocument(uri, text);
+        }
         return Unit.Task;
     }
 
@@ -77,47 +82,17 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
                 .Capabilities
                 .TextDocumentSyncKind
                 .Full,
+            Save = new OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities.SaveOptions
+            {
+                IncludeText = true,
+            },
         };
     }
 
     private void ValidateDocument(DocumentUri uri, string text)
     {
-        var diagnostics = new List<Diagnostic>();
         var toast = DocumentManager.Instance.GetToasterForDocument(uri);
-
-        try
-        {
-            var tokens = Lexer.Tokenize(text);
-            Parser.Parse(tokens, toast.GetInfixInfo, toast.IsPrefix);
-        }
-        catch (ToastException ex)
-        {
-            var loc = ex.Error.Location;
-            int line = Math.Max(0, loc.Line - 1);
-            int col = Math.Max(0, loc.Column - 1);
-
-            diagnostics.Add(
-                new Diagnostic
-                {
-                    Severity = DiagnosticSeverity.Error,
-                    Range = new LspRange(new Position(line, col), new Position(line, col + 10)),
-                    Message = $"[{ex.Error.ErrorType}] {ex.Error.Message}",
-                    Source = "Toast Language Server",
-                }
-            );
-        }
-        catch (Exception ex)
-        {
-            diagnostics.Add(
-                new Diagnostic
-                {
-                    Severity = DiagnosticSeverity.Error,
-                    Range = new LspRange(new Position(0, 0), new Position(0, 1)),
-                    Message = ex.Message,
-                    Source = "Toast Language Server",
-                }
-            );
-        }
+        var diagnostics = ScopeAnalyzer.ValidateDocumentStatically(text, toast);
 
         _router.TextDocument.PublishDiagnostics(
             new PublishDiagnosticsParams { Uri = uri, Diagnostics = diagnostics }

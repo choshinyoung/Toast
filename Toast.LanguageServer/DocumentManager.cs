@@ -8,7 +8,6 @@ public class DocumentManager
     public static readonly DocumentManager Instance = new();
 
     private readonly ConcurrentDictionary<DocumentUri, string> _documents = new();
-    private readonly ConcurrentDictionary<DocumentUri, Toaster> _toasters = new();
 
     public void UpdateDocument(DocumentUri uri, string text)
     {
@@ -24,11 +23,10 @@ public class DocumentManager
     public void RemoveDocument(DocumentUri uri)
     {
         _documents.TryRemove(uri, out _);
-        _toasters.TryRemove(uri, out _);
     }
 
     public Toaster GetToasterForDocument(DocumentUri uri)
     {
-        return _toasters.GetOrAdd(uri, _ => new Toaster(useSystemModules: true));
+        return new Toaster(useSystemModules: false);
     }
 }
