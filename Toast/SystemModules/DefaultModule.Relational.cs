@@ -2,103 +2,82 @@ namespace Toast.SystemModules;
 
 public partial class DefaultModule
 {
-    public static readonly Command Equal = Command.CreateOperator(
+    [ToastCommand(
         "==",
-        (Context context, ToastValue left, ToastValue right) => new BoolValue(Equals(left, right)),
-        precedence: 4,
-        description: "Equality operator, checks if two values are equal.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command NotEqual = Command.CreateOperator(
+        Precedence = 4,
+        Description = "Equality operator, checks if two values are equal."
+    )]
+    public static BoolValue Equal(ToastValue left, ToastValue right) => new(Equals(left, right));
+
+    [ToastCommand(
         "!=",
-        (Context context, ToastValue left, ToastValue right) => new BoolValue(!Equals(left, right)),
-        precedence: 4,
-        description: "Inequality operator, checks if two values are not equal.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command LessThan = Command.CreateOperator(
-        "<",
-        (Context context, NumberValue left, NumberValue right) =>
-            new BoolValue(left.Value < right.Value),
-        precedence: 5,
-        description: "Less than comparison operator.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command GreaterThan = Command.CreateOperator(
-        ">",
-        (Context context, NumberValue left, NumberValue right) =>
-            new BoolValue(left.Value > right.Value),
-        precedence: 5,
-        description: "Greater than comparison operator.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command LessThanOrEqual = Command.CreateOperator(
-        "<=",
-        (Context context, NumberValue left, NumberValue right) =>
-            new BoolValue(left.Value <= right.Value),
-        precedence: 5,
-        description: "Less than or equal comparison operator.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command GreaterThanOrEqual = Command.CreateOperator(
-        ">=",
-        (Context context, NumberValue left, NumberValue right) =>
-            new BoolValue(left.Value >= right.Value),
-        precedence: 5,
-        description: "Greater than or equal comparison operator.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command Is = Command.CreateFunction(
+        Precedence = 4,
+        Description = "Inequality operator, checks if two values are not equal."
+    )]
+    public static BoolValue NotEqual(ToastValue left, ToastValue right) =>
+        new(!Equals(left, right));
+
+    [ToastCommand("<", Precedence = 5, Description = "Less than comparison operator.")]
+    public static BoolValue LessThan(NumberValue left, NumberValue right) =>
+        new(left.Value < right.Value);
+
+    [ToastCommand(">", Precedence = 5, Description = "Greater than comparison operator.")]
+    public static BoolValue GreaterThan(NumberValue left, NumberValue right) =>
+        new(left.Value > right.Value);
+
+    [ToastCommand("<=", Precedence = 5, Description = "Less than or equal comparison operator.")]
+    public static BoolValue LessThanOrEqual(NumberValue left, NumberValue right) =>
+        new(left.Value <= right.Value);
+
+    [ToastCommand(">=", Precedence = 5, Description = "Greater than or equal comparison operator.")]
+    public static BoolValue GreaterThanOrEqual(NumberValue left, NumberValue right) =>
+        new(left.Value >= right.Value);
+
+    [ToastCommand(
         "is",
-        (Context context, ToastValue left, ToastValue right) =>
+        Precedence = 6,
+        IsInfix = true,
+        Description = "Checks whether a value is compatible with the specified type."
+    )]
+    public static BoolValue Is(Context context, ToastValue left, ToastValue right)
+    {
+        if (right is NullValue)
         {
-            if (right is NullValue)
+            return new BoolValue(left is NullValue);
+        }
+
+        TypeValue typeVal;
+        if (right is TypeValue tv)
+        {
+            typeVal = tv;
+        }
+        else if (right is StringValue || right is IdentifierValue)
+        {
+            var typeName = right.ToString();
+            if (typeName == "null")
             {
                 return new BoolValue(left is NullValue);
             }
 
-            TypeValue typeVal;
-            if (right is TypeValue tv)
+            if (context.HasVariable(typeName) && context.GetValue(typeName) is TypeValue resolvedTv)
             {
-                typeVal = tv;
-            }
-            else if (right is StringValue || right is IdentifierValue)
-            {
-                var typeName = right.ToString();
-                if (typeName == "null")
-                {
-                    return new BoolValue(left is NullValue);
-                }
-
-                if (
-                    context.HasVariable(typeName)
-                    && context.GetValue(typeName) is TypeValue resolvedTv
-                )
-                {
-                    typeVal = resolvedTv;
-                }
-                else
-                {
-                    var targetType = ToastType.FromName(typeName);
-                    typeVal = new TypeValue(targetType, null);
-                }
+                typeVal = resolvedTv;
             }
             else
             {
-                throw new ToastException(
-                    new TypeError(
-                        "Right side of 'is' must evaluate to a type, identifier, or string."
-                    )
-                );
+                var targetType = ToastType.FromName(typeName);
+                typeVal = new TypeValue(targetType, null);
             }
+        }
+        else
+        {
+            throw new ToastException(
+                new TypeError("Right side of 'is' must evaluate to a type, identifier, or string.")
+            );
+        }
 
-            return new BoolValue(CheckIsCompatible(context, left, typeVal));
-        },
-        precedence: 6,
-        isInfix: true,
-        description: "Checks whether a value is compatible with the specified type.",
-        returnType: ToastType.Boolean
-    );
+        return new BoolValue(CheckIsCompatible(context, left, typeVal));
+    }
 
     private static bool CheckIsCompatible(Context context, ToastValue left, TypeValue targetTypeVal)
     {
@@ -151,16 +130,5 @@ public partial class DefaultModule
         }
 
         return false;
-    }
-
-    public static void RegisterRelational(Toaster toast)
-    {
-        toast.RegisterCommand(Equal);
-        toast.RegisterCommand(NotEqual);
-        toast.RegisterCommand(LessThan);
-        toast.RegisterCommand(GreaterThan);
-        toast.RegisterCommand(LessThanOrEqual);
-        toast.RegisterCommand(GreaterThanOrEqual);
-        toast.RegisterCommand(Is);
     }
 }

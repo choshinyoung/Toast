@@ -11,10 +11,10 @@ public class ModuleTests
     public void TestImportClassifiedModulesIndividually()
     {
         // Sandbox Toaster with no modules
-        var toaster = new Toaster(useSystemModules: false);
+        var toaster = new Toaster([]);
 
-        // 1. Import 'import' module first to be able to import others (or register core import)
-        SystemModules.ImportModule.Register(toaster);
+        // 1. Load 'import' module first to be able to import others
+        toaster.Load<SystemModules.ImportModule>();
 
         // 2. Import object & default
         toaster.Execute("import \"object\"");
@@ -33,19 +33,17 @@ public class ModuleTests
         Assert.Equal(99, ((NumberValue)resultFlow).Value);
 
         // 4. Import converter
-        var resultConv = toaster.Execute(
-            """
-            import "converter"
-            string 456
-            """
-        );
-        Assert.Equal("456", ((StringValue)resultConv).Value);
+        toaster.Execute("import \"converter\"");
+        Assert.True(toaster.Converters.ContainsKey((ToastType.Number, ToastType.String)));
     }
 
     [Fact]
     public void TestImportSystemModuleIngestsAllModulesDirectly()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var result = toaster.Execute(
             """
             import "system"
@@ -62,12 +60,15 @@ public class ModuleTests
     [Fact]
     public void TestImportMathAllowsDirectCallAndConstants()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var result = toaster.Execute(
             """
             import "math"
-            var direct = sqrt(64)
-            var floor = floorDiv 15 2
+            var direct = math.sqrt(64)
+            var floor = math.floorDiv 15 2
             direct + floor
             """
         );
@@ -79,7 +80,10 @@ public class ModuleTests
     [Fact]
     public void TestImportDateTimeModule()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var result = toaster.Execute(
             """
             import "datetime"
@@ -121,7 +125,10 @@ public class ModuleTests
     [Fact]
     public void TestDisallowedPathImportsThrowSecurityError()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
 
         Assert.Throws<ToastException>(() =>
         {
@@ -157,7 +164,10 @@ public class ModuleTests
 
             ModuleManager.Instance.InstallLocalFile(helperScript, "myhelper");
 
-            var toaster = new Toaster(useSystemModules: true);
+            var toaster = new Toaster([
+                new SystemModules.ImportModule(),
+                new SystemModules.SystemModule(),
+            ]);
             var result = toaster.Execute(
                 """
                 import "myhelper"
@@ -228,14 +238,16 @@ public class ModuleTests
 
         var items = result.Items.ToList();
         Assert.NotEmpty(items);
-        Assert.Contains(items, i => i.Label == "sqrt");
-        Assert.Contains(items, i => i.Label == "floorDiv");
+        Assert.Contains(items, i => i.Label == "math");
     }
 
     [Fact]
     public void TestImportInsideBlockThrowsSyntaxError()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var ex = Assert.Throws<ToastException>(() =>
         {
             toaster.Execute(
@@ -254,7 +266,10 @@ public class ModuleTests
     [Fact]
     public void TestImportInsideFunctionThrowsSyntaxError()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var ex = Assert.Throws<ToastException>(() =>
         {
             toaster.Execute(
@@ -273,12 +288,140 @@ public class ModuleTests
     [Fact]
     public void TestTopLevelImportInReplAndScriptSucceeds()
     {
-        var toaster = new Toaster(useSystemModules: true);
+        var toaster = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+        ]);
         var result = toaster.Execute("""import "math" """);
         Assert.True(result is NullValue);
 
-        var sqrtResult = toaster.Execute("sqrt(25)");
+        var sqrtResult = toaster.Execute("math.sqrt(25)");
         Assert.True(sqrtResult is NumberValue);
         Assert.Equal(5, ((NumberValue)sqrtResult).Value);
+    }
+
+    [Fact]
+    public void TestBareSandboxWithoutImportModule()
+    {
+        var bareToaster = new Toaster([]);
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            bareToaster.Execute("import \"math\"");
+        });
+        Assert.Equal("RuntimeError", ex.Error.ErrorType);
+        Assert.Contains("import", ex.Error.Message);
+    }
+
+    [Fact]
+    public void TestLoadGenericAndTypeReflection()
+    {
+        var toaster = new Toaster([]);
+        toaster.Load<SystemModules.ObjectModule>();
+        toaster.Load<SystemModules.MathModule>();
+        var res = toaster.Execute("math.sqrt(100)");
+        Assert.Equal(10, ((NumberValue)res).Value);
+
+        toaster.Load(typeof(SystemModules.DateTimeModule));
+        var res2 = toaster.Execute("datetime.now().year");
+        Assert.Equal(DateTime.Now.Year, ((NumberValue)res2).Value);
+    }
+
+    [Fact]
+    public void TestLoadStringFromManager()
+    {
+        var toaster = new Toaster([]);
+        toaster.Load<SystemModules.ObjectModule>();
+        toaster.Load("math");
+        var res = toaster.Execute("math.sqrt(49)");
+        Assert.Equal(7, ((NumberValue)res).Value);
+    }
+
+    [Fact]
+    public void TestDeclarativeAttributesModule()
+    {
+        var toaster = new Toaster([]);
+        toaster.Load<SystemModules.ObjectModule>(); // for dot operator
+        toaster.Load<SystemModules.DefaultModule>(); // for arithmetic
+        toaster.Load<SampleCustomModule>();
+
+        // 1. ToastCommand function (no Context needed - pure computation)
+        var res1 = toaster.Execute("greet(\"World\")");
+        Assert.Equal("Hello, World!", ((StringValue)res1).Value);
+
+        // 2. ToastCommand operator
+        var res2 = toaster.Execute("5 +++ 3");
+        Assert.Equal(18, ((NumberValue)res2).Value);
+
+        // 3. ToastObject namespace
+        var res3 = toaster.Execute("calc.double(21)");
+        Assert.Equal(42, ((NumberValue)res3).Value);
+
+        // 4. Context DI (Context injected automatically into method parameter)
+        var res4 = toaster.Execute("evalSelf(\"10 + 20\")");
+        Assert.Equal(30, ((NumberValue)res4).Value);
+
+        // 5. ToastMember (registered ONLY on string type, not as global command)
+        var res5 = toaster.Execute("\"hello\".shout()");
+        Assert.Equal("hello!!!", ((StringValue)res5).Value);
+
+        // Global call shout("hello") must fail because it's only a member
+        Assert.Throws<ToastException>(() =>
+        {
+            toaster.Execute("shout(\"hello\")");
+        });
+
+        // 6. ToastConverter with automatic parameter/return type inference
+        Assert.True(toaster.Converters.ContainsKey((ToastType.String, ToastType.Number)));
+    }
+}
+
+[ToastModule("sample", Description = "Sample module for testing.")]
+public class SampleCustomModule : IToastModule
+{
+    [ToastType("person")]
+    public static class PersonType { }
+
+    [ToastType("string")]
+    public static class StringExtensions
+    {
+        [ToastCommand("shout", Description = "Shouts a string with exclamation marks.")]
+        public static StringValue Shout(StringValue s)
+        {
+            return new StringValue(s.Value + "!!!");
+        }
+    }
+
+    [ToastCommand("greet", Description = "Greets a person.")]
+    public static StringValue Greet(StringValue name)
+    {
+        return new StringValue($"Hello, {name.Value}!");
+    }
+
+    [ToastCommand("+++", Precedence = 11, Description = "Custom triple plus operator.")]
+    public static NumberValue TripleAdd(NumberValue a, NumberValue b)
+    {
+        return new NumberValue(a.Value + b.Value + 10);
+    }
+
+    [ToastCommand("evalSelf", Description = "Evals code with injected Context.")]
+    public static ToastValue EvalSelf(Context ctx, StringValue expr)
+    {
+        return ctx.Toaster.Execute(expr.Value, ctx);
+    }
+
+    [ToastConverter]
+    public static NumberValue StringToNumberAuto(StringValue s)
+    {
+        return new NumberValue(double.Parse(s.Value));
+    }
+
+    [ToastObject("calc")]
+    public static class CalcNamespace
+    {
+        [ToastCommand("double", Description = "Doubles a number.")]
+        public static NumberValue Double(NumberValue x)
+        {
+            return new NumberValue(x.Value * 2);
+        }
     }
 }

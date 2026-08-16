@@ -2,7 +2,7 @@ namespace Toast;
 
 public interface IToastModule
 {
-    string Name { get; }
-    string Description => "";
-    void Load(Toaster toaster, Context callerContext);
+    string Name => ModuleLoader.GetModuleName(GetType());
+    string Description => ModuleLoader.GetModuleDescription(GetType());
+    void OnLoad(Toaster toaster, Context callerContext) { }
 }

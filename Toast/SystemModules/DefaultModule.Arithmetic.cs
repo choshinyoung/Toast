@@ -2,102 +2,69 @@ namespace Toast.SystemModules;
 
 public partial class DefaultModule
 {
-    public static readonly Command UnaryPlus = Command.CreateOperator(
-        "+",
-        (Context context, NumberValue val) => val,
-        precedence: 9,
-        isPrefix: true,
-        description: "Unary plus operator.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Addition = Command.CreateOperator(
-        "+",
-        ToastValue (Context context, ToastValue left, ToastValue right) =>
-        {
-            if (left is StringValue || right is StringValue)
-            {
-                return new StringValue(left.ToString() + right.ToString());
-            }
-            if (left is NumberValue ln && right is NumberValue rn)
-            {
-                return new NumberValue(ln.Value + rn.Value);
-            }
-            throw new ToastException(new TypeError("Cannot add non-number/non-string values."));
-        },
-        precedence: 7,
-        description: "Addition operator for numbers or concatenation for strings."
-    );
-    public static readonly Command UnaryMinus = Command.CreateOperator(
-        "-",
-        (Context context, NumberValue val) => new NumberValue(-val.Value),
-        precedence: 9,
-        isPrefix: true,
-        description: "Unary minus operator, negates a number.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Subtraction = Command.CreateOperator(
-        "-",
-        (Context context, NumberValue left, NumberValue right) =>
-            new NumberValue(left.Value - right.Value),
-        precedence: 7,
-        description: "Subtraction operator.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Multiplication = Command.CreateOperator(
-        "*",
-        (Context context, NumberValue left, NumberValue right) =>
-            new NumberValue(left.Value * right.Value),
-        precedence: 8,
-        description: "Multiplication operator.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Division = Command.CreateOperator(
-        "/",
-        (Context context, NumberValue left, NumberValue right) =>
-        {
-            if (right.Value == 0)
-            {
-                throw new ToastException(RuntimeError.DivisionByZero());
-            }
-            return new NumberValue(left.Value / right.Value);
-        },
-        precedence: 8,
-        description: "Division operator.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Modulus = Command.CreateOperator(
-        "%",
-        (Context context, NumberValue left, NumberValue right) =>
-        {
-            if (right.Value == 0)
-            {
-                throw new ToastException(RuntimeError.DivisionByZero());
-            }
-            return new NumberValue(left.Value % right.Value);
-        },
-        precedence: 8,
-        description: "Modulus operator.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Exponentiation = Command.CreateOperator(
-        "**",
-        (Context context, NumberValue left, NumberValue right) =>
-            new NumberValue(System.Math.Pow(left.Value, right.Value)),
-        precedence: 9,
-        isRightAssociative: true,
-        description: "Exponentiation operator.",
-        returnType: ToastType.Number
-    );
+    [ToastCommand("+", Precedence = 9, IsPrefix = true, Description = "Unary plus operator.")]
+    public static NumberValue UnaryPlus(NumberValue val) => val;
 
-    public static void RegisterArithmetic(Toaster toast)
+    [ToastCommand(
+        "+",
+        Precedence = 7,
+        Description = "Addition operator for numbers or concatenation for strings."
+    )]
+    public static ToastValue Addition(ToastValue left, ToastValue right)
     {
-        toast.RegisterCommand(UnaryPlus);
-        toast.RegisterCommand(Addition);
-        toast.RegisterCommand(UnaryMinus);
-        toast.RegisterCommand(Subtraction);
-        toast.RegisterCommand(Multiplication);
-        toast.RegisterCommand(Division);
-        toast.RegisterCommand(Modulus);
-        toast.RegisterCommand(Exponentiation);
+        if (left is StringValue || right is StringValue)
+        {
+            return new StringValue(left.ToString() + right.ToString());
+        }
+        if (left is NumberValue ln && right is NumberValue rn)
+        {
+            return new NumberValue(ln.Value + rn.Value);
+        }
+        throw new ToastException(new TypeError("Cannot add non-number/non-string values."));
     }
+
+    [ToastCommand(
+        "-",
+        Precedence = 9,
+        IsPrefix = true,
+        Description = "Unary minus operator, negates a number."
+    )]
+    public static NumberValue UnaryMinus(NumberValue val) => new(-val.Value);
+
+    [ToastCommand("-", Precedence = 7, Description = "Subtraction operator.")]
+    public static NumberValue Subtraction(NumberValue left, NumberValue right) =>
+        new(left.Value - right.Value);
+
+    [ToastCommand("*", Precedence = 8, Description = "Multiplication operator.")]
+    public static NumberValue Multiplication(NumberValue left, NumberValue right) =>
+        new(left.Value * right.Value);
+
+    [ToastCommand("/", Precedence = 8, Description = "Division operator.")]
+    public static NumberValue Division(NumberValue left, NumberValue right)
+    {
+        if (right.Value == 0)
+        {
+            throw new ToastException(RuntimeError.DivisionByZero());
+        }
+        return new NumberValue(left.Value / right.Value);
+    }
+
+    [ToastCommand("%", Precedence = 8, Description = "Modulus operator.")]
+    public static NumberValue Modulus(NumberValue left, NumberValue right)
+    {
+        if (right.Value == 0)
+        {
+            throw new ToastException(RuntimeError.DivisionByZero());
+        }
+        return new NumberValue(left.Value % right.Value);
+    }
+
+    [ToastCommand(
+        "**",
+        Precedence = 9,
+        IsRightAssociative = true,
+        Description = "Exponentiation operator."
+    )]
+    public static NumberValue Exponentiation(NumberValue left, NumberValue right) =>
+        new(System.Math.Pow(left.Value, right.Value));
 }

@@ -8,7 +8,7 @@ public class ErrorTests : BaseTest
         var context = new Context(_toast);
 
         // 1. Error creation & Toast language is check
-        Evaluate("var synErr = Error(\"SyntaxError\", \"Unmatched bracket\", 2, 5)", context);
+        Evaluate("var synErr = error(\"SyntaxError\", \"Unmatched bracket\", 2, 5)", context);
         AssertResult("synErr.message", "Unmatched bracket", context);
         AssertResult("synErr.line", 2.0, context);
         AssertResult("synErr.column", 5.0, context);
@@ -18,7 +18,7 @@ public class ErrorTests : BaseTest
         AssertResult("synErr is object", true, context);
 
         // 2. TypeError creation & is check
-        Evaluate("var typeErr = Error(\"TypeError\", \"Type mismatch\", 1, 10)", context);
+        Evaluate("var typeErr = error(\"TypeError\", \"Type mismatch\", 1, 10)", context);
         AssertResult("typeErr.errorType", "TypeError", context);
         AssertResult("typeErr is Error", true, context);
     }
@@ -75,7 +75,7 @@ public class ErrorTests : BaseTest
 
         // 1. throw Error object and catch with lambda
         Evaluate(
-            "var res1 = try { throw (Error(\"something went wrong\")) } catch (err) => { err.message }",
+            "var res1 = try { throw (error(\"something went wrong\")) } catch (err) => { err.message }",
             context
         );
         AssertResult("res1", "something went wrong", context);
@@ -86,7 +86,7 @@ public class ErrorTests : BaseTest
 
         // 3. throw custom Error object and catch with explicit parameter
         Evaluate(
-            "var res3 = try { throw (Error(\"CustomError\", \"division by zero\", 5, 10)) } catch (err) => { err.errorType }",
+            "var res3 = try { throw (error(\"CustomError\", \"division by zero\", 5, 10)) } catch (err) => { err.errorType }",
             context
         );
         AssertResult("res3", "CustomError", context);

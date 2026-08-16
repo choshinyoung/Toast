@@ -140,7 +140,11 @@ public class FunctionTests : BaseTest
         Assert.Equal("function(x: number, y: string)", funcWithTypedArgs.ToString());
 
         // Test inside object
-        var objStr = Evaluate("var obj = {{ x = () => {} }}\n string obj", context);
+        Evaluate("var obj = {{ x = () => {} }}", context);
+        var objVal = Evaluate("obj", context);
+        Assert.True(
+            _toast.TryConvert(objVal, ToastType.Object, ToastType.String, context, out var objStr)
+        );
         Assert.Equal("{x: function()}", objStr.ToString());
 
         // Test C# Command/Builtin ToString formatting

@@ -1,76 +1,119 @@
 namespace Toast.SystemModules;
 
+[ToastModule("list", Description = "List functions and operators.")]
 public class ListModule : IToastModule
 {
-    public string Name => "list";
-    public string Description => "List functions.";
-
-    public static readonly Command To = Command.CreateFunction(
+    [ToastCommand(
         "to",
-        (Context context, NumberValue left, NumberValue right) =>
+        Precedence = 6,
+        IsInfix = true,
+        Description = "Generates a list containing an integer range from left to right (inclusive)."
+    )]
+    public static ListValue To(NumberValue left, NumberValue right)
+    {
+        int l = (int)left.Value;
+        int r = (int)right.Value;
+        var list = new List<ToastValue>();
+        for (int i = l; i <= r; i++)
         {
-            int l = (int)left.Value;
-            int r = (int)right.Value;
-            var list = new List<ToastValue>();
-            for (int i = l; i <= r; i++)
-            {
-                list.Add(new NumberValue(i));
-            }
-            return new ListValue(list);
-        },
-        precedence: 6,
-        isInfix: true,
-        description: "Generates a list containing an integer range from left to right (inclusive).",
-        returnType: ToastType.List
-    );
-    public static readonly Command In = Command.CreateFunction(
+            list.Add(new NumberValue(i));
+        }
+        return new ListValue(list);
+    }
+
+    [ToastCommand(
         "in",
-        (Context context, ToastValue left, ListValue right) =>
+        Precedence = 6,
+        IsInfix = true,
+        Description = "Checks if an element is contained in a list."
+    )]
+    public static BoolValue In(ToastValue left, ListValue right)
+    {
+        foreach (var item in right.Elements)
         {
-            foreach (var item in right.Elements)
-            {
-                if (Equals(item, left))
-                    return new BoolValue(true);
-            }
-            return new BoolValue(false);
-        },
-        precedence: 6,
-        isInfix: true,
-        description: "Checks if an element is contained in a list.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command IndexAccess = Command.CreateOperator(
+            if (Equals(item, left))
+                return new BoolValue(true);
+        }
+        return new BoolValue(false);
+    }
+
+    [ToastCommand(
         "#",
-        (Context context, ToastValue left, NumberValue index) =>
+        Precedence = 14,
+        IsInfix = true,
+        Description = "Accesses member by index from an ObjectValue."
+    )]
+    public static ToastValue IndexAccess(Context context, ToastValue left, NumberValue index)
+    {
+        if (left is ObjectValue objVal)
         {
-            if (left is ObjectValue objVal)
+            if (
+                objVal.Context.GetBindings().TryGetValue("#", out var memberBinding)
+                && memberBinding.Value is CommandValue indexCmd
+            )
             {
-                if (
-                    objVal.Context.GetBindings().TryGetValue("#", out var memberBinding)
-                    && memberBinding.Value is CommandValue indexCmd
-                )
-                {
-                    return indexCmd.Command.TargetDelegate(context, [index]);
-                }
-                throw new ToastException(
-                    new TypeError($"Type '{left.Type}' does not support '#' indexing.")
-                );
+                return indexCmd.Command.TargetDelegate(context, [index]);
             }
-            throw new ToastException(new TypeError("Can only index ObjectValue types with '#'."));
-        },
-        precedence: 10,
-        description: "Index operator for collections."
-    );
-    private static readonly Command ListIndex = Command.CreateFunction(
-        "#",
-        (Context context, ListValue list, NumberValue index) =>
+            throw new ToastException(
+                new TypeError($"Type '{left.Type}' does not support '#' indexing.")
+            );
+        }
+        throw new ToastException(new TypeError("Can only index ObjectValue types with '#'."));
+    }
+
+    [ToastCommand("filter", Description = "Filters elements of a list using a predicate function.")]
+    public static ListValue Filter(ListValue list, FunctionValue predicate)
+    {
+        var result = new List<ToastValue>();
+        foreach (var item in list.Elements)
+        {
+            var res = predicate.Execute([item]);
+            if (res is BoolValue b && b.Value)
+            {
+                result.Add(item);
+            }
+        }
+        return new ListValue(result);
+    }
+
+    [ToastCommand(
+        "map",
+        Description = "Transforms each element of a list using a mapper function."
+    )]
+    public static ListValue Map(ListValue list, FunctionValue mapper)
+    {
+        var result = new List<ToastValue>();
+        foreach (var item in list.Elements)
+        {
+            result.Add(mapper.Execute([item]));
+        }
+        return new ListValue(result);
+    }
+
+    [ToastCommand(
+        "reduce",
+        Description = "Reduces elements in a list to a single value using an accumulator function."
+    )]
+    public static ToastValue Reduce(ListValue list, ToastValue initial, FunctionValue reducer)
+    {
+        var acc = initial;
+        foreach (var item in list.Elements)
+        {
+            acc = reducer.Execute([acc, item]);
+        }
+        return acc;
+    }
+
+    [ToastType("list")]
+    public static class ListType
+    {
+        [ToastCommand("#", Description = "Gets or references an element in a list by index.")]
+        public static ToastValue ListIndex(Context context, ListValue list, NumberValue index)
         {
             int idx = (int)index.Value;
             if (idx < 0 || idx >= list.Elements.Count)
             {
-                throw new IndexOutOfRangeException(
-                    $"Index {idx} is out of range for list of length {list.Elements.Count}."
-                );
+                throw new ToastException(IndexError.OutOfRange(idx, list.Elements.Count, "list"));
             }
 
             if (context.Toaster.Executor.SuppressDereference)
@@ -79,76 +122,28 @@ public class ListModule : IToastModule
             }
 
             return list.Elements[idx];
-        },
-        description: "Retrieves the element at the specified index in the list."
-    );
-    public static readonly Command IndexOf = Command.CreateFunction(
-        "indexOf",
-        (Context context, ListValue list, ToastValue item) =>
+        }
+
+        [ToastCommand("indexOf", Description = "Finds the first index of an element in a list.")]
+        public static NumberValue IndexOf(ListValue list, ToastValue target)
         {
-            return new NumberValue(list.Elements.IndexOf(item));
-        },
-        description: "Returns the zero-based index of the first occurrence of an item in a list.",
-        returnType: ToastType.Number
-    );
-    public static readonly Command Filter = Command.CreateFunction(
-        "filter",
-        (Context context, ListValue list, FunctionValue predicate) =>
-        {
-            var result = new List<ToastValue>();
-            foreach (var item in list.Elements)
+            for (int i = 0; i < list.Elements.Count; i++)
             {
-                var res = predicate.Execute([item]);
-                if (res is BoolValue b && b.Value)
-                {
-                    result.Add(item);
-                }
+                if (Equals(list.Elements[i], target))
+                    return new NumberValue(i);
             }
-            return new ListValue(result);
-        },
-        description: "Filters elements in a list based on a predicate function.",
-        returnType: ToastType.List
-    );
-    public static readonly Command Map = Command.CreateFunction(
-        "map",
-        (Context context, ListValue list, FunctionValue mapper) =>
-        {
-            var result = new List<ToastValue>();
-            foreach (var item in list.Elements)
-            {
-                result.Add(mapper.Execute([item]));
-            }
-            return new ListValue(result);
-        },
-        description: "Transforms each element in a list by applying a mapper function.",
-        returnType: ToastType.List
-    );
-    public static readonly Command Reduce = Command.CreateFunction(
-        "reduce",
-        (Context context, ListValue list, ToastValue initial, FunctionValue reducer) =>
-        {
-            var acc = initial;
-            foreach (var item in list.Elements)
-            {
-                acc = reducer.Execute([acc, item]);
-            }
-            return acc;
-        },
-        description: "Reduces a list of values to a single accumulated value using a reducer function."
-    );
-    public static readonly Command Join = Command.CreateFunction(
-        "combine",
-        (Context context, ListValue list1, ListValue list2) =>
+            return new NumberValue(-1);
+        }
+
+        [ToastCommand("join", Description = "Combines two lists into a single list.")]
+        public static ListValue Join(ListValue list1, ListValue list2)
         {
             var result = list1.Elements.Concat(list2.Elements).ToList();
             return new ListValue(result);
-        },
-        description: "Combines two lists into a single list.",
-        returnType: ToastType.List
-    );
-    public static readonly Command Sort = Command.CreateFunction(
-        "sort",
-        (Context context, ListValue list) =>
+        }
+
+        [ToastCommand("sort", Description = "Sorts elements in a list in ascending order.")]
+        public static ListValue Sort(ListValue list)
         {
             var result = new List<ToastValue>(list.Elements);
             result.Sort(
@@ -166,13 +161,13 @@ public class ListModule : IToastModule
                 }
             );
             return new ListValue(result);
-        },
-        description: "Sorts elements in a list in ascending order.",
-        returnType: ToastType.List
-    );
-    public static readonly Command SortAs = Command.CreateFunction(
-        "sortAs",
-        (Context context, ListValue list, FunctionValue keySelector) =>
+        }
+
+        [ToastCommand(
+            "sortAs",
+            Description = "Sorts elements in a list according to a key selector function."
+        )]
+        public static ListValue SortAs(ListValue list, FunctionValue keySelector)
         {
             var result = new List<ToastValue>(list.Elements);
             result.Sort(
@@ -191,74 +186,41 @@ public class ListModule : IToastModule
                 }
             );
             return new ListValue(result);
-        },
-        description: "Sorts elements in a list according to a key selector function.",
-        returnType: ToastType.List
-    );
-    public static readonly Command Shuffle = Command.CreateFunction(
-        "shuffle",
-        (Context context, ListValue list) =>
+        }
+
+        [ToastCommand(
+            "shuffle",
+            Description = "Shuffles the elements in a list into random order."
+        )]
+        public static ListValue Shuffle(ListValue list)
         {
-            var random = new Random();
-            var result = list.Elements.OrderBy(x => random.Next()).ToList();
+            var result = list.Elements.OrderBy(_ => System.Random.Shared.Next()).ToList();
             return new ListValue(result);
-        },
-        description: "Shuffles the elements in a list into random order.",
-        returnType: ToastType.List
-    );
-    public static readonly Command Add = Command.CreateFunction(
-        "add",
-        (Context context, ListValue list, ToastValue item) =>
+        }
+
+        [ToastCommand("add", Description = "Adds an element to the end of the list.")]
+        public static ToastValue Add(ListValue list, ToastValue item)
         {
             list.Elements.Add(item);
             return NullValue.Instance;
-        },
-        description: "Adds an element to the end of the list.",
-        returnType: ToastType.Null
-    );
-    public static readonly Command RemoveAt = Command.CreateFunction(
-        "removeAt",
-        (Context context, ListValue list, NumberValue index) =>
+        }
+
+        [ToastCommand(
+            "removeAt",
+            Description = "Removes the element at the specified index of the list."
+        )]
+        public static ToastValue RemoveAt(ListValue list, NumberValue index)
         {
             int i = (int)index.Value;
             var removed = list.Elements[i];
             list.Elements.RemoveAt(i);
             return removed;
-        },
-        description: "Removes the element at the specified index of the list."
-    );
-    public static readonly Command Length = Command.CreateFunction(
-        "length",
-        (Context context, ListValue list) =>
+        }
+
+        [ToastCommand("length", Description = "Gets the number of elements in the list.")]
+        public static NumberValue Length(ListValue list)
         {
             return new NumberValue(list.Elements.Count);
-        },
-        description: "Gets the number of elements in the list.",
-        returnType: ToastType.Number
-    );
-
-    public static void Register(Toaster toast)
-    {
-        toast.RegisterCommand(To);
-        toast.RegisterCommand(In);
-        toast.RegisterCommand(IndexAccess);
-        toast.RegisterCommand(Filter);
-        toast.RegisterCommand(Map);
-        toast.RegisterCommand(Reduce);
-
-        toast.RegisterTypeMember(ToastType.List, "#", new CommandValue(ListIndex));
-        toast.RegisterTypeMember(ToastType.List, "add", new CommandValue(Add));
-        toast.RegisterTypeMember(ToastType.List, "removeAt", new CommandValue(RemoveAt));
-        toast.RegisterTypeMember(ToastType.List, "length", new CommandValue(Length));
-        toast.RegisterTypeMember(ToastType.List, "indexOf", new CommandValue(IndexOf));
-        toast.RegisterTypeMember(ToastType.List, "join", new CommandValue(Join));
-        toast.RegisterTypeMember(ToastType.List, "sort", new CommandValue(Sort));
-        toast.RegisterTypeMember(ToastType.List, "sortAs", new CommandValue(SortAs));
-        toast.RegisterTypeMember(ToastType.List, "shuffle", new CommandValue(Shuffle));
-    }
-
-    public void Load(Toaster toaster, Context callerContext)
-    {
-        Register(toaster);
+        }
     }
 }

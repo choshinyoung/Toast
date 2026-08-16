@@ -2,7 +2,12 @@ namespace Toast;
 
 public class Toaster
 {
-    public static readonly Toaster Empty = new(useSystemModules: false);
+    private static readonly IReadOnlyList<IToastModule> DefaultModules =
+    [
+        new SystemModules.ImportModule(),
+    ];
+
+    public static readonly Toaster Empty = new([]);
 
     public readonly Dictionary<string, Command> PrefixCommands = [];
     public readonly Dictionary<string, Command> InfixCommands = [];
@@ -12,37 +17,77 @@ public class Toaster
     public readonly Context GlobalContext;
     public readonly Executor Executor;
 
-    public Toaster(bool useSystemModules = false)
+    public Toaster(IEnumerable<IToastModule>? modules = null)
     {
         Executor = new Executor(this);
         GlobalContext = new Context(this);
-        SystemModules.ImportModule.Register(this);
-        if (useSystemModules)
+        RegisterBuiltInTypes();
+
+        var targetModules = modules ?? DefaultModules;
+        foreach (var module in targetModules)
         {
-            SystemModules.SystemModule.Register(this);
+            Load(module);
         }
+    }
+
+    private void RegisterBuiltInTypes()
+    {
+        GlobalContext.SetValueDirect(ToastType.Number.Name, new TypeValue(ToastType.Number, null));
+        GlobalContext.SetValueDirect(ToastType.String.Name, new TypeValue(ToastType.String, null));
+        GlobalContext.SetValueDirect(
+            ToastType.Boolean.Name,
+            new TypeValue(ToastType.Boolean, null)
+        );
+        GlobalContext.SetValueDirect(ToastType.List.Name, new TypeValue(ToastType.List, null));
+        GlobalContext.SetValueDirect(ToastType.Object.Name, new TypeValue(ToastType.Object, null));
+        GlobalContext.SetValueDirect(
+            ToastType.Function.Name,
+            new TypeValue(ToastType.Function, null)
+        );
+        GlobalContext.SetValueDirect(ToastType.Null.Name, new TypeValue(ToastType.Null, null));
+        GlobalContext.SetValueDirect(ToastType.Error.Name, new TypeValue(ToastType.Error, null));
+        GlobalContext.SetValueDirect("Error", new TypeValue(ToastType.Error, null));
+    }
+
+    public void Load(string moduleName)
+    {
+        ModuleManager.Instance.LoadModule(moduleName, this, GlobalContext);
+    }
+
+    public void Load<T>()
+        where T : IToastModule, new()
+    {
+        var module = new T();
+        Load(module);
+    }
+
+    public void Load(Type moduleType)
+    {
+        if (
+            !typeof(IToastModule).IsAssignableFrom(moduleType)
+            || moduleType.IsAbstract
+            || moduleType.IsInterface
+        )
+        {
+            throw new ArgumentException(
+                $"Type '{moduleType.FullName}' must implement IToastModule and be a non-abstract class."
+            );
+        }
+
+        if (Activator.CreateInstance(moduleType) is IToastModule module)
+        {
+            Load(module);
+        }
+    }
+
+    public void Load(IToastModule module)
+    {
+        ModuleLoader.Load(module, this, GlobalContext);
     }
 
     public void RegisterType(ToastType type)
     {
         CustomTypes.Add(type);
-    }
-
-    public void RegisterType(
-        string name,
-        Func<Context, ToastValue[], ToastValue> constructorFunc,
-        HashSet<string>? declaredMembers = null
-    )
-    {
-        var toastType = new ToastType(name);
-        CustomTypes.Add(toastType);
-        var constructorCmd = new Command(
-            name,
-            constructorFunc,
-            parameterTypes: [.. Enumerable.Repeat(ToastType.Any, 1)]
-        );
-        var typeVal = new TypeValue(toastType, constructorCmd, declaredMembers);
-        GlobalContext.SetValueDirect(name, typeVal);
     }
 
     public void RegisterCommand(Command command)
@@ -61,54 +106,6 @@ public class Toaster
         }
     }
 
-    public void RegisterOperator(
-        string name,
-        Delegate targetDelegate,
-        int precedence,
-        bool isRightAssociative = false,
-        bool isPrefix = false,
-        string? description = null,
-        ToastType? returnType = null
-    )
-    {
-        RegisterCommand(
-            Command.CreateOperator(
-                name,
-                targetDelegate,
-                precedence,
-                isRightAssociative,
-                isPrefix,
-                description: description,
-                returnType: returnType
-            )
-        );
-    }
-
-    public void RegisterFunction(
-        string name,
-        Delegate targetDelegate,
-        int precedence = 0,
-        bool isRightAssociative = false,
-        bool isPrefix = false,
-        bool isInfix = false,
-        string? description = null,
-        ToastType? returnType = null
-    )
-    {
-        RegisterCommand(
-            Command.CreateFunction(
-                name,
-                targetDelegate,
-                precedence,
-                isRightAssociative,
-                isPrefix,
-                isInfix,
-                description: description,
-                returnType: returnType
-            )
-        );
-    }
-
     public void RegisterConverter(TypeConverter converter)
     {
         Converters[(converter.Source, converter.Target)] = converter;
@@ -122,19 +119,6 @@ public class Toaster
             ExtensionMembers[type] = members;
         }
         members[memberName] = value;
-    }
-
-    public HashSet<string> GetInfixIdentifiers()
-    {
-        var infixIds = new HashSet<string>();
-        foreach (var cmd in InfixCommands.Values)
-        {
-            if (cmd.IsInfix)
-            {
-                infixIds.Add(cmd.Name);
-            }
-        }
-        return infixIds;
     }
 
     public (int Precedence, bool IsRight) GetInfixInfo(Token token)

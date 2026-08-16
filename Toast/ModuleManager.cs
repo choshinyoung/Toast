@@ -133,7 +133,7 @@ public class ModuleManager
 
         if (_systemModules.TryGetValue(moduleName, out var systemMod))
         {
-            systemMod.Load(toaster, callerContext);
+            toaster.Load(systemMod);
             return;
         }
 
@@ -200,7 +200,7 @@ public class ModuleManager
             && Activator.CreateInstance(moduleType) is IToastModule moduleInstance
         )
         {
-            moduleInstance.Load(toaster, callerContext);
+            toaster.Load(moduleInstance);
             return;
         }
 

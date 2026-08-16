@@ -194,7 +194,7 @@ public class LspTests
     [Fact]
     public void TestStaticDiagnosticDetectsUnimportedSystemCommands()
     {
-        var toaster = new Toaster(useSystemModules: false);
+        var toaster = new Toaster();
         var unimportedCode = """
             if (true) {
                 print("hello")
@@ -211,7 +211,7 @@ public class LspTests
     [Fact]
     public void TestStaticDiagnosticPassesWithImport()
     {
-        var toaster = new Toaster(useSystemModules: false);
+        var toaster = new Toaster();
         var importedCode = """
             import "system"
             if (true) {

@@ -1,233 +1,333 @@
 namespace Toast.SystemModules;
 
+[ToastModule("object", Description = "Variable, type and object functions.")]
 public class ObjectModule : IToastModule
 {
-    public string Name => "object";
-    public string Description => "Variable, type and object function.";
-
-    private static TypeValue ResolveType(Context context, ToastValue typeVal)
+    [ToastCommand(
+        ":",
+        Precedence = 10,
+        Description = "Type annotation operator, constrains a variable or parameter to a specified type."
+    )]
+    public static TypedIdentifierValue TypeAnnotation(IdentifierValue id, TypeValue typeVal)
     {
-        if (typeVal is TypeValue tv)
-        {
-            return tv;
-        }
-
-        var typeName = typeVal.ToString();
-        if (context.HasVariable(typeName))
-        {
-            var val = context.GetValue(typeName);
-            if (val is TypeValue resolvedTv)
-            {
-                return resolvedTv;
-            }
-        }
-
-        var targetType = ToastType.FromName(typeName);
-
-        return new TypeValue(targetType, null);
+        return new TypedIdentifierValue(id.Name, typeVal);
     }
 
-    public static readonly Command TypeAnnotation = Command.CreateOperator(
-        ":",
-        (Context context, IdentifierValue id, ToastValue typeVal) =>
-        {
-            return new TypedIdentifierValue(id.Name, ResolveType(context, typeVal));
-        },
-        precedence: 10,
-        isRightAssociative: false,
-        description: "Type annotation operator, constrains a variable or parameter to a specified type."
-    );
-    public static readonly Command Var = Command.CreateFunction(
+    [ToastCommand(
         "var",
-        (Context context, IdentifierValue target) =>
+        DeclaresMember = true,
+        Description = "Declares a new variable in the current scope."
+    )]
+    public static ToastValue Var(Context context, IdentifierValue target)
+    {
+        string varName;
+        TypeValue typeConstraint = TypeValue.Any;
+
+        if (target is TypedIdentifierValue typedId)
         {
-            string varName;
-            TypeValue typeConstraint = TypeValue.Any;
+            varName = typedId.Name;
+            typeConstraint = typedId.TargetTypeVal;
+        }
+        else
+        {
+            varName = target.Name;
+        }
 
-            if (target is TypedIdentifierValue typedId)
-            {
-                varName = typedId.Name;
-                typeConstraint = typedId.TargetTypeVal;
-            }
-            else
-            {
-                varName = target.Name;
-            }
+        if (context.GetBindings().ContainsKey(varName))
+        {
+            throw new ToastException(RuntimeError.AlreadyDefined(varName));
+        }
+        context.GetOrCreateLocal(varName, typeConstraint);
+        return new ReferenceValue(new VariableAssignTarget(context, varName));
+    }
 
-            if (context.GetBindings().ContainsKey(varName))
-            {
-                throw new ToastException(RuntimeError.AlreadyDefined(varName));
-            }
-            context.GetOrCreateLocal(varName, typeConstraint);
-            return new ReferenceValue(new VariableAssignTarget(context, varName));
-        },
-        declaresMember: true,
-        description: "Declares a new variable in the current scope."
-    );
-    public static readonly Command Assign = Command.CreateOperator(
+    [ToastCommand(
         "=",
-        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
-        {
-            leftVal.Target.SetValue(rightVal);
-            return rightVal;
-        },
-        precedence: 1,
-        isRightAssociative: true,
-        description: "Assignment operator, stores a value into a variable or object property."
-    );
-    public static readonly Command AssignAdd = Command.CreateOperator(
+        Precedence = 1,
+        IsRightAssociative = true,
+        IsInfix = true,
+        Description = "Assignment operator, stores a value into a variable or object property."
+    )]
+    public static ToastValue Assign(ReferenceValue leftVal, ToastValue rightVal)
+    {
+        leftVal.Target.SetValue(rightVal);
+        return rightVal;
+    }
+
+    [ToastCommand(
         "+=",
-        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
+        Precedence = 1,
+        IsRightAssociative = true,
+        IsInfix = true,
+        Description = "Addition assignment operator."
+    )]
+    public static ToastValue AssignAdd(ReferenceValue leftVal, ToastValue rightVal)
+    {
+        var currentVal = leftVal.Target.GetValue();
+        ToastValue newVal;
+        if (currentVal is StringValue || rightVal is StringValue)
         {
-            var currentVal = leftVal.Target.GetValue();
-            ToastValue newVal;
-            if (currentVal is StringValue || rightVal is StringValue)
-            {
-                newVal = new StringValue(currentVal.ToString() + rightVal.ToString());
-            }
-            else if (currentVal is NumberValue ln && rightVal is NumberValue rn)
-            {
-                newVal = new NumberValue(ln.Value + rn.Value);
-            }
-            else
-            {
-                throw new ToastException(new TypeError("Invalid types for += operator."));
-            }
+            newVal = new StringValue(currentVal.ToString() + rightVal.ToString());
+        }
+        else if (currentVal is NumberValue ln && rightVal is NumberValue rn)
+        {
+            newVal = new NumberValue(ln.Value + rn.Value);
+        }
+        else
+        {
+            throw new ToastException(new TypeError("Invalid types for += operator."));
+        }
+        leftVal.Target.SetValue(newVal);
+        return newVal;
+    }
+
+    [ToastCommand(
+        "-=",
+        Precedence = 1,
+        IsRightAssociative = true,
+        IsInfix = true,
+        Description = "Subtraction assignment operator."
+    )]
+    public static ToastValue AssignSub(ReferenceValue leftVal, ToastValue rightVal)
+    {
+        var currentVal = leftVal.Target.GetValue();
+        if (currentVal is NumberValue ln && rightVal is NumberValue rn)
+        {
+            var newVal = new NumberValue(ln.Value - rn.Value);
             leftVal.Target.SetValue(newVal);
             return newVal;
-        },
-        precedence: 1,
-        isRightAssociative: true,
-        description: "Addition assignment operator."
-    );
-    public static readonly Command AssignSub = Command.CreateOperator(
-        "-=",
-        (Context context, ReferenceValue leftVal, ToastValue rightVal) =>
-        {
-            var currentVal = leftVal.Target.GetValue();
-            if (currentVal is NumberValue ln && rightVal is NumberValue rn)
-            {
-                var newVal = new NumberValue(ln.Value - rn.Value);
-                leftVal.Target.SetValue(newVal);
-                return newVal;
-            }
-            throw new ToastException(new TypeError("Invalid types for -= operator."));
-        },
-        precedence: 1,
-        isRightAssociative: true,
-        description: "Subtraction assignment operator."
-    );
-    public static readonly Command MemberAccess = Command.CreateOperator(
+        }
+        throw new ToastException(new TypeError("Invalid types for -= operator."));
+    }
+
+    [ToastCommand(
         ".",
-        (Context context, ToastValue left, AstNodeValue rightNode) =>
+        Precedence = 10,
+        Description = "Member access operator, accesses a property or method of an object."
+    )]
+    public static ToastValue MemberAccess(Context context, ToastValue left, AstNodeValue rightNode)
+    {
+        if (left is TypeValue typeVal)
         {
-            if (left is TypeValue typeVal)
-            {
-                if (rightNode.Node is not IdentifierNode typeIdNode)
-                {
-                    throw new ToastException(
-                        new TypeError("Right side of '.' must be an identifier.")
-                    );
-                }
-                string staticFieldName = typeIdNode.Name;
-                if (
-                    context.Toaster.ExtensionMembers.TryGetValue(
-                        typeVal.TargetType,
-                        out var members
-                    ) && members.TryGetValue(staticFieldName, out var staticMemberVal)
-                )
-                {
-                    if (
-                        !context.Toaster.Executor.SuppressZeroArgFunction
-                        && staticMemberVal is FunctionValue sfv
-                        && sfv.Parameters.Count == 0
-                    )
-                    {
-                        return sfv.Execute([]);
-                    }
-                    if (
-                        !context.Toaster.Executor.SuppressZeroArgFunction
-                        && staticMemberVal is CommandValue scv
-                        && scv.Command.Parameters.Count == 0
-                    )
-                    {
-                        return scv.Command.TargetDelegate(context, []);
-                    }
-                    return staticMemberVal;
-                }
-                throw new ToastException(RuntimeError.PropertyNotDefined(staticFieldName));
-            }
-
-            if (left is not ObjectValue objVal)
-            {
-                throw new ToastException(
-                    new TypeError("Left side of '.' must be an object or type.")
-                );
-            }
-
-            if (rightNode.Node is not IdentifierNode idNode)
+            if (rightNode.Node is not IdentifierNode typeIdNode)
             {
                 throw new ToastException(new TypeError("Right side of '.' must be an identifier."));
             }
-
-            string fieldName = idNode.Name;
-
-            if (context.Toaster.Executor.SuppressDereference)
-            {
-                return new ReferenceValue(new ObjectPropertyAssignTarget(objVal, fieldName));
-            }
-
-            var bindings = objVal.Context.GetBindings();
-            if (!bindings.TryGetValue(fieldName, out var binding))
+            string staticFieldName = typeIdNode.Name;
+            if (
+                context.Toaster.ExtensionMembers.TryGetValue(typeVal.TargetType, out var members)
+                && members.TryGetValue(staticFieldName, out var staticMemberVal)
+            )
             {
                 if (
-                    context.Toaster.ExtensionMembers.TryGetValue(objVal.Type, out var extMembers)
-                    && extMembers.TryGetValue(fieldName, out var extVal)
+                    !context.Toaster.Executor.SuppressZeroArgFunction
+                    && staticMemberVal is FunctionValue sfv
+                    && sfv.Parameters.Count == 0
                 )
                 {
-                    if (
-                        !context.Toaster.Executor.SuppressZeroArgFunction
-                        && extVal is FunctionValue efv
-                        && efv.Parameters.Count == 0
-                    )
-                    {
-                        return efv.Execute([]);
-                    }
-                    if (
-                        !context.Toaster.Executor.SuppressZeroArgFunction
-                        && extVal is CommandValue ecv
-                        && ecv.Command.Parameters.Count == 0
-                    )
-                    {
-                        return ecv.Command.TargetDelegate(context, []);
-                    }
-                    return extVal;
+                    return sfv.Execute([]);
                 }
-                throw new ToastException(RuntimeError.PropertyNotDefined(fieldName));
+                if (
+                    !context.Toaster.Executor.SuppressZeroArgFunction
+                    && staticMemberVal is CommandValue scv
+                    && scv.Command.Parameters.Count == 0
+                )
+                {
+                    return scv.Command.TargetDelegate(context, []);
+                }
+                return staticMemberVal;
             }
+            throw new ToastException(RuntimeError.PropertyNotDefined(staticFieldName));
+        }
 
-            var val = binding.Value;
+        if (left is not ObjectValue objVal)
+        {
+            throw new ToastException(new TypeError("Left side of '.' must be an object or type."));
+        }
+
+        if (rightNode.Node is not IdentifierNode idNode)
+        {
+            throw new ToastException(new TypeError("Right side of '.' must be an identifier."));
+        }
+
+        string fieldName = idNode.Name;
+
+        if (context.Toaster.Executor.SuppressDereference)
+        {
+            return new ReferenceValue(new ObjectPropertyAssignTarget(objVal, fieldName));
+        }
+
+        var bindings = objVal.Context.GetBindings();
+        if (!bindings.TryGetValue(fieldName, out var binding))
+        {
             if (
-                !context.Toaster.Executor.SuppressZeroArgFunction
-                && val is FunctionValue funcVal
-                && funcVal.Parameters.Count == 0
+                context.Toaster.ExtensionMembers.TryGetValue(objVal.Type, out var extMembers)
+                && extMembers.TryGetValue(fieldName, out var extVal)
             )
             {
-                return funcVal.Execute([]);
+                if (
+                    !context.Toaster.Executor.SuppressZeroArgFunction
+                    && extVal is FunctionValue efv
+                    && efv.Parameters.Count == 0
+                )
+                {
+                    return efv.Execute([]);
+                }
+                if (
+                    !context.Toaster.Executor.SuppressZeroArgFunction
+                    && extVal is CommandValue ecv
+                    && ecv.Command.Parameters.Count == 0
+                )
+                {
+                    return ecv.Command.TargetDelegate(context, []);
+                }
+                return extVal;
             }
-            if (
-                !context.Toaster.Executor.SuppressZeroArgFunction
-                && val is CommandValue cmdVal
-                && cmdVal.Command.ParameterCount == 0
-            )
+            throw new ToastException(RuntimeError.PropertyNotDefined(fieldName));
+        }
+
+        var val = binding.Value;
+        if (
+            !context.Toaster.Executor.SuppressZeroArgFunction
+            && val is FunctionValue funcVal
+            && funcVal.Parameters.Count == 0
+        )
+        {
+            return funcVal.Execute([]);
+        }
+        if (
+            !context.Toaster.Executor.SuppressZeroArgFunction
+            && val is CommandValue cmdVal
+            && cmdVal.Command.ParameterCount == 0
+        )
+        {
+            return cmdVal.Command.TargetDelegate(context, []);
+        }
+        return val;
+    }
+
+    [ToastCommand("type", Description = "Creates an anonymous custom type constructor.")]
+    public static ToastValue TypeCreator(Context context, FunctionValue funcVal)
+    {
+        var factoryCmd = CreateConstructorFactory("@type_factory", "type", funcVal);
+        var declaredMembers = GetDeclaredMembers(context, funcVal);
+        var memberTypes = new Dictionary<string, ToastType>();
+        foreach (var param in funcVal.Parameters)
+        {
+            memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
+        }
+        return new TypeValue(
+            new ToastType("@type_factory"),
+            factoryCmd,
+            declaredMembers,
+            memberTypes
+        );
+    }
+
+    [ToastCommand("class", DeclaresMember = true, Description = "Declares a named class/type.")]
+    public static ToastValue ClassCreator(
+        Context context,
+        IdentifierValue id,
+        FunctionValue funcVal
+    )
+    {
+        if (context.GetBindings().ContainsKey(id.Name))
+        {
+            throw new InvalidOperationException(
+                $"Class '{id.Name}' is already defined in the current scope."
+            );
+        }
+
+        var factoryCmd = CreateConstructorFactory(id.Name, "class", funcVal);
+        var declaredMembers = GetDeclaredMembers(context, funcVal);
+        var memberTypes = new Dictionary<string, ToastType>();
+        foreach (var param in funcVal.Parameters)
+        {
+            memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
+        }
+        var typeVal = new TypeValue(
+            new ToastType(id.Name),
+            factoryCmd,
+            declaredMembers,
+            memberTypes
+        );
+        context.SetValueDirect(id.Name, typeVal);
+        return typeVal;
+    }
+
+    [ToastCommand(
+        "function",
+        DeclaresMember = true,
+        Description = "Declares a named function in the current scope."
+    )]
+    public static ToastValue FunctionCreator(
+        Context context,
+        IdentifierValue id,
+        FunctionValue funcVal
+    )
+    {
+        if (context.GetBindings().ContainsKey(id.Name))
+        {
+            throw new ToastException(RuntimeError.AlreadyDefined(id.Name));
+        }
+        context.SetValueDirect(id.Name, funcVal);
+        return funcVal;
+    }
+
+    [ToastCommand(
+        "with",
+        Precedence = 6,
+        IsInfix = true,
+        Description = "Merges properties of two objects to produce a combined object."
+    )]
+    public static ObjectValue With(ObjectValue left, ObjectValue right)
+    {
+        var newCtx = new Context(left.Context.Toaster, left.Context.Parent);
+        var newObj = new ObjectValue(newCtx, left.CustomType);
+        newCtx.Owner = newObj;
+
+        foreach (var kvp in left.Context.GetBindings())
+        {
+            newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
+            var val = kvp.Value.Value;
+            if (val is FunctionValue funcVal)
             {
-                return cmdVal.Command.TargetDelegate(context, []);
+                val = funcVal with { ClosureContext = newCtx };
             }
-            return val;
-        },
-        precedence: 10,
-        description: "Member access operator, accesses a property or method of an object."
-    );
+            newCtx.SetValueDirect(kvp.Key, val);
+        }
+        foreach (var kvp in right.Context.GetBindings())
+        {
+            newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
+            var val = kvp.Value.Value;
+            if (val is FunctionValue funcVal)
+            {
+                val = funcVal with { ClosureContext = newCtx };
+            }
+            newCtx.SetValueDirect(kvp.Key, val);
+        }
+        return newObj;
+    }
+
+    [ToastCommand(
+        "typeof",
+        Precedence = 9,
+        IsPrefix = true,
+        Description = "Returns the Type value of the given expression."
+    )]
+    public static TypeValue TypeOf(Context context, ToastValue val)
+    {
+        var typeName = val.Type.Name;
+        if (context.HasVariable(typeName))
+        {
+            var registeredVal = context.GetValue(typeName);
+            if (registeredVal is TypeValue tv)
+            {
+                return tv;
+            }
+        }
+        return new TypeValue(val.Type, null);
+    }
 
     private static Command CreateConstructorFactory(string name, string kind, FunctionValue funcVal)
     {
@@ -274,10 +374,7 @@ public class ObjectModule : IToastModule
                             }
                             argVal = converted;
                         }
-                        paramConstraint = ResolveType(
-                            objCtx,
-                            new IdentifierValue(expectedType.Name)
-                        );
+                        paramConstraint = new TypeValue(param.Type.Type, null);
                     }
 
                     objCtx.GetOrCreateLocal(paramName, paramConstraint);
@@ -353,143 +450,5 @@ public class ObjectModule : IToastModule
                 }
             }
         }
-    }
-
-    public static readonly Command TypeCreator = Command.CreateFunction(
-        "type",
-        (Context context, FunctionValue funcVal) =>
-        {
-            var factoryCmd = CreateConstructorFactory("@type_factory", "type", funcVal);
-            var declaredMembers = GetDeclaredMembers(context, funcVal);
-            var memberTypes = new Dictionary<string, ToastType>();
-            foreach (var param in funcVal.Parameters)
-            {
-                memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
-            }
-            return new TypeValue(
-                new ToastType("@type_factory"),
-                factoryCmd,
-                declaredMembers,
-                memberTypes
-            );
-        },
-        description: "Creates an anonymous custom type constructor."
-    );
-    public static readonly Command ClassCreator = Command.CreateFunction(
-        "class",
-        (Context context, IdentifierValue id, FunctionValue funcVal) =>
-        {
-            if (context.GetBindings().ContainsKey(id.Name))
-            {
-                throw new InvalidOperationException(
-                    $"Class '{id.Name}' is already defined in the current scope."
-                );
-            }
-
-            var factoryCmd = CreateConstructorFactory(id.Name, "class", funcVal);
-            var declaredMembers = GetDeclaredMembers(context, funcVal);
-            var memberTypes = new Dictionary<string, ToastType>();
-            foreach (var param in funcVal.Parameters)
-            {
-                memberTypes[param.Name] = param.Type?.Type ?? ToastType.Any;
-            }
-            var typeVal = new TypeValue(
-                new ToastType(id.Name),
-                factoryCmd,
-                declaredMembers,
-                memberTypes
-            );
-            context.SetValueDirect(id.Name, typeVal);
-            return typeVal;
-        },
-        declaresMember: true,
-        description: "Declares a named class/type."
-    );
-    public static readonly Command FunctionCreator = Command.CreateFunction(
-        "function",
-        (Context context, IdentifierValue id, FunctionValue funcVal) =>
-        {
-            if (context.GetBindings().ContainsKey(id.Name))
-            {
-                throw new ToastException(RuntimeError.AlreadyDefined(id.Name));
-            }
-            context.SetValueDirect(id.Name, funcVal);
-            return funcVal;
-        },
-        declaresMember: true,
-        description: "Declares a named function in the current scope."
-    );
-    public static readonly Command With = Command.CreateFunction(
-        "with",
-        (Context context, ObjectValue left, ObjectValue right) =>
-        {
-            var newCtx = new Context(left.Context.Toaster, left.Context.Parent);
-            var newObj = new ObjectValue(newCtx, left.CustomType);
-            newCtx.Owner = newObj;
-
-            foreach (var kvp in left.Context.GetBindings())
-            {
-                newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
-                var val = kvp.Value.Value;
-                if (val is FunctionValue funcVal)
-                {
-                    val = funcVal with { ClosureContext = newCtx };
-                }
-                newCtx.SetValueDirect(kvp.Key, val);
-            }
-            foreach (var kvp in right.Context.GetBindings())
-            {
-                newCtx.GetOrCreateLocal(kvp.Key, kvp.Value.Constraint);
-                var val = kvp.Value.Value;
-                if (val is FunctionValue funcVal)
-                {
-                    val = funcVal with { ClosureContext = newCtx };
-                }
-                newCtx.SetValueDirect(kvp.Key, val);
-            }
-            return newObj;
-        },
-        precedence: 6,
-        isInfix: true,
-        description: "Merges properties of two objects to produce a combined object."
-    );
-    public static readonly Command TypeOf = Command.CreateFunction(
-        "typeof",
-        (Context context, ToastValue val) =>
-        {
-            var typeName = val.Type.Name;
-            if (context.HasVariable(typeName))
-            {
-                var registeredVal = context.GetValue(typeName);
-                if (registeredVal is TypeValue tv)
-                {
-                    return tv;
-                }
-            }
-            return new TypeValue(val.Type, null);
-        },
-        precedence: 9,
-        isPrefix: true,
-        description: "Returns the Type value of the given expression."
-    );
-
-    public static void Register(Toaster toast)
-    {
-        toast.RegisterCommand(Var);
-        toast.RegisterCommand(Assign);
-        toast.RegisterCommand(AssignAdd);
-        toast.RegisterCommand(AssignSub);
-        toast.RegisterCommand(MemberAccess);
-        toast.RegisterCommand(TypeCreator);
-        toast.RegisterCommand(ClassCreator);
-        toast.RegisterCommand(FunctionCreator);
-        toast.RegisterCommand(With);
-        toast.RegisterCommand(TypeAnnotation);
-        toast.RegisterCommand(TypeOf);
-    }
-
-    public void Load(Toaster toaster, Context callerContext)
-    {
-        Register(toaster);
     }
 }

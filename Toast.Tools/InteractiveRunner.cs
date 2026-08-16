@@ -9,8 +9,11 @@ public static class InteractiveRunner
         Console.WriteLine($"Toast {version}");
         Console.WriteLine("Type \"exit\" to leave.\n");
 
-        var toast = new Toaster(useSystemModules: true);
-        toast.RegisterFunction("exit", (Context context) => Environment.Exit(0));
+        var toast = new Toaster([
+            new SystemModules.ImportModule(),
+            new SystemModules.SystemModule(),
+            new InteractiveModule(),
+        ]);
 
         while (true)
         {

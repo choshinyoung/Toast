@@ -15,8 +15,10 @@ public class SystemTests : BaseTest
     [Fact]
     public void TestExplicitCasting()
     {
-        AssertResult("number 1", 1.0);
-        AssertResult("string true", "True");
+        AssertResult("123 as string", "123");
+        AssertResult("\"456\" as number", 456.0);
+        AssertResult("\"true\" as boolean", true);
+        AssertResult("\"abc\" as list", new List<string> { "a", "b", "c" });
     }
 
     [Fact]
@@ -54,8 +56,10 @@ public class SystemTests : BaseTest
 
         var mathCtx = new Context(_toast);
         Evaluate("import \"math\"", mathCtx);
-        AssertResult("floorDiv 15 2", 7, mathCtx);
-        AssertResult("sqrt 16", 4.0, mathCtx);
+        AssertResult("math.floorDiv 15 2", 7, mathCtx);
+        AssertResult("math.sqrt 16", 4.0, mathCtx);
+        AssertResult("math.PI > 3.14", true, mathCtx);
+        AssertResult("math.E > 2.71", true, mathCtx);
 
         // 2. Relational / Logical Operators
         AssertResult("5 == 5", true);
@@ -86,10 +90,46 @@ public class SystemTests : BaseTest
 
         // 4. Converters
         AssertResult("print 123", NullValue.Instance);
-        AssertResult("number \"123\"", 123);
-        AssertResult("number \"123.45\"", 123.45);
-        AssertResult("boolean \"true\"", true);
-        AssertResult("list \"abc\"", new List<string> { "a", "b", "c" });
+        Assert.True(
+            _toast.TryConvert(
+                new StringValue("123"),
+                ToastType.String,
+                ToastType.Number,
+                _toast.GlobalContext,
+                out var numVal1
+            )
+                && ((NumberValue)numVal1).Value == 123
+        );
+        Assert.True(
+            _toast.TryConvert(
+                new StringValue("123.45"),
+                ToastType.String,
+                ToastType.Number,
+                _toast.GlobalContext,
+                out var numVal2
+            )
+                && ((NumberValue)numVal2).Value == 123.45
+        );
+        Assert.True(
+            _toast.TryConvert(
+                new StringValue("true"),
+                ToastType.String,
+                ToastType.Boolean,
+                _toast.GlobalContext,
+                out var boolVal
+            )
+                && ((BoolValue)boolVal).Value == true
+        );
+        Assert.True(
+            _toast.TryConvert(
+                new StringValue("abc"),
+                ToastType.String,
+                ToastType.List,
+                _toast.GlobalContext,
+                out var listVal
+            )
+                && ((ListValue)listVal).Elements.Count == 3
+        );
 
         // 5. String Helper Functions
         // 전역 커맨드로 등록된 String 함수들은 없음 → 인스턴스 멤버(.member) 또는 전역 등록된 것만 사용
@@ -255,6 +295,9 @@ public class SystemTests : BaseTest
         // 1. Creation and fields via datetime.now()
         Evaluate("var now = datetime.now()", context);
         AssertResult("now.year", DateTime.Now.Year, context);
+        AssertResult("now.month", DateTime.Now.Month, context);
+        AssertResult("now.day", DateTime.Now.Day, context);
+        AssertResult("now.totalSeconds > 0", true, context);
 
         // 2. Verified that instance does NOT have 'now' property (prevents datetime.now.now.now)
         Assert.Throws<ToastException>(() => Evaluate("now.now", context));
@@ -262,7 +305,16 @@ public class SystemTests : BaseTest
         // 3. Custom Methods & Converter-based string conversion
         Evaluate("var d = datetime.now()", context);
         AssertResult("d.format \"yyyy\"", DateTime.Now.Year.ToString(), context);
-        Assert.True(Evaluate("string d", context) is StringValue);
+        Assert.True(
+            _toast.TryConvert(
+                Evaluate("d", context),
+                ToastType.FromName("datetime"),
+                ToastType.String,
+                context,
+                out var convStr
+            )
+                && convStr is StringValue
+        );
 
         // 4. Method Chaining
         Evaluate("var d2 = d.addDays 5", context);

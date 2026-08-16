@@ -1,29 +1,12 @@
 namespace Toast.SystemModules;
 
+[ToastModule("import", Description = "import function.")]
 public class ImportModule : IToastModule
 {
-    public string Name => "import";
-    public string Description => "import function.";
-
-    public static readonly Command ImportCommand = Command.CreateFunction(
-        "import",
-        (Context context, StringValue moduleName) =>
-        {
-            ModuleManager.Instance.LoadModule(moduleName.Value, context.Toaster, context);
-            return NullValue.Instance;
-        },
-        parameterTypes: [ToastType.String],
-        description: "Imports a module or globally installed package.",
-        returnType: ToastType.Null
-    );
-
-    public static void Register(Toaster toast)
+    [ToastCommand("import", Description = "Imports a module or globally installed package.")]
+    public static ToastValue Import(Context context, StringValue moduleName)
     {
-        toast.RegisterCommand(ImportCommand);
-    }
-
-    public void Load(Toaster toaster, Context callerContext)
-    {
-        Register(toaster);
+        ModuleManager.Instance.LoadModule(moduleName.Value, context.Toaster, context);
+        return NullValue.Instance;
     }
 }

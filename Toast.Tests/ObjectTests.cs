@@ -40,7 +40,7 @@ public class ObjectTests : BaseTest
         Evaluate(
             @"var Point2 = type (x, y) => {
           var magnitude = {
-            sqrt(x * x + y * y)
+            math.sqrt(x * x + y * y)
           }
           var normalize = {
             var mag = magnitude
@@ -91,7 +91,7 @@ public class ObjectTests : BaseTest
         Evaluate("import \"math\"", context);
         Evaluate(
             @"class Point2 (x, y) => {
-  function magnitude () => sqrt(x * x + y * y)
+  function magnitude () => math.sqrt(x * x + y * y)
   function normalize () => {
     var mag = magnitude
     Point2 (x / mag) (y / mag)
@@ -324,10 +324,8 @@ public class ObjectTests : BaseTest
         AssertResult("s_with.length", 4, context);
         AssertResult("s_with.contains(\"sd\")", true, context);
 
-        // 3. 샌드박싱 (선택적 시스템 커맨드 등록) 검증
-        // useSystemModules: false 로 생성한 샌드박스 Toaster 에서는 확장 멤버 함수들이 존재하지 않아야 함.
-        var sandboxToast = new Toaster(useSystemModules: false);
-        Toast.SystemModules.ObjectModule.Register(sandboxToast); // . 연산자 사용을 위해 ObjectModule만 등록
+        // 모듈을 등록하지 않은 빈 Toaster에서는 확장 멤버 함수들이 존재하지 않아야 함.
+        var sandboxToast = new Toaster([new Toast.SystemModules.ObjectModule()]); // . 연산자 사용을 위해 ObjectModule만 등록
         var sandboxCtx = new Context(sandboxToast);
 
         sandboxToast.Evaluate(

@@ -60,39 +60,47 @@ public class Command
         TargetDelegate = CompileDelegate(targetDelegate);
 
         var list = new List<CommandParameter>();
+        var hasContextParam =
+            methodParams.Length > 0
+            && typeof(Context).IsAssignableFrom(methodParams[0].ParameterType);
+        var argOffset = hasContextParam ? 1 : 0;
+        var methodArgCount = methodParams.Length - argOffset;
+
         if (parameterTypes != null)
         {
             for (int i = 0; i < parameterTypes.Count; i++)
             {
                 var pName =
-                    (i + 1 < methodParams.Length)
-                        ? (methodParams[i + 1].Name ?? $"arg{i + 1}")
+                    (i + argOffset < methodParams.Length)
+                        ? (methodParams[i + argOffset].Name ?? $"arg{i + 1}")
                         : $"arg{i + 1}";
                 var pType = parameterTypes[i];
+                var paramAttr =
+                    (i + argOffset < methodParams.Length)
+                        ? methodParams[i + argOffset]
+                            .GetCustomAttributes(typeof(ToastParameterAttribute), false)
+                            .FirstOrDefault() as ToastParameterAttribute
+                        : null;
                 var pLazy =
-                    isParameterLazy != null && i < isParameterLazy.Count && isParameterLazy[i];
-                list.Add(new CommandParameter(pName, pType, pLazy));
-            }
-        }
-        else if (
-            methodParams.Length > 0
-            && typeof(Context).IsAssignableFrom(methodParams[0].ParameterType)
-        )
-        {
-            for (int i = 1; i < methodParams.Length; i++)
-            {
-                var param = methodParams[i];
-                var pName = param.Name ?? $"arg{i}";
-                var pType = ToastType.FromClrType(param.ParameterType);
-                var pLazy = param.ParameterType == typeof(AstNodeValue);
+                    paramAttr?.IsLazy
+                    ?? (isParameterLazy != null && i < isParameterLazy.Count && isParameterLazy[i]);
                 list.Add(new CommandParameter(pName, pType, pLazy));
             }
         }
         else
         {
-            throw new InvalidOperationException(
-                $"Command delegate for '{name}' must have Context as its first parameter."
-            );
+            for (int i = 0; i < methodArgCount; i++)
+            {
+                var param = methodParams[i + argOffset];
+                var pName = param.Name ?? $"arg{i + 1}";
+                var pType = ToastType.TryFromClrType(param.ParameterType) ?? ToastType.Any;
+                var paramAttr =
+                    param
+                        .GetCustomAttributes(typeof(ToastParameterAttribute), false)
+                        .FirstOrDefault() as ToastParameterAttribute;
+                var pLazy = paramAttr?.IsLazy ?? (param.ParameterType == typeof(AstNodeValue));
+                list.Add(new CommandParameter(pName, pType, pLazy));
+            }
         }
         Parameters = list;
     }
@@ -130,14 +138,44 @@ public class Command
         var contextParam = Expression.Parameter(typeof(Context), "context");
         var argsParam = Expression.Parameter(typeof(ToastValue[]), "args");
 
-        var callArgs = new List<Expression> { contextParam };
+        var callArgs = new List<Expression>();
+        var hasContextParam =
+            parameters.Length > 0 && typeof(Context).IsAssignableFrom(parameters[0].ParameterType);
 
-        for (int i = 1; i < parameters.Length; i++)
+        if (hasContextParam)
         {
-            var paramType = parameters[i].ParameterType;
-            var arrayIndex = Expression.ArrayIndex(argsParam, Expression.Constant(i - 1));
-            var cast = Expression.Convert(arrayIndex, paramType);
-            callArgs.Add(cast);
+            callArgs.Add(contextParam);
+            if (parameters.Length == 2 && parameters[1].ParameterType == typeof(ToastValue[]))
+            {
+                callArgs.Add(argsParam);
+            }
+            else
+            {
+                for (int i = 1; i < parameters.Length; i++)
+                {
+                    var paramType = parameters[i].ParameterType;
+                    var arrayIndex = Expression.ArrayIndex(argsParam, Expression.Constant(i - 1));
+                    var cast = Expression.Convert(arrayIndex, paramType);
+                    callArgs.Add(cast);
+                }
+            }
+        }
+        else
+        {
+            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(ToastValue[]))
+            {
+                callArgs.Add(argsParam);
+            }
+            else
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                {
+                    var paramType = parameters[i].ParameterType;
+                    var arrayIndex = Expression.ArrayIndex(argsParam, Expression.Constant(i));
+                    var cast = Expression.Convert(arrayIndex, paramType);
+                    callArgs.Add(cast);
+                }
+            }
         }
 
         Expression call;

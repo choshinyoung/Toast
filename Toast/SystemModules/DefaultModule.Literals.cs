@@ -2,29 +2,12 @@ namespace Toast.SystemModules;
 
 public partial class DefaultModule
 {
-    public static readonly Command True = Command.CreateFunction(
-        "true",
-        (Context context) => new BoolValue(true),
-        description: "Boolean true literal.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command False = Command.CreateFunction(
-        "false",
-        (Context context) => new BoolValue(false),
-        description: "Boolean false literal.",
-        returnType: ToastType.Boolean
-    );
-    public static readonly Command Null = Command.CreateFunction(
-        "null",
-        (Context context) => NullValue.Instance,
-        description: "Null literal representing the absence of a value.",
-        returnType: ToastType.Null
-    );
+    [ToastCommand("true", Description = "Boolean true literal.")]
+    public static BoolValue True() => new(true);
 
-    public static void RegisterLiterals(Toaster toast)
-    {
-        toast.RegisterCommand(True);
-        toast.RegisterCommand(False);
-        toast.RegisterCommand(Null);
-    }
+    [ToastCommand("false", Description = "Boolean false literal.")]
+    public static BoolValue False() => new(false);
+
+    [ToastCommand("null", Description = "Null literal representing the absence of a value.")]
+    public static NullValue Null() => NullValue.Instance;
 }
