@@ -24,9 +24,4 @@ public class DocumentManager
     {
         _documents.TryRemove(uri, out _);
     }
-
-    public Toaster GetToasterForDocument(DocumentUri uri)
-    {
-        return new Toaster(useSystemModules: false);
-    }
 }

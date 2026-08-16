@@ -21,7 +21,7 @@ public class HoverHandler : HoverHandlerBase
     {
         var uri = request.TextDocument.Uri;
         var text = DocumentManager.Instance.GetDocument(uri) ?? "";
-        var toaster = DocumentManager.Instance.GetToasterForDocument(uri);
+        var toaster = new Toaster();
 
         var word = GetWordAtPosition(text, request.Position);
         if (string.IsNullOrEmpty(word))

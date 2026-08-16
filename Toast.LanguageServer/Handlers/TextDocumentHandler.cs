@@ -91,7 +91,7 @@ public class TextDocumentHandler(ILanguageServerFacade router) : TextDocumentSyn
 
     private void ValidateDocument(DocumentUri uri, string text)
     {
-        var toast = DocumentManager.Instance.GetToasterForDocument(uri);
+        var toast = new Toaster();
         var diagnostics = ScopeAnalyzer.ValidateDocumentStatically(text, toast);
 
         _router.TextDocument.PublishDiagnostics(

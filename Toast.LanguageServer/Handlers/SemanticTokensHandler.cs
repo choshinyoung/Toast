@@ -71,7 +71,7 @@ public class SemanticTokensHandler : ISemanticTokensFullHandler
             );
         }
 
-        var toaster = DocumentManager.Instance.GetToasterForDocument(uri);
+        var toaster = new Toaster();
         var availableSymbols = ScopeAnalyzer.GetAvailableSymbols(text, toaster);
         var symbols = availableSymbols.ToDictionary(s => s.Name, s => s);
 

@@ -26,7 +26,7 @@ public class CompletionHandler : CompletionHandlerBase
     {
         var uri = request.TextDocument.Uri;
         var documentText = DocumentManager.Instance.GetDocument(uri) ?? "";
-        var toaster = DocumentManager.Instance.GetToasterForDocument(uri);
+        var toaster = new Toaster();
 
         var items = new List<CompletionItem>();
 
