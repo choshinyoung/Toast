@@ -9,10 +9,7 @@
 > **본 프로젝트는 현재 미완성 상태입니다!**  
 > 이전 버전 및 안정화 버전은 [v1.4](https://github.com/choshinyoung/Toast/tree/v1.4) 브랜치를 참고해 주세요.
 
-
 Toast는 C#으로 작성된 가볍고 확장 가능한 스크립팅 언어입니다. 직관적인 사용성, 간결한 문법, 그리고 유연한 확장성을 목표로 설계되었습니다.
-
----
 
 ## 🛠️ 대화형 도구 (CLI Tool)
 
@@ -25,8 +22,6 @@ dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.6-beta
 ```bash
 toast
 ```
-
----
 
 ## 📦 라이브러리
 
@@ -44,8 +39,6 @@ var toaster = new Toaster([new ImportModule(), new SystemModule()]);
 var result = toaster.Execute("1 + 2 * 3");
 Console.WriteLine(result); // 출력 결과: 7
 ```
-
----
 
 ## 🎨 VS Code 확장 (Extension)
 
