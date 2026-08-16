@@ -1,6 +1,6 @@
 namespace Toast.SystemModules;
 
-[ToastModule("system", Description = "System bundle providing all built-in modules.")]
+[ToastModule("system", "System bundle providing all built-in modules.")]
 public class SystemModule : IToastModule
 {
     public void OnLoad(Toaster toaster, Context callerContext)

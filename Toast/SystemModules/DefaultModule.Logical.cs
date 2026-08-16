@@ -4,17 +4,13 @@ public partial class DefaultModule
 {
     [ToastCommand(
         "!",
+        "Logical NOT operator, inverts a boolean value.",
         Precedence = 9,
-        IsPrefix = true,
-        Description = "Logical NOT operator, inverts a boolean value."
+        IsPrefix = true
     )]
     public static BoolValue LogicalNot(BoolValue val) => new(!val.Value);
 
-    [ToastCommand(
-        "&&",
-        Precedence = 2,
-        Description = "Logical AND operator with short-circuit evaluation."
-    )]
+    [ToastCommand("&&", "Logical AND operator with short-circuit evaluation.", Precedence = 2)]
     public static ToastValue LogicalAnd(Context context, BoolValue left, AstNodeValue right)
     {
         if (!left.Value)
@@ -25,11 +21,7 @@ public partial class DefaultModule
         throw new ToastException(new TypeError("Right side of '&&' must evaluate to a boolean."));
     }
 
-    [ToastCommand(
-        "||",
-        Precedence = 2,
-        Description = "Logical OR operator with short-circuit evaluation."
-    )]
+    [ToastCommand("||", "Logical OR operator with short-circuit evaluation.", Precedence = 2)]
     public static ToastValue LogicalOr(Context context, BoolValue left, AstNodeValue right)
     {
         if (left.Value)

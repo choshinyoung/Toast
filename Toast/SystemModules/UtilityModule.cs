@@ -1,22 +1,22 @@
 namespace Toast.SystemModules;
 
-[ToastModule("utility", Description = "IO, random, error and other utilities.")]
+[ToastModule("utility", "IO, random, error and other utilities.")]
 public class UtilityModule : IToastModule
 {
-    [ToastCommand("print", Description = "Prints a value to standard output.")]
+    [ToastCommand("print", "Prints a value to standard output.")]
     public static ToastValue Print(ToastValue val)
     {
         Console.WriteLine(val);
         return NullValue.Instance;
     }
 
-    [ToastCommand("input", Description = "Reads a line of text from standard input.")]
+    [ToastCommand("input", "Reads a line of text from standard input.")]
     public static StringValue Input()
     {
         return new StringValue(Console.ReadLine() ?? "");
     }
 
-    [ToastCommand("execute", Description = "Executes a function with a list of arguments.")]
+    [ToastCommand("execute", "Executes a function with a list of arguments.")]
     public static ToastValue Execute(FunctionValue func, ListValue args)
     {
         return func.Execute(args.Elements);
@@ -24,14 +24,14 @@ public class UtilityModule : IToastModule
 
     [ToastCommand(
         "random",
-        Description = "Generates a pseudo-random integer between min (inclusive) and max (exclusive)."
+        "Generates a pseudo-random integer between min (inclusive) and max (exclusive)."
     )]
     public static NumberValue Random(NumberValue min, NumberValue max)
     {
         return new NumberValue(System.Random.Shared.Next((int)min.Value, (int)max.Value));
     }
 
-    [ToastCommand("randomChoice", Description = "Returns a random element from a list.")]
+    [ToastCommand("randomChoice", "Returns a random element from a list.")]
     public static ToastValue RandomChoice(ListValue list)
     {
         if (list.Elements.Count == 0)
@@ -41,7 +41,7 @@ public class UtilityModule : IToastModule
 
     [ToastCommand(
         "error",
-        Description = "Creates an Error object with error type, message, location, and optional cause."
+        "Creates an Error object with error type, message, location, and optional cause."
     )]
     public static ErrorValue CreateError(ToastValue[] args)
     {

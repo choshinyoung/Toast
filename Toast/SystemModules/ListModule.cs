@@ -1,13 +1,13 @@
 namespace Toast.SystemModules;
 
-[ToastModule("list", Description = "List functions and operators.")]
+[ToastModule("list", "List functions and operators.")]
 public class ListModule : IToastModule
 {
     [ToastCommand(
         "to",
+        "Generates a list containing an integer range from left to right (inclusive).",
         Precedence = 6,
-        IsInfix = true,
-        Description = "Generates a list containing an integer range from left to right (inclusive)."
+        IsInfix = true
     )]
     public static ListValue To(NumberValue left, NumberValue right)
     {
@@ -23,9 +23,9 @@ public class ListModule : IToastModule
 
     [ToastCommand(
         "in",
+        "Checks if an element is contained in a list.",
         Precedence = 6,
-        IsInfix = true,
-        Description = "Checks if an element is contained in a list."
+        IsInfix = true
     )]
     public static BoolValue In(ToastValue left, ListValue right)
     {
@@ -39,9 +39,9 @@ public class ListModule : IToastModule
 
     [ToastCommand(
         "#",
+        "Accesses member by index from an ObjectValue.",
         Precedence = 14,
-        IsInfix = true,
-        Description = "Accesses member by index from an ObjectValue."
+        IsInfix = true
     )]
     public static ToastValue IndexAccess(Context context, ToastValue left, NumberValue index)
     {
@@ -61,7 +61,7 @@ public class ListModule : IToastModule
         throw new ToastException(new TypeError("Can only index ObjectValue types with '#'."));
     }
 
-    [ToastCommand("filter", Description = "Filters elements of a list using a predicate function.")]
+    [ToastCommand("filter", "Filters elements of a list using a predicate function.")]
     public static ListValue Filter(ListValue list, FunctionValue predicate)
     {
         var result = new List<ToastValue>();
@@ -76,10 +76,7 @@ public class ListModule : IToastModule
         return new ListValue(result);
     }
 
-    [ToastCommand(
-        "map",
-        Description = "Transforms each element of a list using a mapper function."
-    )]
+    [ToastCommand("map", "Transforms each element of a list using a mapper function.")]
     public static ListValue Map(ListValue list, FunctionValue mapper)
     {
         var result = new List<ToastValue>();
@@ -92,7 +89,7 @@ public class ListModule : IToastModule
 
     [ToastCommand(
         "reduce",
-        Description = "Reduces elements in a list to a single value using an accumulator function."
+        "Reduces elements in a list to a single value using an accumulator function."
     )]
     public static ToastValue Reduce(ListValue list, ToastValue initial, FunctionValue reducer)
     {
@@ -104,10 +101,10 @@ public class ListModule : IToastModule
         return acc;
     }
 
-    [ToastType("list")]
+    [ToastType("list", "List type")]
     public static class ListType
     {
-        [ToastCommand("#", Description = "Gets or references an element in a list by index.")]
+        [ToastCommand("#", "Gets or references an element in a list by index.")]
         public static ToastValue ListIndex(Context context, ListValue list, NumberValue index)
         {
             int idx = (int)index.Value;
@@ -124,7 +121,7 @@ public class ListModule : IToastModule
             return list.Elements[idx];
         }
 
-        [ToastCommand("indexOf", Description = "Finds the first index of an element in a list.")]
+        [ToastCommand("indexOf", "Finds the first index of an element in a list.")]
         public static NumberValue IndexOf(ListValue list, ToastValue target)
         {
             for (int i = 0; i < list.Elements.Count; i++)
@@ -135,14 +132,14 @@ public class ListModule : IToastModule
             return new NumberValue(-1);
         }
 
-        [ToastCommand("join", Description = "Combines two lists into a single list.")]
+        [ToastCommand("join", "Combines two lists into a single list.")]
         public static ListValue Join(ListValue list1, ListValue list2)
         {
             var result = list1.Elements.Concat(list2.Elements).ToList();
             return new ListValue(result);
         }
 
-        [ToastCommand("sort", Description = "Sorts elements in a list in ascending order.")]
+        [ToastCommand("sort", "Sorts elements in a list in ascending order.")]
         public static ListValue Sort(ListValue list)
         {
             var result = new List<ToastValue>(list.Elements);
@@ -163,10 +160,7 @@ public class ListModule : IToastModule
             return new ListValue(result);
         }
 
-        [ToastCommand(
-            "sortAs",
-            Description = "Sorts elements in a list according to a key selector function."
-        )]
+        [ToastCommand("sortAs", "Sorts elements in a list according to a key selector function.")]
         public static ListValue SortAs(ListValue list, FunctionValue keySelector)
         {
             var result = new List<ToastValue>(list.Elements);
@@ -188,27 +182,21 @@ public class ListModule : IToastModule
             return new ListValue(result);
         }
 
-        [ToastCommand(
-            "shuffle",
-            Description = "Shuffles the elements in a list into random order."
-        )]
+        [ToastCommand("shuffle", "Shuffles the elements in a list into random order.")]
         public static ListValue Shuffle(ListValue list)
         {
             var result = list.Elements.OrderBy(_ => System.Random.Shared.Next()).ToList();
             return new ListValue(result);
         }
 
-        [ToastCommand("add", Description = "Adds an element to the end of the list.")]
+        [ToastCommand("add", "Adds an element to the end of the list.")]
         public static ToastValue Add(ListValue list, ToastValue item)
         {
             list.Elements.Add(item);
             return NullValue.Instance;
         }
 
-        [ToastCommand(
-            "removeAt",
-            Description = "Removes the element at the specified index of the list."
-        )]
+        [ToastCommand("removeAt", "Removes the element at the specified index of the list.")]
         public static ToastValue RemoveAt(ListValue list, NumberValue index)
         {
             int i = (int)index.Value;
@@ -217,7 +205,7 @@ public class ListModule : IToastModule
             return removed;
         }
 
-        [ToastCommand("length", Description = "Gets the number of elements in the list.")]
+        [ToastCommand("length", "Gets the number of elements in the list.")]
         public static NumberValue Length(ListValue list)
         {
             return new NumberValue(list.Elements.Count);

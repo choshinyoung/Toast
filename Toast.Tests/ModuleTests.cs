@@ -375,7 +375,7 @@ public class ModuleTests
     }
 }
 
-[ToastModule("sample", Description = "Sample module for testing.")]
+[ToastModule("sample", "Sample module for testing.")]
 public class SampleCustomModule : IToastModule
 {
     [ToastType("person")]
@@ -384,26 +384,26 @@ public class SampleCustomModule : IToastModule
     [ToastType("string")]
     public static class StringExtensions
     {
-        [ToastCommand("shout", Description = "Shouts a string with exclamation marks.")]
+        [ToastCommand("shout", "Shouts a string with exclamation marks.")]
         public static StringValue Shout(StringValue s)
         {
             return new StringValue(s.Value + "!!!");
         }
     }
 
-    [ToastCommand("greet", Description = "Greets a person.")]
+    [ToastCommand("greet", "Greets a person.")]
     public static StringValue Greet(StringValue name)
     {
         return new StringValue($"Hello, {name.Value}!");
     }
 
-    [ToastCommand("+++", Precedence = 11, Description = "Custom triple plus operator.")]
+    [ToastCommand("+++", "Custom triple plus operator.", Precedence = 11)]
     public static NumberValue TripleAdd(NumberValue a, NumberValue b)
     {
         return new NumberValue(a.Value + b.Value + 10);
     }
 
-    [ToastCommand("evalSelf", Description = "Evals code with injected Context.")]
+    [ToastCommand("evalSelf", "Evals code with injected Context.")]
     public static ToastValue EvalSelf(Context ctx, StringValue expr)
     {
         return ctx.Toaster.Execute(expr.Value, ctx);
@@ -418,7 +418,7 @@ public class SampleCustomModule : IToastModule
     [ToastObject("calc")]
     public static class CalcNamespace
     {
-        [ToastCommand("double", Description = "Doubles a number.")]
+        [ToastCommand("double", "Doubles a number.")]
         public static NumberValue Double(NumberValue x)
         {
             return new NumberValue(x.Value * 2);

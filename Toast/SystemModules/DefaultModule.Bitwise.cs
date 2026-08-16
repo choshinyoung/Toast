@@ -4,29 +4,29 @@ public partial class DefaultModule
 {
     [ToastCommand(
         "~",
+        "Bitwise NOT operator, inverts all bits of an integer.",
         Precedence = 9,
-        IsPrefix = true,
-        Description = "Bitwise NOT operator, inverts all bits of an integer."
+        IsPrefix = true
     )]
     public static NumberValue BitwiseNot(NumberValue val) => new(~(int)val.Value);
 
-    [ToastCommand("&", Precedence = 6, Description = "Bitwise AND operator.")]
+    [ToastCommand("&", "Bitwise AND operator.", Precedence = 6)]
     public static NumberValue BitwiseAnd(NumberValue x, NumberValue y) =>
         new((int)x.Value & (int)y.Value);
 
-    [ToastCommand("|", Precedence = 6, Description = "Bitwise OR operator.")]
+    [ToastCommand("|", "Bitwise OR operator.", Precedence = 6)]
     public static NumberValue BitwiseOr(NumberValue x, NumberValue y) =>
         new((int)x.Value | (int)y.Value);
 
-    [ToastCommand("^", Precedence = 6, Description = "Bitwise XOR operator.")]
+    [ToastCommand("^", "Bitwise XOR operator.", Precedence = 6)]
     public static NumberValue BitwiseXor(NumberValue x, NumberValue y) =>
         new((int)x.Value ^ (int)y.Value);
 
-    [ToastCommand("<<", Precedence = 8, Description = "Bitwise left shift operator.")]
+    [ToastCommand("<<", "Bitwise left shift operator.", Precedence = 8)]
     public static NumberValue LeftShift(NumberValue x, NumberValue y) =>
         new((int)x.Value << (int)y.Value);
 
-    [ToastCommand(">>", Precedence = 8, Description = "Bitwise right shift operator.")]
+    [ToastCommand(">>", "Bitwise right shift operator.", Precedence = 8)]
     public static NumberValue RightShift(NumberValue x, NumberValue y) =>
         new((int)x.Value >> (int)y.Value);
 }

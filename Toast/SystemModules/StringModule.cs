@@ -1,22 +1,19 @@
 namespace Toast.SystemModules;
 
-[ToastModule("string", Description = "String functions and extension members.")]
+[ToastModule("string", "String functions and extension members.")]
 public class StringModule : IToastModule
 {
-    [ToastType("string")]
+    [ToastType("string", "String type")]
     public static class StringType
     {
-        [ToastCommand(
-            "split",
-            Description = "Splits a string into a list of substrings based on a separator."
-        )]
+        [ToastCommand("split", "Splits a string into a list of substrings based on a separator.")]
         public static ListValue Split(StringValue str, StringValue separator)
         {
             var parts = str.Value.Split([separator.Value], StringSplitOptions.None);
             return new ListValue([.. parts.Select(x => (ToastValue)new StringValue(x))]);
         }
 
-        [ToastCommand("reverse", Description = "Reverses a string.")]
+        [ToastCommand("reverse", "Reverses a string.")]
         public static StringValue Reverse(StringValue str)
         {
             var chars = str.Value.ToCharArray();
@@ -26,35 +23,26 @@ public class StringModule : IToastModule
 
         [ToastCommand(
             "startsWith",
-            Description = "Determines whether a string starts with the specified prefix."
+            "Determines whether a string starts with the specified prefix."
         )]
         public static BoolValue StartsWith(StringValue str, StringValue prefix)
         {
             return new BoolValue(str.Value.StartsWith(prefix.Value));
         }
 
-        [ToastCommand(
-            "endsWith",
-            Description = "Determines whether a string ends with the specified suffix."
-        )]
+        [ToastCommand("endsWith", "Determines whether a string ends with the specified suffix.")]
         public static BoolValue EndsWith(StringValue str, StringValue suffix)
         {
             return new BoolValue(str.Value.EndsWith(suffix.Value));
         }
 
-        [ToastCommand(
-            "contains",
-            Description = "Determines whether a string contains the specified substring."
-        )]
+        [ToastCommand("contains", "Determines whether a string contains the specified substring.")]
         public static BoolValue Contains(StringValue str, StringValue substring)
         {
             return new BoolValue(str.Value.Contains(substring.Value));
         }
 
-        [ToastCommand(
-            "trim",
-            Description = "Removes leading and trailing whitespace characters from a string."
-        )]
+        [ToastCommand("trim", "Removes leading and trailing whitespace characters from a string.")]
         public static StringValue Trim(StringValue str)
         {
             return new StringValue(str.Value.Trim());
@@ -62,7 +50,7 @@ public class StringModule : IToastModule
 
         [ToastCommand(
             "substring",
-            Description = "Retrieves a substring starting at a specified character position."
+            "Retrieves a substring starting at a specified character position."
         )]
         public static StringValue Substring(
             StringValue str,
@@ -75,7 +63,7 @@ public class StringModule : IToastModule
 
         [ToastCommand(
             "join",
-            Description = "Concatenates members of a list using the specified separator between each element."
+            "Concatenates members of a list using the specified separator between each element."
         )]
         public static StringValue Join(StringValue separator, ListValue list)
         {
@@ -85,7 +73,7 @@ public class StringModule : IToastModule
 
         [ToastCommand(
             "replace",
-            Description = "Replaces all occurrences of a specified string with another string."
+            "Replaces all occurrences of a specified string with another string."
         )]
         public static StringValue Replace(
             StringValue str,
@@ -96,28 +84,25 @@ public class StringModule : IToastModule
             return new StringValue(str.Value.Replace(oldValue.Value, newValue.Value));
         }
 
-        [ToastCommand("toUpper", Description = "Converts all characters in a string to uppercase.")]
+        [ToastCommand("toUpper", "Converts all characters in a string to uppercase.")]
         public static StringValue ToUpper(StringValue str)
         {
             return new StringValue(str.Value.ToUpper());
         }
 
-        [ToastCommand("toLower", Description = "Converts all characters in a string to lowercase.")]
+        [ToastCommand("toLower", "Converts all characters in a string to lowercase.")]
         public static StringValue ToLower(StringValue str)
         {
             return new StringValue(str.Value.ToLower());
         }
 
-        [ToastCommand("length", Description = "Gets the length of a string.")]
+        [ToastCommand("length", "Gets the length of a string.")]
         public static NumberValue Length(StringValue str)
         {
             return new NumberValue(str.Value.Length);
         }
 
-        [ToastCommand(
-            "#",
-            Description = "Gets a character from a string at the specified zero-based index."
-        )]
+        [ToastCommand("#", "Gets a character from a string at the specified zero-based index.")]
         public static StringValue Index(StringValue str, NumberValue index)
         {
             int idx = (int)index.Value;

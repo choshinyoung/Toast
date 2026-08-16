@@ -1,32 +1,26 @@
 namespace Toast.SystemModules;
 
-[ToastModule("datetime", Description = "Date and time manipulation module")]
+[ToastModule("datetime", "Date and time manipulation module")]
 public class DateTimeModule : IToastModule
 {
-    [ToastType("datetime")]
+    [ToastType("datetime", "DateTime type")]
     public static class DateTimeTypeClass
     {
-        [ToastCommand(
-            "addDays",
-            Description = "Adds the specified number of days to the datetime value."
-        )]
+        [ToastCommand("addDays", "Adds the specified number of days to the datetime value.")]
         public static ObjectValue AddDays(Context context, ObjectValue self, NumberValue days)
         {
             var dt = ToDateTime(self);
             return CreateDateTimeObject(context.Toaster, dt.AddDays(days.Value));
         }
 
-        [ToastCommand(
-            "format",
-            Description = "Formats the datetime value using a standard format string."
-        )]
+        [ToastCommand("format", "Formats the datetime value using a standard format string.")]
         public static StringValue Format(ObjectValue self, StringValue fmt)
         {
             var dt = ToDateTime(self);
             return new StringValue(dt.ToString(fmt.Value));
         }
 
-        [ToastCommand("totalSeconds", Description = "Gets the Unix epoch timestamp in seconds.")]
+        [ToastCommand("totalSeconds", "Gets the Unix epoch timestamp in seconds.")]
         public static NumberValue TotalSeconds(ObjectValue self)
         {
             var dt = ToDateTime(self);
@@ -45,16 +39,16 @@ public class DateTimeModule : IToastModule
         }
     }
 
-    [ToastObject("datetime")]
+    [ToastObject("datetime", "DateTime namespace")]
     public static class DateTimeNamespace
     {
-        [ToastCommand("now", Description = "Gets the current local date and time.")]
+        [ToastCommand("now", "Gets the current local date and time.")]
         public static ObjectValue Now(Context context)
         {
             return CreateDateTimeObject(context.Toaster, DateTime.Now);
         }
 
-        [ToastCommand("utcNow", Description = "Gets the current UTC date and time.")]
+        [ToastCommand("utcNow", "Gets the current UTC date and time.")]
         public static ObjectValue UtcNow(Context context)
         {
             return CreateDateTimeObject(context.Toaster, DateTime.UtcNow);

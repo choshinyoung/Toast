@@ -1,22 +1,22 @@
 namespace Toast;
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-public sealed class ToastCommandAttribute(string? name = null) : Attribute
+public sealed class ToastCommandAttribute(string? name = null, string description = "") : Attribute
 {
     public string? Name { get; } = name;
+    public string Description { get; set; } = description;
     public int Precedence { get; set; } = 0;
     public bool IsRightAssociative { get; set; } = false;
     public bool IsPrefix { get; set; } = false;
     public bool IsInfix { get; set; } = false;
     public bool DeclaresMember { get; set; } = false;
-    public string Description { get; set; } = "";
 }
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class ToastObjectAttribute(string? name = null) : Attribute
+public sealed class ToastObjectAttribute(string? name = null, string description = "") : Attribute
 {
     public string? Name { get; } = name;
-    public string Description { get; set; } = "";
+    public string Description { get; set; } = description;
 }
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
@@ -27,17 +27,17 @@ public sealed class ToastConverterAttribute : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class ToastTypeAttribute(string? name = null) : Attribute
+public sealed class ToastTypeAttribute(string? name = null, string description = "") : Attribute
 {
     public string? Name { get; } = name;
-    public string Description { get; set; } = "";
+    public string Description { get; set; } = description;
 }
 
 [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
-public sealed class ToastParameterAttribute : Attribute
+public sealed class ToastParameterAttribute(string description = "") : Attribute
 {
+    public string Description { get; set; } = description;
     public bool IsLazy { get; set; } = false;
-    public string Description { get; set; } = "";
 }
 
 [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
@@ -47,8 +47,8 @@ public sealed class ToastMemberAttribute(string? typeName = null) : Attribute
 }
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-public sealed class ToastModuleAttribute(string? name = null) : Attribute
+public sealed class ToastModuleAttribute(string? name = null, string description = "") : Attribute
 {
     public string? Name { get; } = name;
-    public string Description { get; set; } = "";
+    public string Description { get; set; } = description;
 }

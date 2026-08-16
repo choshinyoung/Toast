@@ -1,23 +1,19 @@
 namespace Toast.SystemModules;
 
-[ToastModule("object", Description = "Variable, type and object functions.")]
+[ToastModule("object", "Variable, type and object functions.")]
 public class ObjectModule : IToastModule
 {
     [ToastCommand(
         ":",
-        Precedence = 10,
-        Description = "Type annotation operator, constrains a variable or parameter to a specified type."
+        "Type annotation operator, constrains a variable or parameter to a specified type.",
+        Precedence = 10
     )]
     public static TypedIdentifierValue TypeAnnotation(IdentifierValue id, TypeValue typeVal)
     {
         return new TypedIdentifierValue(id.Name, typeVal);
     }
 
-    [ToastCommand(
-        "var",
-        DeclaresMember = true,
-        Description = "Declares a new variable in the current scope."
-    )]
+    [ToastCommand("var", "Declares a new variable in the current scope.", DeclaresMember = true)]
     public static ToastValue Var(Context context, IdentifierValue target)
     {
         string varName;
@@ -43,10 +39,10 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "=",
+        "Assignment operator, stores a value into a variable or object property.",
         Precedence = 1,
         IsRightAssociative = true,
-        IsInfix = true,
-        Description = "Assignment operator, stores a value into a variable or object property."
+        IsInfix = true
     )]
     public static ToastValue Assign(ReferenceValue leftVal, ToastValue rightVal)
     {
@@ -56,10 +52,10 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "+=",
+        "Addition assignment operator.",
         Precedence = 1,
         IsRightAssociative = true,
-        IsInfix = true,
-        Description = "Addition assignment operator."
+        IsInfix = true
     )]
     public static ToastValue AssignAdd(ReferenceValue leftVal, ToastValue rightVal)
     {
@@ -83,10 +79,10 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "-=",
+        "Subtraction assignment operator.",
         Precedence = 1,
         IsRightAssociative = true,
-        IsInfix = true,
-        Description = "Subtraction assignment operator."
+        IsInfix = true
     )]
     public static ToastValue AssignSub(ReferenceValue leftVal, ToastValue rightVal)
     {
@@ -102,8 +98,8 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         ".",
-        Precedence = 10,
-        Description = "Member access operator, accesses a property or method of an object."
+        "Member access operator, accesses a property or method of an object.",
+        Precedence = 10
     )]
     public static ToastValue MemberAccess(Context context, ToastValue left, AstNodeValue rightNode)
     {
@@ -206,7 +202,7 @@ public class ObjectModule : IToastModule
         return val;
     }
 
-    [ToastCommand("type", Description = "Creates an anonymous custom type constructor.")]
+    [ToastCommand("type", "Creates an anonymous custom type constructor.")]
     public static ToastValue TypeCreator(Context context, FunctionValue funcVal)
     {
         var factoryCmd = CreateConstructorFactory("@type_factory", "type", funcVal);
@@ -224,7 +220,7 @@ public class ObjectModule : IToastModule
         );
     }
 
-    [ToastCommand("class", DeclaresMember = true, Description = "Declares a named class/type.")]
+    [ToastCommand("class", "Declares a named class/type.", DeclaresMember = true)]
     public static ToastValue ClassCreator(
         Context context,
         IdentifierValue id,
@@ -257,8 +253,8 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "function",
-        DeclaresMember = true,
-        Description = "Declares a named function in the current scope."
+        "Declares a named function in the current scope.",
+        DeclaresMember = true
     )]
     public static ToastValue FunctionCreator(
         Context context,
@@ -276,9 +272,9 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "with",
+        "Merges properties of two objects to produce a combined object.",
         Precedence = 6,
-        IsInfix = true,
-        Description = "Merges properties of two objects to produce a combined object."
+        IsInfix = true
     )]
     public static ObjectValue With(ObjectValue left, ObjectValue right)
     {
@@ -311,9 +307,9 @@ public class ObjectModule : IToastModule
 
     [ToastCommand(
         "typeof",
+        "Returns the Type value of the given expression.",
         Precedence = 9,
-        IsPrefix = true,
-        Description = "Returns the Type value of the given expression."
+        IsPrefix = true
     )]
     public static TypeValue TypeOf(Context context, ToastValue val)
     {

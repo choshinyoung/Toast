@@ -1,6 +1,6 @@
 namespace Toast.SystemModules;
 
-[ToastModule("converter", Description = "Standard type converters between types.")]
+[ToastModule("converter", "Standard type converters between types.")]
 public class ConverterModule : IToastModule
 {
     [ToastConverter]

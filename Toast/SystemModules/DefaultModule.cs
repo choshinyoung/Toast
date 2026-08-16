@@ -1,14 +1,9 @@
 namespace Toast.SystemModules;
 
-[ToastModule("default", Description = "Default primitive operator functions.")]
+[ToastModule("default", "Default primitive operator functions.")]
 public partial class DefaultModule : IToastModule
 {
-    [ToastCommand(
-        "as",
-        Precedence = 6,
-        IsInfix = true,
-        Description = "Converts a value to the specified type."
-    )]
+    [ToastCommand("as", "Converts a value to the specified type.", Precedence = 6, IsInfix = true)]
     public static ToastValue As(Context context, ToastValue val, TypeValue targetTypeVal)
     {
         var targetType = targetTypeVal.TargetType;
@@ -29,9 +24,9 @@ public partial class DefaultModule : IToastModule
 
     [ToastCommand(
         "`",
+        "Quotes an expression to obtain its command, function, or reference without direct invocation.",
         Precedence = 9,
-        IsPrefix = true,
-        Description = "Quotes an expression to obtain its command, function, or reference without direct invocation."
+        IsPrefix = true
     )]
     public static ToastValue Quote(Context context, AstNodeValue nodeVal)
     {
@@ -93,8 +88,8 @@ public partial class DefaultModule : IToastModule
 
     [ToastCommand(
         "|>",
-        Precedence = 2,
-        Description = "Pipes the result of the left expression as the first argument to the right function call."
+        "Pipes the result of the left expression as the first argument to the right function call.",
+        Precedence = 2
     )]
     public static ToastValue Pipeline(
         Context context,

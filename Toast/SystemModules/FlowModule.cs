@@ -1,12 +1,9 @@
 namespace Toast.SystemModules;
 
-[ToastModule("flow", Description = "Control flow functions.")]
+[ToastModule("flow", "Control flow functions.")]
 public class FlowModule : IToastModule
 {
-    [ToastCommand(
-        "if",
-        Description = "Evaluates and returns the body expression if the condition is true."
-    )]
+    [ToastCommand("if", "Evaluates and returns the body expression if the condition is true.")]
     public static ToastValue If(Context context, BoolValue cond, AstNodeValue body)
     {
         if (cond.Value)
@@ -23,10 +20,10 @@ public class FlowModule : IToastModule
 
     [ToastCommand(
         "else",
+        "Evaluates the right branch if the 'if' condition is false.",
         Precedence = 6,
         IsRightAssociative = true,
-        IsInfix = true,
-        Description = "Evaluates the right branch if the 'if' condition is false."
+        IsInfix = true
     )]
     public static ToastValue Else(Context context, AstNodeValue leftNode, AstNodeValue rightNode)
     {
@@ -71,7 +68,7 @@ public class FlowModule : IToastModule
 
     [ToastCommand(
         "while",
-        Description = "Repeatedly evaluates the body expression while the condition remains true."
+        "Repeatedly evaluates the body expression while the condition remains true."
     )]
     public static ToastValue While(Context context, AstNodeValue cond, AstNodeValue body)
     {
@@ -101,7 +98,7 @@ public class FlowModule : IToastModule
 
     [ToastCommand(
         "for",
-        Description = "Iterates over elements of a list, executing the body function for each element."
+        "Iterates over elements of a list, executing the body function for each element."
     )]
     public static ToastValue For(Context context, ListValue items, AstNodeValue body)
     {
@@ -126,19 +123,15 @@ public class FlowModule : IToastModule
 
     [ToastCommand(
         "throw",
-        IsPrefix = true,
-        Description = "Throws an error object or creates a RuntimeError with the given message."
+        "Throws an error object or creates a RuntimeError with the given message.",
+        IsPrefix = true
     )]
     public static ToastValue Throw(Context context, ErrorValue err)
     {
         throw new ToastException(err);
     }
 
-    [ToastCommand(
-        "try",
-        IsPrefix = true,
-        Description = "Executes a block of code, capturing any errors thrown."
-    )]
+    [ToastCommand("try", "Executes a block of code, capturing any errors thrown.", IsPrefix = true)]
     public static ToastValue Try(Context context, AstNodeValue bodyNode)
     {
         try
@@ -158,10 +151,10 @@ public class FlowModule : IToastModule
 
     [ToastCommand(
         "catch",
+        "Catches an error thrown in a 'try' block and executes an error handling function.",
         Precedence = 6,
         IsRightAssociative = true,
-        IsInfix = true,
-        Description = "Catches an error thrown in a 'try' block and executes an error handling function."
+        IsInfix = true
     )]
     public static ToastValue Catch(Context context, AstNodeValue leftNode, AstNodeValue rightNode)
     {

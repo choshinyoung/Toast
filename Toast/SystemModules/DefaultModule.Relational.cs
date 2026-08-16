@@ -2,42 +2,34 @@ namespace Toast.SystemModules;
 
 public partial class DefaultModule
 {
-    [ToastCommand(
-        "==",
-        Precedence = 4,
-        Description = "Equality operator, checks if two values are equal."
-    )]
+    [ToastCommand("==", "Equality operator, checks if two values are equal.", Precedence = 4)]
     public static BoolValue Equal(ToastValue left, ToastValue right) => new(Equals(left, right));
 
-    [ToastCommand(
-        "!=",
-        Precedence = 4,
-        Description = "Inequality operator, checks if two values are not equal."
-    )]
+    [ToastCommand("!=", "Inequality operator, checks if two values are not equal.", Precedence = 4)]
     public static BoolValue NotEqual(ToastValue left, ToastValue right) =>
         new(!Equals(left, right));
 
-    [ToastCommand("<", Precedence = 5, Description = "Less than comparison operator.")]
+    [ToastCommand("<", "Less than comparison operator.", Precedence = 5)]
     public static BoolValue LessThan(NumberValue left, NumberValue right) =>
         new(left.Value < right.Value);
 
-    [ToastCommand(">", Precedence = 5, Description = "Greater than comparison operator.")]
+    [ToastCommand(">", "Greater than comparison operator.", Precedence = 5)]
     public static BoolValue GreaterThan(NumberValue left, NumberValue right) =>
         new(left.Value > right.Value);
 
-    [ToastCommand("<=", Precedence = 5, Description = "Less than or equal comparison operator.")]
+    [ToastCommand("<=", "Less than or equal comparison operator.", Precedence = 5)]
     public static BoolValue LessThanOrEqual(NumberValue left, NumberValue right) =>
         new(left.Value <= right.Value);
 
-    [ToastCommand(">=", Precedence = 5, Description = "Greater than or equal comparison operator.")]
+    [ToastCommand(">=", "Greater than or equal comparison operator.", Precedence = 5)]
     public static BoolValue GreaterThanOrEqual(NumberValue left, NumberValue right) =>
         new(left.Value >= right.Value);
 
     [ToastCommand(
         "is",
+        "Checks whether a value is compatible with the specified type.",
         Precedence = 6,
-        IsInfix = true,
-        Description = "Checks whether a value is compatible with the specified type."
+        IsInfix = true
     )]
     public static BoolValue Is(Context context, ToastValue left, ToastValue right)
     {

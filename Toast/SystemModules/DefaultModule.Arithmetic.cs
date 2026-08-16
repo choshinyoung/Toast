@@ -2,13 +2,13 @@ namespace Toast.SystemModules;
 
 public partial class DefaultModule
 {
-    [ToastCommand("+", Precedence = 9, IsPrefix = true, Description = "Unary plus operator.")]
+    [ToastCommand("+", "Unary plus operator.", Precedence = 9, IsPrefix = true)]
     public static NumberValue UnaryPlus(NumberValue val) => val;
 
     [ToastCommand(
         "+",
-        Precedence = 7,
-        Description = "Addition operator for numbers or concatenation for strings."
+        "Addition operator for numbers or concatenation for strings.",
+        Precedence = 7
     )]
     public static ToastValue Addition(ToastValue left, ToastValue right)
     {
@@ -23,23 +23,18 @@ public partial class DefaultModule
         throw new ToastException(new TypeError("Cannot add non-number/non-string values."));
     }
 
-    [ToastCommand(
-        "-",
-        Precedence = 9,
-        IsPrefix = true,
-        Description = "Unary minus operator, negates a number."
-    )]
+    [ToastCommand("-", "Unary minus operator, negates a number.", Precedence = 9, IsPrefix = true)]
     public static NumberValue UnaryMinus(NumberValue val) => new(-val.Value);
 
-    [ToastCommand("-", Precedence = 7, Description = "Subtraction operator.")]
+    [ToastCommand("-", "Subtraction operator.", Precedence = 7)]
     public static NumberValue Subtraction(NumberValue left, NumberValue right) =>
         new(left.Value - right.Value);
 
-    [ToastCommand("*", Precedence = 8, Description = "Multiplication operator.")]
+    [ToastCommand("*", "Multiplication operator.", Precedence = 8)]
     public static NumberValue Multiplication(NumberValue left, NumberValue right) =>
         new(left.Value * right.Value);
 
-    [ToastCommand("/", Precedence = 8, Description = "Division operator.")]
+    [ToastCommand("/", "Division operator.", Precedence = 8)]
     public static NumberValue Division(NumberValue left, NumberValue right)
     {
         if (right.Value == 0)
@@ -49,7 +44,7 @@ public partial class DefaultModule
         return new NumberValue(left.Value / right.Value);
     }
 
-    [ToastCommand("%", Precedence = 8, Description = "Modulus operator.")]
+    [ToastCommand("%", "Modulus operator.", Precedence = 8)]
     public static NumberValue Modulus(NumberValue left, NumberValue right)
     {
         if (right.Value == 0)
@@ -59,12 +54,7 @@ public partial class DefaultModule
         return new NumberValue(left.Value % right.Value);
     }
 
-    [ToastCommand(
-        "**",
-        Precedence = 9,
-        IsRightAssociative = true,
-        Description = "Exponentiation operator."
-    )]
+    [ToastCommand("**", "Exponentiation operator.", Precedence = 9, IsRightAssociative = true)]
     public static NumberValue Exponentiation(NumberValue left, NumberValue right) =>
         new(System.Math.Pow(left.Value, right.Value));
 }
