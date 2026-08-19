@@ -6,6 +6,12 @@ public class StringModule : IToastModule
     [ToastType("string", "String type")]
     public static class StringType
     {
+        [ToastCommand("concat", "Concatenates another string with this string.")]
+        public static StringValue Concat(StringValue str, StringValue other)
+        {
+            return new StringValue(str.Value + other.Value);
+        }
+
         [ToastCommand("split", "Splits a string into a list of substrings based on a separator.")]
         public static ListValue Split(StringValue str, StringValue separator)
         {

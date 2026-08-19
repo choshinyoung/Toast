@@ -186,8 +186,8 @@ public class SystemTests : BaseTest
         // Product: reduce [2, 3, 4] 1 ((acc, x) => acc * x) = 24
         AssertResult("reduce [2, 3, 4] 1 ((acc, x) => acc * x)", 24);
 
-        // String concat: reduce ["a", "b", "c"] "" ((acc, x) => acc + x) = "abc"
-        AssertResult("reduce [\"a\", \"b\", \"c\"] \"\" ((acc, x) => acc + x)", "abc");
+        // String concat: reduce ["a", "b", "c"] "" ((acc, x) => acc.concat(x)) = "abc"
+        AssertResult("reduce [\"a\", \"b\", \"c\"] \"\" ((acc, x) => acc.concat(x))", "abc");
 
         // Empty list returns initial value
         AssertResult("reduce [] 42 ((acc, x) => acc + x)", 42);

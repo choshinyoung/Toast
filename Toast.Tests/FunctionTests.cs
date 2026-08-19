@@ -149,6 +149,6 @@ public class FunctionTests : BaseTest
 
         // Test C# Command/Builtin ToString formatting
         var plusFunc = Evaluate("`(+)", context);
-        Assert.Equal("function(left: any, right: any)", plusFunc.ToString());
+        Assert.Equal("function(left: number, right: number)", plusFunc.ToString());
     }
 }

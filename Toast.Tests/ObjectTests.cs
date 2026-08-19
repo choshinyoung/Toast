@@ -131,7 +131,7 @@ public class ObjectTests : BaseTest
         Evaluate(
             @"class ranshi(name) => {
                 function moomin() => {
-                    ""응 난 랜덤"" + name + "" 이야""
+                    ""응 난 랜덤"".concat(name).concat("" 이야"")
                 }
             }",
             context
@@ -295,6 +295,7 @@ public class ObjectTests : BaseTest
         // 1. StringValue 멤버 접근 검증
         Evaluate("var s = \"hello\"", context);
         AssertResult("s.length", 5, context);
+        AssertResult("s.concat(\" world\")", "hello world", context);
         AssertResult("s.contains(\"ell\")", true, context);
         AssertResult("s.substring(1, 3)", "ell", context);
 
