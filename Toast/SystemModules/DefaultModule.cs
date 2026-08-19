@@ -97,14 +97,43 @@ public partial class DefaultModule : IToastModule
         AstNodeValue rightNode
     )
     {
-        if (rightNode.Node is CallNode callNode)
+        var rawRight = rightNode.Node;
+        while (rawRight is GroupNode gn && gn.Items.Count == 1)
         {
-            var newCallNode = new CallNode(callNode.Callee, [leftNode.Node, .. callNode.Arguments]);
-            return context.Toaster.Evaluate(newCallNode, context);
+            rawRight = gn.Items[0];
+        }
+
+        if (rawRight is CallNode callNode)
+        {
+            if (callNode.Callee is IdentifierNode idNode)
+            {
+                Command? cmd = null;
+                if (context.Toaster.InfixCommands.TryGetValue(idNode.Name, out var infixCmd))
+                    cmd = infixCmd;
+                else if (context.Toaster.PrefixCommands.TryGetValue(idNode.Name, out var prefixCmd))
+                    cmd = prefixCmd;
+                else if (
+                    context.HasVariable(idNode.Name)
+                    && context.GetValue(idNode.Name) is CommandValue cv
+                )
+                    cmd = cv.Command;
+
+                if (cmd != null && callNode.Arguments.Count >= cmd.ParameterCount)
+                {
+                    var newCallNode = new CallNode(rawRight, [leftNode.Node]);
+                    return context.Toaster.Evaluate(newCallNode, context);
+                }
+            }
+
+            var newCallNodePrep = new CallNode(
+                callNode.Callee,
+                [leftNode.Node, .. callNode.Arguments]
+            );
+            return context.Toaster.Evaluate(newCallNodePrep, context);
         }
         else
         {
-            var newCallNode = new CallNode(rightNode.Node, [leftNode.Node]);
+            var newCallNode = new CallNode(rawRight, [leftNode.Node]);
             return context.Toaster.Evaluate(newCallNode, context);
         }
     }

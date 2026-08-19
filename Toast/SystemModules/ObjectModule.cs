@@ -202,6 +202,24 @@ public class ObjectModule : IToastModule
         return val;
     }
 
+    [ToastCommand(
+        "..",
+        "Property getter operator, returns a function that extracts a member from an object.",
+        Precedence = 9,
+        IsPrefix = true
+    )]
+    public static ToastValue MemberGetter(IdentifierValue member)
+    {
+        string propName = member.Name;
+        var node = new AstNodeValue(new IdentifierNode(propName));
+        var getterCmd = new Command(
+            $"..{propName}",
+            (Context ctx, ToastValue target) => MemberAccess(ctx, target, node),
+            description: $"Getter for member '{propName}'"
+        );
+        return new CommandValue(getterCmd);
+    }
+
     [ToastCommand("type", "Creates an anonymous custom type constructor.")]
     public static ToastValue TypeCreator(Context context, FunctionValue funcVal)
     {

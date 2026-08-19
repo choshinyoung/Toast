@@ -150,5 +150,18 @@ public class FunctionTests : BaseTest
         // Test C# Command/Builtin ToString formatting
         var plusFunc = Evaluate("`(+)", context);
         Assert.Equal("function(left: number, right: number)", plusFunc.ToString());
+
+        // Test CommandValue string conversion via ConverterModule
+        var sortFunc = Evaluate("sort", context);
+        Assert.True(
+            _toast.TryConvert(
+                sortFunc,
+                ToastType.Function,
+                ToastType.String,
+                context,
+                out var sortStr
+            )
+        );
+        Assert.Equal("function(list: list)", sortStr.ToString());
     }
 }

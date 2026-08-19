@@ -154,8 +154,8 @@ public class SystemTests : BaseTest
         AssertResult("map (1 to 3) ((x) => x * 2)", new List<object> { 2, 4, 6 });
         AssertResult("filter (1 to 5) ((x) => x > 3)", new List<object> { 4, 5 });
         AssertResult("(1 to 2).join(3 to 4)", new List<int> { 1, 2, 3, 4 });
-        AssertResult("(1 to 3).sort()", new List<int> { 1, 2, 3 });
-        AssertResult("[3, 1, 2].sort()", new List<int> { 1, 2, 3 });
+        AssertResult("sort(1 to 3)", new List<int> { 1, 2, 3 });
+        AssertResult("sort([3, 1, 2])", new List<int> { 1, 2, 3 });
     }
 
     [Fact]
@@ -228,8 +228,49 @@ public class SystemTests : BaseTest
         AssertResult("\"  hello  \" |> (x) => x.trim()", "hello");
         AssertResult("\"a,b,c\" |> (x) => x.split(\",\")", new List<string> { "a", "b", "c" });
 
-        // List sort/shuffle 파이프라인 (TypeMember이므로 람다로 감싸서 사용) (임시)
-        AssertResult("[3, 1, 2] |> (x) => x.sort()", new List<int> { 1, 2, 3 });
+        // List sort 파이프라인
+        AssertResult("[3, 1, 2] |> sort", new List<int> { 1, 2, 3 });
+    }
+
+    [Fact]
+    public void TestMemberGetterOperatorAndTopLevelSort()
+    {
+        var context = new Context(_toast);
+
+        // 1. ..property 게터 연산자 기본 테스트
+        Evaluate("var getLen = ..length", context);
+        AssertResult("getLen(\"hello\")", 5, context);
+        AssertResult("getLen([1, 2, 3])", 3, context);
+
+        // 2. map과 .. 연산자 결합
+        AssertResult(
+            "[\"a\", \"abc\", \"de\"] |> map ..length",
+            new List<int> { 1, 3, 2 },
+            context
+        );
+
+        // 3. 최상위 sort 테스트
+        AssertResult("[3, 1, 4, 2] |> sort", new List<int> { 1, 2, 3, 4 }, context);
+
+        // 4. 최상위 sortAs와 .. 연산자 결합
+        Evaluate(
+            @"class Item(name, price) => {
+            }",
+            context
+        );
+        Evaluate(
+            "var items = [Item(\"Apple\", 300), Item(\"Banana\", 100), Item(\"Cherry\", 200)]",
+            context
+        );
+        Evaluate("var sortedItems = items |> sortAs ..price", context);
+        AssertResult("sortedItems # 0 .name", "Banana", context);
+        AssertResult("sortedItems # 1 .name", "Cherry", context);
+        AssertResult("sortedItems # 2 .name", "Apple", context);
+
+        // 5. 단일 객체 파이프라인과 .. 게터 결합 (e.g. item |> ..price)
+        Evaluate("var singleItem = Item(\"Grape\", 500)", context);
+        AssertResult("singleItem |> ..price", 500, context);
+        AssertResult("singleItem |> (..name)", "Grape", context);
     }
 
     [Fact]

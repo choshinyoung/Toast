@@ -53,8 +53,8 @@ public class ConverterModule : IToastModule
         return new StringValue($"{{{string.Join(", ", items)}}}");
     }
 
-    [ToastConverter]
-    public static StringValue FunctionToString(FunctionValue val)
+    [ToastConverter(SourceTypeName = "function", TargetTypeName = "string")]
+    public static StringValue FunctionToString(ToastValue val)
     {
         return new StringValue(val.ToString());
     }

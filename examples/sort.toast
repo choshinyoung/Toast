@@ -1,0 +1,12 @@
+import "system"
+import "point"
+
+var arr =
+    1 to 10 |>
+    map { Point(random(0, 100), random(0, 100)) }
+
+arr |>
+    sortAs ..magnitude |>
+    map (x) => { "({x.x}, {x.y})" } |>
+    ("\n".join) |>
+    print

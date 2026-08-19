@@ -61,13 +61,30 @@ public class ListModule : IToastModule
         throw new ToastException(new TypeError("Can only index ObjectValue types with '#'."));
     }
 
+    private static ToastValue InvokeCallable(
+        Context context,
+        ToastValue callable,
+        params ToastValue[] args
+    )
+    {
+        if (callable is FunctionValue funcVal)
+        {
+            return funcVal.Execute([.. args]);
+        }
+        if (callable is CommandValue cmdVal)
+        {
+            return cmdVal.Command.TargetDelegate(context, args);
+        }
+        throw new ToastException(new TypeError("Target is not a callable function."));
+    }
+
     [ToastCommand("filter", "Filters elements of a list using a predicate function.")]
-    public static ListValue Filter(ListValue list, FunctionValue predicate)
+    public static ListValue Filter(Context context, ListValue list, ToastValue predicate)
     {
         var result = new List<ToastValue>();
         foreach (var item in list.Elements)
         {
-            var res = predicate.Execute([item]);
+            var res = InvokeCallable(context, predicate, item);
             if (res is BoolValue b && b.Value)
             {
                 result.Add(item);
@@ -77,12 +94,12 @@ public class ListModule : IToastModule
     }
 
     [ToastCommand("map", "Transforms each element of a list using a mapper function.")]
-    public static ListValue Map(ListValue list, FunctionValue mapper)
+    public static ListValue Map(Context context, ListValue list, ToastValue mapper)
     {
         var result = new List<ToastValue>();
         foreach (var item in list.Elements)
         {
-            result.Add(mapper.Execute([item]));
+            result.Add(InvokeCallable(context, mapper, item));
         }
         return new ListValue(result);
     }
@@ -91,14 +108,60 @@ public class ListModule : IToastModule
         "reduce",
         "Reduces elements in a list to a single value using an accumulator function."
     )]
-    public static ToastValue Reduce(ListValue list, ToastValue initial, FunctionValue reducer)
+    public static ToastValue Reduce(
+        Context context,
+        ListValue list,
+        ToastValue initial,
+        ToastValue reducer
+    )
     {
         var acc = initial;
         foreach (var item in list.Elements)
         {
-            acc = reducer.Execute([acc, item]);
+            acc = InvokeCallable(context, reducer, acc, item);
         }
         return acc;
+    }
+
+    [ToastCommand("sort", "Sorts elements in a list in ascending order.")]
+    public static ListValue Sort(ListValue list)
+    {
+        var result = new List<ToastValue>(list.Elements);
+        result.Sort(
+            (a, b) =>
+            {
+                if (a is NumberValue na && b is NumberValue nb)
+                    return na.Value.CompareTo(nb.Value);
+                if (a is StringValue sa && b is StringValue sb)
+                    return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
+                throw new ToastException(
+                    new TypeError("Can only sort lists containing only numbers or only strings.")
+                );
+            }
+        );
+        return new ListValue(result);
+    }
+
+    [ToastCommand("sortAs", "Sorts elements in a list according to a key selector function.")]
+    public static ListValue SortAs(Context context, ListValue list, ToastValue keySelector)
+    {
+        var result = new List<ToastValue>(list.Elements);
+        result.Sort(
+            (a, b) =>
+            {
+                var ka = InvokeCallable(context, keySelector, a);
+                var kb = InvokeCallable(context, keySelector, b);
+
+                if (ka is NumberValue na && kb is NumberValue nb)
+                    return na.Value.CompareTo(nb.Value);
+                if (ka is StringValue sa && kb is StringValue sb)
+                    return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
+                throw new ToastException(
+                    new TypeError("Sorted keys must be comparable numbers or strings.")
+                );
+            }
+        );
+        return new ListValue(result);
     }
 
     [ToastType("list", "List type")]
@@ -136,49 +199,6 @@ public class ListModule : IToastModule
         public static ListValue Join(ListValue list1, ListValue list2)
         {
             var result = list1.Elements.Concat(list2.Elements).ToList();
-            return new ListValue(result);
-        }
-
-        [ToastCommand("sort", "Sorts elements in a list in ascending order.")]
-        public static ListValue Sort(ListValue list)
-        {
-            var result = new List<ToastValue>(list.Elements);
-            result.Sort(
-                (a, b) =>
-                {
-                    if (a is NumberValue na && b is NumberValue nb)
-                        return na.Value.CompareTo(nb.Value);
-                    if (a is StringValue sa && b is StringValue sb)
-                        return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
-                    throw new ToastException(
-                        new TypeError(
-                            "Can only sort lists containing only numbers or only strings."
-                        )
-                    );
-                }
-            );
-            return new ListValue(result);
-        }
-
-        [ToastCommand("sortAs", "Sorts elements in a list according to a key selector function.")]
-        public static ListValue SortAs(ListValue list, FunctionValue keySelector)
-        {
-            var result = new List<ToastValue>(list.Elements);
-            result.Sort(
-                (a, b) =>
-                {
-                    var ka = keySelector.Execute([a]);
-                    var kb = keySelector.Execute([b]);
-
-                    if (ka is NumberValue na && kb is NumberValue nb)
-                        return na.Value.CompareTo(nb.Value);
-                    if (ka is StringValue sa && kb is StringValue sb)
-                        return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
-                    throw new ToastException(
-                        new TypeError("Sorted keys must be comparable numbers or strings.")
-                    );
-                }
-            );
             return new ListValue(result);
         }
 
