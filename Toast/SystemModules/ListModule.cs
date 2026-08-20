@@ -69,11 +69,52 @@ public class ListModule : IToastModule
     {
         if (callable is FunctionValue funcVal)
         {
-            return funcVal.Execute([.. args]);
+            if (funcVal.Parameters.Count > args.Length)
+            {
+                throw new ToastException(
+                    new TypeError(
+                        $"Arity mismatch: callback expects at most {args.Length} parameters, but got {funcVal.Parameters.Count}."
+                    )
+                );
+            }
+            return funcVal.Execute([.. args.Take(funcVal.Parameters.Count)]);
         }
         if (callable is CommandValue cmdVal)
         {
-            return cmdVal.Command.TargetDelegate(context, args);
+            if (cmdVal.Command.ParameterCount > args.Length)
+            {
+                throw new ToastException(
+                    new TypeError(
+                        $"Arity mismatch: callback expects at most {args.Length} parameters, but got {cmdVal.Command.ParameterCount}."
+                    )
+                );
+            }
+            return cmdVal.Command.TargetDelegate(
+                context,
+                [.. args.Take(cmdVal.Command.ParameterCount)]
+            );
+        }
+        if (callable is TypeValue typeVal)
+        {
+            if (typeVal.Constructor == null)
+            {
+                throw new ToastException(
+                    new TypeError($"Type '{typeVal.TargetType.Name}' does not have a constructor.")
+                );
+            }
+
+            if (typeVal.Constructor.ParameterCount > args.Length)
+            {
+                throw new ToastException(
+                    new TypeError(
+                        $"Arity mismatch: callback expects at most {args.Length} parameters, but got {typeVal.Constructor.ParameterCount}."
+                    )
+                );
+            }
+            return typeVal.Constructor.TargetDelegate(
+                context,
+                [.. args.Take(typeVal.Constructor.ParameterCount)]
+            );
         }
         throw new ToastException(new TypeError("Target is not a callable function."));
     }
@@ -82,9 +123,10 @@ public class ListModule : IToastModule
     public static ListValue Filter(Context context, ListValue list, ToastValue predicate)
     {
         var result = new List<ToastValue>();
-        foreach (var item in list.Elements)
+        for (int i = 0; i < list.Elements.Count; i++)
         {
-            var res = InvokeCallable(context, predicate, item);
+            var item = list.Elements[i];
+            var res = InvokeCallable(context, predicate, item, new NumberValue(i));
             if (res is BoolValue b && b.Value)
             {
                 result.Add(item);
@@ -97,9 +139,10 @@ public class ListModule : IToastModule
     public static ListValue Map(Context context, ListValue list, ToastValue mapper)
     {
         var result = new List<ToastValue>();
-        foreach (var item in list.Elements)
+        for (int i = 0; i < list.Elements.Count; i++)
         {
-            result.Add(InvokeCallable(context, mapper, item));
+            var item = list.Elements[i];
+            result.Add(InvokeCallable(context, mapper, item, new NumberValue(i)));
         }
         return new ListValue(result);
     }
@@ -116,9 +159,10 @@ public class ListModule : IToastModule
     )
     {
         var acc = initial;
-        foreach (var item in list.Elements)
+        for (int i = 0; i < list.Elements.Count; i++)
         {
-            acc = InvokeCallable(context, reducer, acc, item);
+            var item = list.Elements[i];
+            acc = InvokeCallable(context, reducer, acc, item, new NumberValue(i));
         }
         return acc;
     }
@@ -126,42 +170,85 @@ public class ListModule : IToastModule
     [ToastCommand("sort", "Sorts elements in a list in ascending order.")]
     public static ListValue Sort(ListValue list)
     {
-        var result = new List<ToastValue>(list.Elements);
-        result.Sort(
-            (a, b) =>
+        if (list.Elements.Count <= 1)
+        {
+            return new ListValue([.. list.Elements]);
+        }
+
+        var first = list.Elements[0];
+        if (first is NumberValue)
+        {
+            if (list.Elements.Any(e => e is not NumberValue))
             {
-                if (a is NumberValue na && b is NumberValue nb)
-                    return na.Value.CompareTo(nb.Value);
-                if (a is StringValue sa && b is StringValue sb)
-                    return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
                 throw new ToastException(
                     new TypeError("Can only sort lists containing only numbers or only strings.")
                 );
             }
+            return new ListValue([.. list.Elements.Cast<NumberValue>().OrderBy(n => n.Value)]);
+        }
+        if (first is StringValue)
+        {
+            if (list.Elements.Any(e => e is not StringValue))
+            {
+                throw new ToastException(
+                    new TypeError("Can only sort lists containing only numbers or only strings.")
+                );
+            }
+            return new ListValue([
+                .. list.Elements.Cast<StringValue>().OrderBy(s => s.Value, StringComparer.Ordinal),
+            ]);
+        }
+        throw new ToastException(
+            new TypeError("Can only sort lists containing only numbers or only strings.")
         );
-        return new ListValue(result);
     }
 
     [ToastCommand("sortAs", "Sorts elements in a list according to a key selector function.")]
     public static ListValue SortAs(Context context, ListValue list, ToastValue keySelector)
     {
-        var result = new List<ToastValue>(list.Elements);
-        result.Sort(
-            (a, b) =>
-            {
-                var ka = InvokeCallable(context, keySelector, a);
-                var kb = InvokeCallable(context, keySelector, b);
+        if (list.Elements.Count <= 1)
+        {
+            return new ListValue([.. list.Elements]);
+        }
 
-                if (ka is NumberValue na && kb is NumberValue nb)
-                    return na.Value.CompareTo(nb.Value);
-                if (ka is StringValue sa && kb is StringValue sb)
-                    return string.Compare(sa.Value, sb.Value, StringComparison.Ordinal);
+        var decorated = new List<(ToastValue Key, ToastValue Item)>(list.Elements.Count);
+        foreach (var item in list.Elements)
+        {
+            var key = InvokeCallable(context, keySelector, item);
+            decorated.Add((key, item));
+        }
+
+        var firstKey = decorated[0].Key;
+        if (firstKey is NumberValue)
+        {
+            if (decorated.Any(d => d.Key is not NumberValue))
+            {
                 throw new ToastException(
                     new TypeError("Sorted keys must be comparable numbers or strings.")
                 );
             }
+            return new ListValue([
+                .. decorated.OrderBy(d => ((NumberValue)d.Key).Value).Select(d => d.Item),
+            ]);
+        }
+        if (firstKey is StringValue)
+        {
+            if (decorated.Any(d => d.Key is not StringValue))
+            {
+                throw new ToastException(
+                    new TypeError("Sorted keys must be comparable numbers or strings.")
+                );
+            }
+            return new ListValue([
+                .. decorated
+                    .OrderBy(d => ((StringValue)d.Key).Value, StringComparer.Ordinal)
+                    .Select(d => d.Item),
+            ]);
+        }
+
+        throw new ToastException(
+            new TypeError("Sorted keys must be comparable numbers or strings.")
         );
-        return new ListValue(result);
     }
 
     [ToastType("list", "List type")]

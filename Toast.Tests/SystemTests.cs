@@ -361,4 +361,90 @@ public class SystemTests : BaseTest
         Evaluate("var d2 = d.addDays 5", context);
         AssertResult("d2 is \"datetime\"", true, context);
     }
+
+    [Fact]
+    public void TestListHigherOrderFunctionsArityAndIndex()
+    {
+        var context = new Context(_toast);
+
+        // 1. map with 0 parameters
+        AssertResult("map [1, 2, 3] () => 0", new List<int> { 0, 0, 0 }, context);
+
+        // 2. map with 1 parameter
+        AssertResult("map [1, 2, 3] (x) => x", new List<int> { 1, 2, 3 }, context);
+
+        // 3. map with 2 parameters (element, index)
+        Evaluate("var res = map [1, 2, 3] (x, y) => [x, y]", context);
+        var resList = Assert.IsType<ListValue>(context.GetValue("res"));
+        Assert.Equal(3, resList.Elements.Count);
+
+        var first = Assert.IsType<ListValue>(resList.Elements[0]);
+        Assert.Equal(new NumberValue(1), first.Elements[0]);
+        Assert.Equal(new NumberValue(0), first.Elements[1]);
+
+        var second = Assert.IsType<ListValue>(resList.Elements[1]);
+        Assert.Equal(new NumberValue(2), second.Elements[0]);
+        Assert.Equal(new NumberValue(1), second.Elements[1]);
+
+        var third = Assert.IsType<ListValue>(resList.Elements[2]);
+        Assert.Equal(new NumberValue(3), third.Elements[0]);
+        Assert.Equal(new NumberValue(2), third.Elements[1]);
+
+        // 4. map with 3 parameters throws ArityMismatch
+        var ex = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("map [1, 2, 3] (x, y, z) => [x, y, z]", context);
+        });
+        Assert.Equal("TypeError", ex.Error.ErrorType);
+        Assert.Contains("Arity mismatch", ex.Error.Message);
+
+        // 5. filter with 2 parameters (element, index)
+        AssertResult(
+            "filter [10, 20, 30, 40] (x, i) => i % 2 == 0",
+            new List<int> { 10, 30 },
+            context
+        );
+
+        // 6. filter with 3 parameters throws ArityMismatch
+        var exFilter = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("filter [1, 2, 3] (x, y, z) => true", context);
+        });
+        Assert.Equal("TypeError", exFilter.Error.ErrorType);
+        Assert.Contains("Arity mismatch", exFilter.Error.Message);
+
+        // 7. reduce with 2 parameters (acc, item)
+        AssertResult("reduce [1, 2, 3] 0 ((acc, x) => acc + x)", 6, context);
+
+        // 8. reduce with 3 parameters (acc, item, index)
+        AssertResult("reduce [10, 20, 30] 0 ((acc, x, i) => acc + i)", 3, context);
+
+        // 9. reduce with 4 parameters throws ArityMismatch
+        var exReduce = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("reduce [1, 2, 3] 0 ((a, b, c, d) => a)", context);
+        });
+        Assert.Equal("TypeError", exReduce.Error.ErrorType);
+        Assert.Contains("Arity mismatch", exReduce.Error.Message);
+
+        // 10. sortAs with 1 parameter
+        AssertResult("[30, 10, 20] |> sortAs ((x) => x)", new List<int> { 10, 20, 30 }, context);
+
+        // 11. sortAs with 2 parameters throws ArityMismatch
+        var exSortAs = Assert.Throws<ToastException>(() =>
+        {
+            Evaluate("[1, 2] |> sortAs ((x, y) => x)", context);
+        });
+        Assert.Equal("TypeError", exSortAs.Error.ErrorType);
+        Assert.Contains("Arity mismatch", exSortAs.Error.Message);
+
+        // 12. map with class constructor TypeValue
+        Evaluate("class Point(x, y) => { converter string() => \"({x}, {y})\" }", context);
+        Evaluate("var points = map [1, 2, 3] Point", context);
+        AssertResult("\"{points}\"", "[(1, 0), (2, 1), (3, 2)]", context);
+
+        Evaluate("class Box(val) => { converter string() => \"Box({val})\" }", context);
+        Evaluate("var boxes = map [10, 20] Box", context);
+        AssertResult("\"{boxes}\"", "[Box(10), Box(20)]", context);
+    }
 }

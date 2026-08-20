@@ -7,6 +7,6 @@ var arr =
 
 arr |>
     sortAs ..magnitude |>
-    map (x) => { "({x.x}, {x.y})" } |>
+    map ((x) => "({x.x}, {x.y})") |>
     ("\n".join) |>
     print
