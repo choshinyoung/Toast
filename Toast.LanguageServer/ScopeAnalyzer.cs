@@ -286,6 +286,13 @@ public static class ScopeAnalyzer
                 CollectStaticSymbols(item, scope, toaster, symbols);
             }
         }
+        else if (node is InterpolatedStringNode interp)
+        {
+            foreach (var part in interp.Parts)
+            {
+                CollectStaticSymbols(part, scope, toaster, symbols);
+            }
+        }
     }
 
     private static (ToastType Type, HashSet<string>? Members) InferTypeAndMembers(
@@ -327,13 +334,6 @@ public static class ScopeAnalyzer
         {
             if (call.Callee is IdentifierNode calleeId)
             {
-                // Member access operator `.` -> do not treat right side as unbound variable
-                if (calleeId.Name == "." && call.Arguments.Count >= 2)
-                {
-                    CheckNodeScope(call.Arguments[0], scope, toaster, diagnostics);
-                    return;
-                }
-
                 if (calleeId.Name == "=" && call.Arguments.Count == 2)
                 {
                     var varName = ExtractDeclaredIdentifier(call.Arguments[0]);
@@ -345,7 +345,6 @@ public static class ScopeAnalyzer
                     return;
                 }
 
-                // Declaration keywords
                 if (calleeId.Name == "var" && call.Arguments.Count > 0)
                 {
                     var varName = ExtractDeclaredIdentifier(call.Arguments[0]);
@@ -384,15 +383,33 @@ public static class ScopeAnalyzer
 
                 // Check callee itself
                 CheckIdentifierResolved(calleeId, scope, toaster, diagnostics);
+
+                // Check arguments dynamically based on command parameter type metadata
+                var cmd = FindCommand(calleeId.Name, toaster);
+                for (int i = 0; i < call.Arguments.Count; i++)
+                {
+                    var expectedType =
+                        (cmd != null && i < cmd.Parameters.Count)
+                            ? cmd.Parameters[i].Type
+                            : ToastType.Any;
+
+                    // Identifier and AstNode parameters are consumed as raw metadata rather than evaluated as variables
+                    if (expectedType == ToastType.Identifier || expectedType == ToastType.AstNode)
+                    {
+                        continue;
+                    }
+
+                    CheckNodeScope(call.Arguments[i], scope, toaster, diagnostics);
+                }
+                return;
             }
             else
             {
                 CheckNodeScope(call.Callee, scope, toaster, diagnostics);
-            }
-
-            foreach (var arg in call.Arguments)
-            {
-                CheckNodeScope(arg, scope, toaster, diagnostics);
+                foreach (var arg in call.Arguments)
+                {
+                    CheckNodeScope(arg, scope, toaster, diagnostics);
+                }
             }
         }
         else if (node is FunctionNode fnNode)
@@ -420,6 +437,13 @@ public static class ScopeAnalyzer
             foreach (var elem in ln.Items)
             {
                 CheckNodeScope(elem, scope, toaster, diagnostics);
+            }
+        }
+        else if (node is InterpolatedStringNode interp)
+        {
+            foreach (var part in interp.Parts)
+            {
+                CheckNodeScope(part, scope, toaster, diagnostics);
             }
         }
         else if (node is IdentifierNode idNode)
@@ -533,5 +557,19 @@ public static class ScopeAnalyzer
                 return true;
             return _parent != null && _parent.IsDeclared(name);
         }
+    }
+
+    private static Command? FindCommand(string name, Toaster toaster)
+    {
+        if (toaster.PrefixCommands.TryGetValue(name, out var prefixCmd))
+            return prefixCmd;
+        if (toaster.InfixCommands.TryGetValue(name, out var infixCmd))
+            return infixCmd;
+        if (
+            toaster.GlobalContext.GetBindings().TryGetValue(name, out var binding)
+            && binding.Value is CommandValue cv
+        )
+            return cv.Command;
+        return null;
     }
 }

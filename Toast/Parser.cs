@@ -331,7 +331,7 @@ public class Parser(
                 ToastType.Number,
                 new NumberValue(double.Parse(current.Value!))
             ),
-            TokenKind.String => ParseStringLiteral(current.Value!),
+            TokenKind.String => ParseStringLiteral(current.Value!, current.Location),
             TokenKind.LParen => ParseGroup(),
             TokenKind.LBrace => ParseBlock(),
             TokenKind.LDoubleBrace => ParseObjectLiteral(),
@@ -351,15 +351,17 @@ public class Parser(
         return node;
     }
 
-    private Node ParseStringLiteral(string rawTokenValue)
+    private Node ParseStringLiteral(string rawTokenValue, Location tokenLocation)
     {
         string str = rawTokenValue;
+        int quoteOffset = 0;
         if (
             (str.StartsWith('"') && str.EndsWith('"'))
             || (str.StartsWith('\'') && str.EndsWith('\''))
         )
         {
             str = str[1..^1];
+            quoteOffset = 1;
         }
 
         var parts = new List<Node>();
@@ -393,8 +395,14 @@ public class Parser(
                         sbStatic.Append('}');
                         break;
                     default:
-                        throw new InvalidOperationException(
-                            $"Invalid escape sequence '\\{next}' in string literal."
+                        throw new ToastException(
+                            new SyntaxError(
+                                $"Invalid escape sequence '\\{next}' in string literal.",
+                                new Location(
+                                    tokenLocation.Line,
+                                    tokenLocation.Column + quoteOffset + i
+                                )
+                            )
                         );
                 }
                 i += 2;
@@ -407,6 +415,9 @@ public class Parser(
                 {
                     parts.Add(
                         new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString()))
+                        {
+                            Location = new Location(tokenLocation.Line, tokenLocation.Column),
+                        }
                     );
                     sbStatic.Clear();
                 }
@@ -454,7 +465,12 @@ public class Parser(
 
                 if (depth != 0)
                 {
-                    throw new InvalidOperationException("Unmatched '{' in string interpolation.");
+                    throw new ToastException(
+                        new SyntaxError(
+                            "Unmatched '{' in string interpolation.",
+                            new Location(tokenLocation.Line, tokenLocation.Column + quoteOffset + i)
+                        )
+                    );
                 }
 
                 string exprStr = str[startExpr..j];
@@ -462,11 +478,36 @@ public class Parser(
 
                 if (string.IsNullOrWhiteSpace(exprStr))
                 {
-                    parts.Add(new LiteralNode(ToastType.String, new StringValue("")));
+                    parts.Add(
+                        new LiteralNode(ToastType.String, new StringValue(""))
+                        {
+                            Location = new Location(
+                                tokenLocation.Line,
+                                tokenLocation.Column + quoteOffset + startExpr
+                            ),
+                        }
+                    );
                 }
                 else
                 {
-                    var tokens = Lexer.Tokenize(exprStr);
+                    var rawTokens = Lexer.Tokenize(exprStr);
+                    // Adjust token locations to match their position in the source document
+                    int exprColOffset = tokenLocation.Column + quoteOffset + startExpr;
+                    var tokens = rawTokens
+                        .Select(t => new Token(
+                            t.Kind,
+                            t.Value,
+                            new Location(
+                                tokenLocation.Line + (t.Location.Line - 1),
+                                (
+                                    t.Location.Line == 1
+                                        ? exprColOffset + (t.Location.Column - 1)
+                                        : t.Location.Column
+                                )
+                            )
+                        ))
+                        .ToList();
+
                     var programNode = Parse(tokens, _infixResolver, _prefixResolver);
                     if (programNode.Statements.Count == 1)
                     {
@@ -478,7 +519,12 @@ public class Parser(
                     }
                     else
                     {
-                        parts.Add(new LiteralNode(ToastType.String, new StringValue("")));
+                        parts.Add(
+                            new LiteralNode(ToastType.String, new StringValue(""))
+                            {
+                                Location = new Location(tokenLocation.Line, exprColOffset),
+                            }
+                        );
                     }
                 }
                 continue;
@@ -490,12 +536,20 @@ public class Parser(
 
         if (sbStatic.Length > 0)
         {
-            parts.Add(new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString())));
+            parts.Add(
+                new LiteralNode(ToastType.String, new StringValue(sbStatic.ToString()))
+                {
+                    Location = tokenLocation,
+                }
+            );
         }
 
         if (parts.Count == 0)
         {
-            return new LiteralNode(ToastType.String, new StringValue(""));
+            return new LiteralNode(ToastType.String, new StringValue(""))
+            {
+                Location = tokenLocation,
+            };
         }
 
         if (parts.Count == 1 && parts[0] is LiteralNode literalNode)
@@ -503,7 +557,7 @@ public class Parser(
             return literalNode;
         }
 
-        return new InterpolatedStringNode(parts);
+        return new InterpolatedStringNode(parts) { Location = tokenLocation };
     }
 
     private ObjectLiteralNode ParseObjectLiteral()

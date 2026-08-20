@@ -16,6 +16,7 @@ public record ToastType(string Name)
         public const string Reference = "reference";
         public const string Type = "type";
         public const string Error = "Error";
+        public const string AstNode = "astnode";
     }
 
     public static readonly ToastType String = new(Names.String);
@@ -30,6 +31,7 @@ public record ToastType(string Name)
     public static readonly ToastType Reference = new(Names.Reference);
     public static readonly ToastType Type = new(Names.Type);
     public static readonly ToastType Error = new(Names.Error);
+    public static readonly ToastType AstNode = new(Names.AstNode);
 
     public static readonly HashSet<string> SystemTypeNames =
     [
@@ -45,6 +47,7 @@ public record ToastType(string Name)
         Names.Reference,
         Names.Type,
         Names.Error,
+        Names.AstNode,
     ];
 
     public static ToastType FromName(string typeName)
@@ -63,6 +66,7 @@ public record ToastType(string Name)
             Names.Reference => Reference,
             Names.Type => Type,
             Names.Error => Error,
+            Names.AstNode => AstNode,
             _ => new ToastType(typeName),
         };
     }
@@ -83,12 +87,12 @@ public record ToastType(string Name)
             return Error;
         if (type == typeof(FunctionValue) || type == typeof(CommandValue))
             return Function;
-        if (type == typeof(IdentifierValue))
+        if (type == typeof(IdentifierValue) || typeof(IdentifierValue).IsAssignableFrom(type))
             return Identifier;
         if (type == typeof(NullValue))
             return Null;
         if (type == typeof(AstNodeValue))
-            return Any;
+            return AstNode;
         if (type == typeof(ReferenceValue))
             return Reference;
 

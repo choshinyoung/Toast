@@ -222,4 +222,38 @@ public class LspTests
         var diags = ScopeAnalyzer.ValidateDocumentStatically(importedCode, toaster);
         Assert.Empty(diags);
     }
+
+    [Fact]
+    public async Task TestSemanticTokensStringInterpolation()
+    {
+        var uri = DocumentUri.From("file:///interpolation_semantic.toast");
+        var script = "var name = \"World\"\nprint(\"Hello {name}, count is {1 + 2}!\")";
+        DocumentManager.Instance.UpdateDocument(uri, script);
+
+        var handler = new SemanticTokensHandler();
+        var result = await handler.Handle(
+            new SemanticTokensParams { TextDocument = new TextDocumentIdentifier { Uri = uri } },
+            CancellationToken.None
+        );
+
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Data);
+    }
+
+    [Fact]
+    public void TestMemberGetterOperatorNoDiagnostics()
+    {
+        var toaster = new Toaster();
+        var code = """
+            import "system"
+            class Point(x, y) => {
+                function magnitude() => 0
+            }
+            var arr = 1 to 10 |> map { Point(1, 2) }
+            arr |> sortAs ..magnitude
+            """;
+
+        var diags = ScopeAnalyzer.ValidateDocumentStatically(code, toaster);
+        Assert.Empty(diags);
+    }
 }

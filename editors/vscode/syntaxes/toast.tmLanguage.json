@@ -36,8 +36,14 @@
             },
             {
               "name": "meta.interpolation.toast",
-              "begin": "\\{\\{",
-              "end": "\\}\\}",
+              "begin": "(?<!\\\\)\\{",
+              "beginCaptures": {
+                "0": { "name": "punctuation.section.interpolation.begin.toast" }
+              },
+              "end": "\\}",
+              "endCaptures": {
+                "0": { "name": "punctuation.section.interpolation.end.toast" }
+              },
               "patterns": [{ "include": "$self" }]
             }
           ]
@@ -50,6 +56,18 @@
             {
               "name": "constant.character.escape.toast",
               "match": "\\\\."
+            },
+            {
+              "name": "meta.interpolation.toast",
+              "begin": "(?<!\\\\)\\{",
+              "beginCaptures": {
+                "0": { "name": "punctuation.section.interpolation.begin.toast" }
+              },
+              "end": "\\}",
+              "endCaptures": {
+                "0": { "name": "punctuation.section.interpolation.end.toast" }
+              },
+              "patterns": [{ "include": "$self" }]
             }
           ]
         }

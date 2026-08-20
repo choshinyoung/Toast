@@ -51,8 +51,9 @@ public class InterpolationTests : BaseTest
         AssertResult("\"quote: \\\" \\' \\\\\"", "quote: \" ' \\", context);
         AssertResult("\"braces: \\{ \\}\"", "braces: { }", context);
 
-        // Invalid escape sequence like \t should throw
-        Assert.Throws<InvalidOperationException>(() => Evaluate("\"invalid \\t\"", context));
+        // Invalid escape sequence like \t should throw ToastException
+        var ex = Assert.Throws<ToastException>(() => Evaluate("\"invalid \\t\"", context));
+        Assert.Equal("SyntaxError", ex.Error.ErrorType);
     }
 
     [Fact]
@@ -60,5 +61,18 @@ public class InterpolationTests : BaseTest
     {
         var context = new Context(_toast);
         AssertResult("\"Hello, {\"world!\"}\"", "Hello, world!", context);
+    }
+
+    [Fact]
+    public void TestInterpolationStaticScopeAnalysis()
+    {
+        // Static analysis test for LanguageServer diagnostics
+        var diagnostics = Toast.LanguageServer.ScopeAnalyzer.ValidateDocumentStatically(
+            "var greeting = \"Hello, {unknownName}!\"",
+            _toast
+        );
+
+        Assert.Single(diagnostics);
+        Assert.Contains("unknownName", diagnostics[0].Message);
     }
 }
