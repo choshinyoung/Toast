@@ -62,13 +62,21 @@ public class ConverterModule : IToastModule
     [ToastConverter]
     public static NumberValue StringToNumber(StringValue val)
     {
-        return new NumberValue(double.Parse(val.Value));
+        if (double.TryParse(val.Value, out var num))
+        {
+            return new NumberValue(num);
+        }
+        throw new ToastException(new TypeError($"Cannot convert string '{val.Value}' to number."));
     }
 
     [ToastConverter]
     public static BoolValue StringToBoolean(StringValue val)
     {
-        return new BoolValue(bool.Parse(val.Value));
+        if (bool.TryParse(val.Value, out var b))
+        {
+            return new BoolValue(b);
+        }
+        throw new ToastException(new TypeError($"Cannot convert string '{val.Value}' to boolean."));
     }
 
     [ToastConverter]

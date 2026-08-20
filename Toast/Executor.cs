@@ -386,7 +386,14 @@ public class Executor(Toaster _toast)
                 suppressZeroArgFunction: false,
                 suppressDereference: false
             );
-            sb.Append(val.ToString());
+            if (_toast.TryConvert(val, val.Type, ToastType.String, context, out var converted))
+            {
+                sb.Append(converted.ToString());
+            }
+            else
+            {
+                sb.Append(val.ToString());
+            }
         }
         return new StringValue(sb.ToString());
     }

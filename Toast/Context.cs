@@ -140,9 +140,24 @@ public class Context(Toaster toaster, Context? parent = null)
                 && !Toaster.IsCompatible(value.Type, binding.Constraint.TargetType, this)
             )
             {
-                throw new ToastException(
-                    TypeError.CannotAssign(value.Type, name, binding.Constraint.TargetType)
-                );
+                if (
+                    Toaster.TryConvert(
+                        value,
+                        value.Type,
+                        binding.Constraint.TargetType,
+                        this,
+                        out var converted
+                    )
+                )
+                {
+                    value = converted;
+                }
+                else
+                {
+                    throw new ToastException(
+                        TypeError.CannotAssign(value.Type, name, binding.Constraint.TargetType)
+                    );
+                }
             }
             _bindings[name] = (value, binding.Constraint);
         }

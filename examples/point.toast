@@ -10,4 +10,7 @@ class Point(x, y) => {
         var mag = magnitude
         Point(x / mag, y / mag)
     }
+
+    converter string() => "Point({x}, {y})"
+    converter list() => [x, y]
 }

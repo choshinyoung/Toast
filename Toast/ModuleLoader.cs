@@ -290,24 +290,21 @@ public static class ModuleLoader
             ? new ToastType(attr.TargetTypeName)
             : (ToastType.TryFromClrType(targetClrType) ?? ToastType.Any);
 
-        Func<Context, ToastValue, ToastValue> convertFunc;
+        var ctxParam = Expression.Parameter(typeof(Context), "ctx");
+        var valParam = Expression.Parameter(typeof(ToastValue), "val");
+        var castVal = Expression.Convert(valParam, srcClrType);
 
-        if (hasContext)
-        {
-            convertFunc = (ctx, val) =>
-            {
-                var result = method.Invoke(null, [ctx, val]);
-                return result is ToastValue tv ? tv : NullValue.Instance;
-            };
-        }
-        else
-        {
-            convertFunc = (ctx, val) =>
-            {
-                var result = method.Invoke(null, [val]);
-                return result is ToastValue tv ? tv : NullValue.Instance;
-            };
-        }
+        Expression callExpr = hasContext
+            ? Expression.Call(method, ctxParam, castVal)
+            : Expression.Call(method, castVal);
+
+        var castResult = Expression.Convert(callExpr, typeof(ToastValue));
+        var lambda = Expression.Lambda<Func<Context, ToastValue, ToastValue>>(
+            castResult,
+            ctxParam,
+            valParam
+        );
+        var convertFunc = lambda.Compile();
 
         return new TypeConverter(srcType, targetType, convertFunc);
     }

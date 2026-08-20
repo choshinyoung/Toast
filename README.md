@@ -15,7 +15,7 @@ Toast는 C#으로 작성된 가볍고 확장 가능한 스크립팅 언어입니
 
 전역 도구 설치:
 ```bash
-dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.6-beta
+dotnet tool install -g choshinyoung.Toast.Tools --version 2.0.7-beta
 ```
 
 대화형 도구 실행:
@@ -27,7 +27,7 @@ toast
 
 라이브러리 설치:
 ```bash
-dotnet add package choshinyoung.Toast --version 2.0.6-beta
+dotnet add package choshinyoung.Toast --version 2.0.7-beta
 ```
 
 C# 코드 사용 예시:

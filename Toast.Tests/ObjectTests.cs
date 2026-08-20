@@ -397,4 +397,35 @@ public class ObjectTests : BaseTest
         Evaluate("var length = \"toLower\"", context);
         AssertResult("\"hello\".length", 5, context);
     }
+
+    [Fact]
+    public void TestClassConverter()
+    {
+        var context = new Context(_toast);
+        Evaluate("import \"converter\"", context);
+
+        Evaluate(
+            @"class Point (x, y) => {
+    converter string () => ""Point({x}, {y})""
+    converter list () => [x, y]
+}",
+            context
+        );
+
+        Evaluate("var p = Point(3, 4)", context);
+
+        // 1. Point -> string converter
+        Evaluate("var s: string = p", context);
+        AssertResult("s", "Point(3, 4)", context);
+
+        // 2. Point -> list converter
+        Evaluate("var l: list = p", context);
+        var listVal = Assert.IsType<ListValue>(context.GetValue("l"));
+        Assert.Equal(2, listVal.Elements.Count);
+        Assert.Equal(new NumberValue(3), listVal.Elements[0]);
+        Assert.Equal(new NumberValue(4), listVal.Elements[1]);
+
+        // 3. String interpolation conversion
+        AssertResult("\"Result: {p}\"", "Result: Point(3, 4)", context);
+    }
 }

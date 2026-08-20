@@ -238,6 +238,45 @@ public class ObjectModule : IToastModule
         );
     }
 
+    [ToastCommand("converter", "Declares a type converter for the current class/object.")]
+    public static ToastValue ConverterCreator(
+        Context context,
+        IdentifierValue targetTypeId,
+        FunctionValue funcVal
+    )
+    {
+        string targetTypeName = targetTypeId.Name;
+        string internalKey = $"@converter_{targetTypeName}";
+        context.SetValueDirect(internalKey, funcVal);
+
+        var sourceType = context.Owner?.Type ?? ToastType.Object;
+        var targetType = ToastType.FromName(targetTypeName);
+
+        context.Toaster.Converters[(sourceType, targetType)] = new TypeConverter(
+            sourceType,
+            targetType,
+            (ctx, sourceVal) =>
+            {
+                if (sourceVal is ObjectValue objVal)
+                {
+                    var bindings = objVal.Context.GetBindings();
+                    if (
+                        bindings.TryGetValue(internalKey, out var binding)
+                        && binding.Value is FunctionValue targetFunc
+                    )
+                    {
+                        return targetFunc.Execute([]);
+                    }
+                }
+                throw new ToastException(
+                    new TypeError($"Failed to convert '{sourceType.Name}' to '{targetTypeName}'.")
+                );
+            }
+        );
+
+        return funcVal;
+    }
+
     [ToastCommand("class", "Declares a named class/type.", DeclaresMember = true)]
     public static ToastValue ClassCreator(
         Context context,
@@ -360,6 +399,10 @@ public class ObjectModule : IToastModule
                 }
 
                 var objCtx = new Context(funcVal.ClosureContext);
+                var customType = name == "@type_factory" ? null : new ToastType(name);
+                var objVal = new ObjectValue(objCtx, customType);
+                objCtx.Owner = objVal;
+
                 for (int i = 0; i < funcVal.Parameters.Count; i++)
                 {
                     var param = funcVal.Parameters[i];
@@ -398,8 +441,7 @@ public class ObjectModule : IToastModule
                 {
                     callerCtx.Toaster.Evaluate(stmt, objCtx);
                 }
-                var customType = name == "@type_factory" ? null : new ToastType(name);
-                return new ObjectValue(objCtx, customType);
+                return objVal;
             },
             parameterTypes: parameterTypes,
             isParameterLazy: isParameterLazy,
